@@ -1,1802 +1,20 @@
-diff -ruN a/leos_oxide_tests.sh b/leos_oxide_tests.sh
---- a/leos_oxide_tests.sh	1970-01-01 08:00:00
-+++ b/leos_oxide_tests.sh	2026-01-21 20:45:42
-@@ -0,0 +1,1388 @@
-+#!/usr/bin/env bash
-+set -euo pipefail
-+
-+# Broad LEOS tests on metal oxides (variable valence focus).
-+#
-+# Run inside the Ubuntu VM, e.g.:
-+#   orb -m Ubuntu-x64 bash -lc 'bash /Users/mastreina/Desktop/EOS4VASP/leos_oxide_tests.sh'
-+#
-+# To keep outputs on the shared macOS filesystem for inspection:
-+#   orb -m Ubuntu-x64 bash -lc 'WORK_ROOT=/Users/mastreina/Desktop/EOS4VASP/leos_work bash /Users/mastreina/Desktop/EOS4VASP/leos_oxide_tests.sh nio'
-+
-+VASP_STD="${VASP_STD:-/Users/mastreina/Desktop/EOS4VASP/vasp.6.4.3/bin/vasp_std}"
-+POTPAW_TGZ="${POTPAW_TGZ:-/Users/mastreina/Desktop/EOS4VASP/potpaw_PBE.64.tgz}"
-+NP="${NP:-4}"
-+WORK_ROOT="${WORK_ROOT:-/tmp}"
-+
-+if [[ ! -x "$VASP_STD" ]]; then
-+  echo "ERROR: VASP_STD not found/executable: $VASP_STD" >&2
-+  exit 2
-+fi
-+if [[ ! -f "$POTPAW_TGZ" ]]; then
-+  echo "ERROR: POTPAW_TGZ not found: $POTPAW_TGZ" >&2
-+  exit 2
-+fi
-+
-+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
-+
-+mk_potcar() {
-+  : > POTCAR
-+  for el in "$@"; do
-+    tar -xOf "$POTPAW_TGZ" "$el/POTCAR" >> POTCAR
-+  done
-+}
-+
-+nelect_from_eigenval() {
-+  awk 'NR==6{print $1; exit}' EIGENVAL
-+}
-+
-+nelect_from_eoscar() {
-+  awk '$1=="#" && $2=="NELECT(Wannier)"{print $4; exit}' EOSCAR
-+}
-+
-+check_nelect_wann() {
-+  local label="$1"
-+  local tol="${2:-0.10}"
-+  local expected actual
-+
-+  expected="$(nelect_from_eigenval)"
-+  actual="$(nelect_from_eoscar)"
-+  if [[ -z "${expected:-}" || -z "${actual:-}" ]]; then
-+    echo "  FAIL: $label (missing NELECT/Wannier in EIGENVAL/EOSCAR)" >&2
-+    return 1
-+  fi
-+
-+  if awk -v a="$actual" -v b="$expected" -v tol="$tol" 'BEGIN{d=a-b; if(d<0)d=-d; exit(d>tol)}'; then
-+    return 0
-+  fi
-+
-+  echo "  FAIL: $label NELECT mismatch (NELECT=$expected, NELECT(Wannier)=$actual)" >&2
-+  return 1
-+}
-+
-+stats_os_int() {
-+  # prints: avg min max count
-+  local el="$1"
-+  awk -v el="$el" '
-+    $1 ~ /^[0-9]+$/ && $2==el {x=$6; s+=x; c+=1; if(!init||x<mn)mn=x; if(!init||x>mx)mx=x; init=1}
-+    END{if(c==0){print "nan nan nan 0"} else {printf "%.6f %.0f %.0f %d\n", s/c, mn, mx, c}}
-+  ' EOSCAR
-+}
-+
-+run_vasp() {
-+  mpirun -np "$NP" "$VASP_STD" > vasp.out 2> vasp.err
-+}
-+
-+run_case() {
-+  local name="$1"
-+  shift
-+
-+  mkdir -p "$WORK_ROOT"
-+  local work
-+  work="$(mktemp -d "${WORK_ROOT%/}/leos-oxide-${name}-XXXXXX")"
-+  echo ""
-+  echo "== $name =="
-+  echo "  workdir: $work"
-+  local t0=$SECONDS
-+
-+  ( cd "$work" && "$@" )
-+  local rc=$?
-+  local dt=$((SECONDS - t0))
-+  echo "  time: ${dt}s"
-+  return "$rc"
-+}
-+
-+case_tio2() {
-+  # Rutile TiO2 (expected: Ti +4, O -2)
-+  cp /Users/mastreina/Desktop/EOS4VASP/vasp.6.4.3/testsuite/tests/TiO2_PRECFOCK=NORMAL/POSCAR POSCAR
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+1 1 1
-+0 0 0
-+EOF
-+  mk_potcar Ti O
-+  cat > INCAR <<'EOF'
-+SYSTEM = TiO2 LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "TiO2" || return 1
-+
-+  local ti o
-+  ti="$(stats_os_int Ti)"
-+  o="$(stats_os_int O)"
-+  echo "  Ti OS(int): $ti"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$ti")" == "4.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_sno() {
-+  # Rocksalt SnO (formal: Sn +2, O -2)
-+  cat > POSCAR <<'EOF'
-+SnO (rocksalt)
-+4.80
-+0.0 0.5 0.5
-+0.5 0.0 0.5
-+0.5 0.5 0.0
-+Sn O
-+1 1
-+Direct
-+0 0 0
-+0.5 0.5 0.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+4 4 4
-+0 0 0
-+EOF
-+  mk_potcar Sn O
-+  cat > INCAR <<'EOF'
-+SYSTEM = SnO rocksalt LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "SnO" || return 1
-+
-+  local sn o
-+  sn="$(stats_os_int Sn)"
-+  o="$(stats_os_int O)"
-+  echo "  Sn OS(int): $sn"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$sn")" == "2.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_sno2() {
-+  # Rutile SnO2 (formal: Sn +4, O -2)
-+  cat > POSCAR <<'EOF'
-+SnO2 (rutile)
-+1.0
-+4.7370 0.0000 0.0000
-+0.0000 4.7370 0.0000
-+0.0000 0.0000 3.1860
-+Sn O
-+2 4
-+Direct
-+0.0 0.0 0.0
-+0.5 0.5 0.5
-+0.3060 0.3060 0.0
-+-0.3060 -0.3060 0.0
-+0.1940 0.8060 0.5
-+0.8060 0.1940 0.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+2 2 2
-+0 0 0
-+EOF
-+  mk_potcar Sn O
-+  cat > INCAR <<'EOF'
-+SYSTEM = SnO2 rutile LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "SnO2" || return 1
-+
-+  local sn o
-+  sn="$(stats_os_int Sn)"
-+  o="$(stats_os_int O)"
-+  echo "  Sn OS(int): $sn"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$sn")" == "4.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_cu2o() {
-+  # Cu2O (cuprite, formal: Cu +1, O -2)
-+  cat > POSCAR <<'EOF'
-+Cu2O (cuprite)
-+4.2700
-+1 0 0
-+0 1 0
-+0 0 1
-+Cu O
-+4 2
-+Direct
-+0.25 0.25 0.25
-+0.25 0.75 0.75
-+0.75 0.25 0.75
-+0.75 0.75 0.25
-+0.00 0.00 0.00
-+0.50 0.50 0.50
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+2 2 2
-+0 0 0
-+EOF
-+  mk_potcar Cu O
-+  cat > INCAR <<'EOF'
-+SYSTEM = Cu2O cuprite LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "Cu2O" || return 1
-+
-+  local cu o
-+  cu="$(stats_os_int Cu)"
-+  o="$(stats_os_int O)"
-+  echo "  Cu OS(int): $cu"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$cu")" == "1.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_cuo() {
-+  # Rocksalt CuO (formal: Cu +2, O -2)
-+  cat > POSCAR <<'EOF'
-+CuO (rocksalt)
-+4.30
-+0.0 0.5 0.5
-+0.5 0.0 0.5
-+0.5 0.5 0.0
-+Cu O
-+1 1
-+Direct
-+0 0 0
-+0.5 0.5 0.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+4 4 4
-+0 0 0
-+EOF
-+  mk_potcar Cu O
-+  cat > INCAR <<'EOF'
-+SYSTEM = CuO rocksalt LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+
-+ISPIN = 2
-+MAGMOM = 1.0 0.0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = 2 -1
-+LDAUU = 4.00 0.00
-+LDAUJ = 0.00 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "CuO" || return 1
-+
-+  local cu o
-+  cu="$(stats_os_int Cu)"
-+  o="$(stats_os_int O)"
-+  echo "  Cu OS(int): $cu"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$cu")" == "2.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_mno() {
-+  # AFM rocksalt MnO (formal: Mn +2, O -2)
-+  cat > POSCAR <<'EOF'
-+MnO (AFM rocksalt)
-+4.445
-+1.0 0.5 0.5
-+0.5 1.0 0.5
-+0.5 0.5 1.0
-+Mn O
-+2 2
-+Cartesian
-+0.0 0.0 0.0
-+1.0 1.0 1.0
-+0.5 0.5 0.5
-+1.5 1.5 1.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+2 2 2
-+0 0 0
-+EOF
-+  mk_potcar Mn O
-+  cat > INCAR <<'EOF'
-+SYSTEM = MnO AFM rocksalt LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOS_ONSITE_CUT = 0.05
-+
-+ISPIN = 2
-+MAGMOM = 5.0 -5.0 0 0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = 2 -1
-+LDAUU = 4.00 0.00
-+LDAUJ = 0.00 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "MnO" || return 1
-+
-+  local mn o
-+  mn="$(stats_os_int Mn)"
-+  o="$(stats_os_int O)"
-+  echo "  Mn OS(int): $mn"
-+  echo "   O OS(int): $o"
-+
-+  # Allow site-splitting but require the element-average to be +2.
-+  [[ "$(awk '{print $1}' <<<"$mn")" == "2.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_mno2() {
-+  # Rutile MnO2 (formal: Mn +4, O -2)
-+  cat > POSCAR <<'EOF'
-+MnO2 (rutile)
-+1.0
-+4.3980 0.0000 0.0000
-+0.0000 4.3980 0.0000
-+0.0000 0.0000 2.8730
-+Mn O
-+2 4
-+Direct
-+0.0 0.0 0.0
-+0.5 0.5 0.5
-+0.3050 0.3050 0.0
-+-0.3050 -0.3050 0.0
-+0.1950 0.8050 0.5
-+0.8050 0.1950 0.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+2 2 2
-+0 0 0
-+EOF
-+  mk_potcar Mn O
-+  cat > INCAR <<'EOF'
-+SYSTEM = MnO2 rutile LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+
-+ISPIN = 2
-+MAGMOM = 3.0 -3.0 4*0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = 2 -1
-+LDAUU = 4.00 0.00
-+LDAUJ = 0.00 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "MnO2" || return 1
-+
-+  local mn o
-+  mn="$(stats_os_int Mn)"
-+  o="$(stats_os_int O)"
-+  echo "  Mn OS(int): $mn"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$mn")" == "4.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_nio() {
-+  # AFM rocksalt NiO +U (formal: Ni +2, O -2). Note: site splitting can appear; we check element-average.
-+  cat > POSCAR <<'EOF'
-+NiO (AFM rocksalt)
-+4.2
-+1.0 0.5 0.5
-+0.5 1.0 0.5
-+0.5 0.5 1.0
-+Ni O
-+2 2
-+Cartesian
-+0.0 0.0 0.0
-+1.0 1.0 1.0
-+0.5 0.5 0.5
-+1.5 1.5 1.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+2 2 2
-+0 0 0
-+EOF
-+  mk_potcar Ni O
-+  cat > INCAR <<'EOF'
-+SYSTEM = NiO AFM rocksalt LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+
-+ISPIN = 2
-+MAGMOM = 2.0 -2.0 0 0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = 2 -1
-+LDAUU = 8.00 0.00
-+LDAUJ = 0.95 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "NiO" || return 1
-+
-+  local ni o
-+  ni="$(stats_os_int Ni)"
-+  o="$(stats_os_int O)"
-+  echo "  Ni OS(int): $ni"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$ni")" == "2.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_feo() {
-+  # Rocksalt FeO +U (formal: Fe +2, O -2).
-+  cat > POSCAR <<'EOF'
-+FeO (rocksalt)
-+4.300
-+0.0 0.5 0.5
-+0.5 0.0 0.5
-+0.5 0.5 0.0
-+Fe O
-+1 1
-+Direct
-+0 0 0
-+0.5 0.5 0.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+4 4 4
-+0 0 0
-+EOF
-+  mk_potcar Fe O
-+  cat > INCAR <<'EOF'
-+SYSTEM = FeO rocksalt LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOS_ONSITE_CUT = 0.05
-+
-+ISPIN = 2
-+MAGMOM = 4.0 0.0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = 2 -1
-+LDAUU = 4.00 0.00
-+LDAUJ = 0.00 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "FeO" || return 1
-+
-+  local fe o
-+  fe="$(stats_os_int Fe)"
-+  o="$(stats_os_int O)"
-+  echo "  Fe OS(int): $fe"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$fe")" == "2.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_coo() {
-+  # AFM rocksalt CoO +U (formal: Co +2, O -2).
-+  cat > POSCAR <<'EOF'
-+CoO (AFM rocksalt)
-+4.260
-+1.0 0.5 0.5
-+0.5 1.0 0.5
-+0.5 0.5 1.0
-+Co O
-+2 2
-+Cartesian
-+0.0 0.0 0.0
-+1.0 1.0 1.0
-+0.5 0.5 0.5
-+1.5 1.5 1.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+2 2 2
-+0 0 0
-+EOF
-+  mk_potcar Co O
-+  cat > INCAR <<'EOF'
-+SYSTEM = CoO AFM rocksalt LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOS_ONSITE_CUT = 0.05
-+
-+ISPIN = 2
-+MAGMOM = 3.0 -3.0 0 0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = 2 -1
-+LDAUU = 5.00 0.00
-+LDAUJ = 0.00 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "CoO" || return 1
-+
-+  local co o
-+  co="$(stats_os_int Co)"
-+  o="$(stats_os_int O)"
-+  echo "  Co OS(int): $co"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$co")" == "2.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_lafeo3() {
-+  # Cubic perovskite LaFeO3 (formal: La +3, Fe +3, O -2). Uses +U to open a gap.
-+  cat > POSCAR <<'EOF'
-+LaFeO3 (cubic perovskite)
-+3.950
-+1 0 0
-+0 1 0
-+0 0 1
-+La Fe O
-+1 1 3
-+Direct
-+0.0 0.0 0.0
-+0.5 0.5 0.5
-+0.5 0.5 0.0
-+0.5 0.0 0.5
-+0.0 0.5 0.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+3 3 3
-+0 0 0
-+EOF
-+  mk_potcar La Fe O
-+  cat > INCAR <<'EOF'
-+SYSTEM = LaFeO3 LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOS_ONSITE_CUT = 0.80
-+LMAXMIX = 6
-+
-+ISPIN = 2
-+MAGMOM = 0 5.0 3*0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = -1 2 -1
-+LDAUU = 0.00 4.00 0.00
-+LDAUJ = 0.00 0.00 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "LaFeO3" || return 1
-+
-+  local la fe o
-+  la="$(stats_os_int La)"
-+  fe="$(stats_os_int Fe)"
-+  o="$(stats_os_int O)"
-+  echo "  La OS(int): $la"
-+  echo "  Fe OS(int): $fe"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$la")" == "3.000000" ]] || return 1
-+  [[ "$(awk '{print $1}' <<<"$fe")" == "3.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_lavo3() {
-+  # Cubic perovskite LaVO3 (formal: La +3, V +3, O -2). Uses +U to open a gap.
-+  cat > POSCAR <<'EOF'
-+LaVO3 (cubic perovskite)
-+3.920
-+1 0 0
-+0 1 0
-+0 0 1
-+La V O
-+1 1 3
-+Direct
-+0.0 0.0 0.0
-+0.5 0.5 0.5
-+0.5 0.5 0.0
-+0.5 0.0 0.5
-+0.0 0.5 0.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+3 3 3
-+0 0 0
-+EOF
-+  mk_potcar La V O
-+  cat > INCAR <<'EOF'
-+SYSTEM = LaVO3 LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+LMAXMIX = 6
-+
-+ISPIN = 2
-+MAGMOM = 0 2.0 3*0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = -1 2 -1
-+LDAUU = 0.00 3.00 0.00
-+LDAUJ = 0.00 0.00 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "LaVO3" || return 1
-+
-+  local la v o
-+  la="$(stats_os_int La)"
-+  v="$(stats_os_int V)"
-+  o="$(stats_os_int O)"
-+  echo "  La OS(int): $la"
-+  echo "   V OS(int): $v"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$la")" == "3.000000" ]] || return 1
-+  [[ "$(awk '{print $1}' <<<"$v")" == "3.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_navo3() {
-+  # Cubic perovskite NaVO3 (formal: Na +1, V +5, O -2).
-+  cat > POSCAR <<'EOF'
-+NaVO3 (cubic perovskite)
-+3.900
-+1 0 0
-+0 1 0
-+0 0 1
-+Na V O
-+1 1 3
-+Direct
-+0.0 0.0 0.0
-+0.5 0.5 0.5
-+0.5 0.5 0.0
-+0.5 0.0 0.5
-+0.0 0.5 0.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+3 3 3
-+0 0 0
-+EOF
-+  mk_potcar Na V O
-+  cat > INCAR <<'EOF'
-+SYSTEM = NaVO3 LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "NaVO3" || return 1
-+
-+  local na v o
-+  na="$(stats_os_int Na)"
-+  v="$(stats_os_int V)"
-+  o="$(stats_os_int O)"
-+  echo "  Na OS(int): $na"
-+  echo "   V OS(int): $v"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$na")" == "1.000000" ]] || return 1
-+  [[ "$(awk '{print $1}' <<<"$v")" == "5.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_laco3() {
-+  # Cubic perovskite LaCoO3 (formal: La +3, Co +3, O -2). Uses +U to open a gap.
-+  cat > POSCAR <<'EOF'
-+LaCoO3 (cubic perovskite)
-+3.850
-+1 0 0
-+0 1 0
-+0 0 1
-+La Co O
-+1 1 3
-+Direct
-+0.0 0.0 0.0
-+0.5 0.5 0.5
-+0.5 0.5 0.0
-+0.5 0.0 0.5
-+0.0 0.5 0.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+3 3 3
-+0 0 0
-+EOF
-+  mk_potcar La Co O
-+  cat > INCAR <<'EOF'
-+SYSTEM = LaCoO3 LEOS oxide test
-+ENCUT = 400
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+LMAXMIX = 6
-+
-+ISPIN = 2
-+MAGMOM = 0 0.1 3*0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = -1 2 -1
-+LDAUU = 0.00 4.00 0.00
-+LDAUJ = 0.00 0.00 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "LaCoO3" || return 1
-+
-+  local la co o
-+  la="$(stats_os_int La)"
-+  co="$(stats_os_int Co)"
-+  o="$(stats_os_int O)"
-+  echo "  La OS(int): $la"
-+  echo "  Co OS(int): $co"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$la")" == "3.000000" ]] || return 1
-+  [[ "$(awk '{print $1}' <<<"$co")" == "3.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_ceo2() {
-+  # Fluorite CeO2 (formal: Ce +4, O -2). Run with DFT+U on Ce-f.
-+  cat > POSCAR <<'EOF'
-+CeO2 (fluorite, conventional)
-+5.4110
-+1 0 0
-+0 1 0
-+0 0 1
-+Ce O
-+4 8
-+Direct
-+0.0000 0.0000 0.0000
-+0.0000 0.5000 0.5000
-+0.5000 0.0000 0.5000
-+0.5000 0.5000 0.0000
-+0.2500 0.2500 0.2500
-+0.2500 0.2500 0.7500
-+0.2500 0.7500 0.2500
-+0.7500 0.2500 0.2500
-+0.7500 0.7500 0.7500
-+0.7500 0.7500 0.2500
-+0.7500 0.2500 0.7500
-+0.2500 0.7500 0.7500
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+2 2 2
-+0 0 0
-+EOF
-+  mk_potcar Ce O
-+  cat > INCAR <<'EOF'
-+SYSTEM = CeO2 fluorite LEOS oxide test (+U)
-+ENCUT = 450
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+LMAXMIX = 6
-+
-+ISPIN = 2
-+MAGMOM = 4*0.0 8*0.0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = 3 -1
-+LDAUU = 5.00 0.00
-+LDAUJ = 0.00 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "CeO2" || return 1
-+
-+  local ce o
-+  ce="$(stats_os_int Ce)"
-+  o="$(stats_os_int O)"
-+  echo "  Ce OS(int): $ce"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$ce")" == "4.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_ce2o3() {
-+  # Ce2O3 from a CeO2 fluorite-derived 2x1x1 primitive supercell with one oxygen vacancy.
-+  # This keeps the oxide chemistry while avoiding reliance on a hand-crafted Ce2O3 prototype.
-+  cat > POSCAR <<'EOF'
-+Ce2O3 (fluorite-derived, 2x1x1 + V_O)
-+1.0
-+0.000000 5.411000 5.411000
-+2.705500 0.000000 2.705500
-+2.705500 2.705500 0.000000
-+Ce O
-+2 3
-+Direct
-+0.000000 0.000000 0.000000
-+0.500000 0.000000 0.000000
-+0.125000 0.250000 0.250000
-+0.625000 0.250000 0.250000
-+0.875000 0.750000 0.750000
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+2 2 2
-+0 0 0
-+EOF
-+  mk_potcar Ce O
-+  cat > INCAR <<'EOF'
-+SYSTEM = Ce2O3 (V_O in fluorite) LEOS oxide test (+U)
-+ENCUT = 450
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+ISYM = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+LMAXMIX = 6
-+
-+ISPIN = 2
-+MAGMOM = 2*1.0 3*0.0
-+
-+LDAU = .TRUE.
-+LDAUTYPE = 2
-+LDAUL = 3 -1
-+LDAUU = 5.00 0.00
-+LDAUJ = 0.00 0.00
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "Ce2O3" 0.35 || return 1
-+
-+  local ce o
-+  ce="$(stats_os_int Ce)"
-+  o="$(stats_os_int O)"
-+  echo "  Ce OS(int): $ce"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$ce")" == "3.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_reo2() {
-+  # Rutile-like ReO2 (formal: Re +4, O -2).
-+  cat > POSCAR <<'EOF'
-+ReO2 (rutile-like)
-+1.0
-+4.7000 0.0000 0.0000
-+0.0000 4.7000 0.0000
-+0.0000 0.0000 3.1000
-+Re O
-+2 4
-+Direct
-+0.0 0.0 0.0
-+0.5 0.5 0.5
-+0.3050 0.3050 0.0
-+-0.3050 -0.3050 0.0
-+0.1950 0.8050 0.5
-+0.8050 0.1950 0.5
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+3 3 5
-+0 0 0
-+EOF
-+  mk_potcar Re O
-+  cat > INCAR <<'EOF'
-+SYSTEM = ReO2 LEOS oxide test (metallic stress)
-+ENCUT = 450
-+PREC = Normal
-+ISMEAR = 1
-+SIGMA = 0.20
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "ReO2" || return 1
-+
-+  local re o
-+  re="$(stats_os_int Re)"
-+  o="$(stats_os_int O)"
-+  echo "  Re OS(int): $re"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$re")" == "4.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_reo3() {
-+  # Cubic ReO3 (formal: Re +6, O -2). Note: ReO3 is metallic; this is a LEOS stress test.
-+  cat > POSCAR <<'EOF'
-+ReO3 (cubic)
-+3.7500
-+1 0 0
-+0 1 0
-+0 0 1
-+Re O
-+1 3
-+Direct
-+0.5000 0.5000 0.5000
-+0.5000 0.5000 0.0000
-+0.5000 0.0000 0.5000
-+0.0000 0.5000 0.5000
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+4 4 4
-+0 0 0
-+EOF
-+  mk_potcar Re O
-+  cat > INCAR <<'EOF'
-+SYSTEM = ReO3 LEOS oxide test (metallic stress)
-+ENCUT = 450
-+PREC = Normal
-+ISMEAR = 1
-+SIGMA = 0.20
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "ReO3" || return 1
-+
-+  local re o
-+  re="$(stats_os_int Re)"
-+  o="$(stats_os_int O)"
-+  echo "  Re OS(int): $re"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$re")" == "6.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_nareo4() {
-+  # NaReO4 (perrhenate, formal: Na +1, Re +7, O -2).
-+  # Small-cell isolated ion-pair; intended as a fast +7 regression.
-+  cat > POSCAR <<'EOF'
-+NaReO4 (isolated ion-pair, cubic)
-+10.0000
-+1 0 0
-+0 1 0
-+0 0 1
-+Na Re O
-+1 1 4
-+Direct
-+0.10 0.10 0.10
-+0.50 0.50 0.50
-+0.60 0.60 0.60
-+0.60 0.40 0.40
-+0.40 0.60 0.40
-+0.40 0.40 0.60
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma
-+0
-+Gamma
-+1 1 1
-+0 0 0
-+EOF
-+  mk_potcar Na Re O
-+  cat > INCAR <<'EOF'
-+SYSTEM = NaReO4 LEOS oxide test
-+ENCUT = 450
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+ISYM = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "NaReO4" || return 1
-+
-+  local na re o
-+  na="$(stats_os_int Na)"
-+  re="$(stats_os_int Re)"
-+  o="$(stats_os_int O)"
-+  echo "  Na OS(int): $na"
-+  echo "  Re OS(int): $re"
-+  echo "   O OS(int): $o"
-+
-+  [[ "$(awk '{print $1}' <<<"$na")" == "1.000000" ]] || return 1
-+  [[ "$(awk '{print $1}' <<<"$re")" == "7.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$o")" == "-2 -2" ]] || return 1
-+}
-+
-+case_re2() {
-+  # Re2 dimer (formal: Re 0). This is a fast LEOS sanity test for oxidation state 0.
-+  cat > POSCAR <<'EOF'
-+Re2 (dimer, cubic box)
-+12.0000
-+1 0 0
-+0 1 0
-+0 0 1
-+Re
-+2
-+Cartesian
-+6.0000 6.0000 4.8000
-+6.0000 6.0000 7.2000
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma
-+0
-+Gamma
-+1 1 1
-+0 0 0
-+EOF
-+  mk_potcar Re
-+  cat > INCAR <<'EOF'
-+SYSTEM = Re2 LEOS test
-+ENCUT = 450
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "Re2" || return 1
-+
-+  local re
-+  re="$(stats_os_int Re)"
-+  echo "  Re OS(int): $re"
-+
-+  [[ "$(awk '{print $1,$2,$3}' <<<"$re")" == "0.000000 0 0" ]] || return 1
-+}
-+
-+case_recl4() {
-+  # ReCl4 (formal: Re +4, Cl -1). Isolated neutral complex for a fast +4 regression.
-+  cat > POSCAR <<'EOF'
-+ReCl4 (isolated, cubic box)
-+12.0000
-+1 0 0
-+0 1 0
-+0 0 1
-+Re Cl
-+1 4
-+Direct
-+0.5000 0.5000 0.5000
-+0.6500 0.6500 0.6500
-+0.6500 0.3500 0.3500
-+0.3500 0.6500 0.3500
-+0.3500 0.3500 0.6500
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma
-+0
-+Gamma
-+1 1 1
-+0 0 0
-+EOF
-+  mk_potcar Re Cl
-+  cat > INCAR <<'EOF'
-+SYSTEM = ReCl4 LEOS test
-+ENCUT = 450
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+ISYM = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "ReCl4" || return 1
-+
-+  local re cl
-+  re="$(stats_os_int Re)"
-+  cl="$(stats_os_int Cl)"
-+  echo "  Re OS(int): $re"
-+  echo "  Cl OS(int): $cl"
-+
-+  [[ "$(awk '{print $1}' <<<"$re")" == "4.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$cl")" == "-1 -1" ]] || return 1
-+}
-+
-+case_ref6() {
-+  # ReF6 (formal: Re +6, F -1). Isolated neutral complex for a fast +6 regression.
-+  cat > POSCAR <<'EOF'
-+ReF6 (isolated, cubic box)
-+12.0000
-+1 0 0
-+0 1 0
-+0 0 1
-+Re F
-+1 6
-+Direct
-+0.5000 0.5000 0.5000
-+0.6500 0.5000 0.5000
-+0.3500 0.5000 0.5000
-+0.5000 0.6500 0.5000
-+0.5000 0.3500 0.5000
-+0.5000 0.5000 0.6500
-+0.5000 0.5000 0.3500
-+EOF
-+  cat > KPOINTS <<'EOF'
-+Gamma
-+0
-+Gamma
-+1 1 1
-+0 0 0
-+EOF
-+  mk_potcar Re F
-+  cat > INCAR <<'EOF'
-+SYSTEM = ReF6 LEOS test
-+ENCUT = 450
-+PREC = Normal
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+ISYM = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOS_ONSITE_CUT = 0.05
-+
-+ISPIN = 2
-+MAGMOM = 1.0 6*0.0
-+EOF
-+  run_vasp
-+
-+  check_nelect_wann "ReF6" || return 1
-+
-+  local re f
-+  re="$(stats_os_int Re)"
-+  f="$(stats_os_int F)"
-+  echo "  Re OS(int): $re"
-+  echo "   F OS(int): $f"
-+
-+  [[ "$(awk '{print $1}' <<<"$re")" == "6.000000" ]] || return 1
-+  [[ "$(awk '{print $2,$3}' <<<"$f")" == "-1 -1" ]] || return 1
-+}
-+
-+all_cases=(tio2 sno sno2 cu2o cuo mno mno2 nio feo coo lafeo3 lavo3 laco3 ceo2 ce2o3 nareo4 re2 recl4)
-+
-+cases=("$@")
-+if [[ ${#cases[@]} -eq 0 ]]; then
-+  cases=("${all_cases[@]}")
-+fi
-+
-+fail=0
-+total="${#cases[@]}"
-+done=0
-+t_all0=$SECONDS
-+
-+for c in "${cases[@]}"; do
-+  done=$((done + 1))
-+  if run_case "$c" "case_${c}"; then
-+    echo "  PASS: $c"
-+  else
-+    echo "  FAIL: $c" >&2
-+    fail=$((fail + 1))
-+  fi
-+
-+  elapsed=$((SECONDS - t_all0))
-+  if [[ $done -gt 0 ]]; then
-+    eta=$(( (total - done) * elapsed / done ))
-+  else
-+    eta=0
-+  fi
-+  echo "  progress: ${done}/${total}  elapsed: ${elapsed}s  est_remaining: ${eta}s"
-+done
-+
-+echo ""
-+echo "Done: total=$total, fail=$fail"
-+if [[ $fail -ne 0 ]]; then
-+  exit 1
-+fi
-diff -ruN a/leos_smoketest.sh b/leos_smoketest.sh
---- a/leos_smoketest.sh	1970-01-01 08:00:00
-+++ b/leos_smoketest.sh	2026-01-21 17:05:56
-@@ -0,0 +1,326 @@
-+#!/usr/bin/env bash
-+set -euo pipefail
-+
-+# Minimal LEOS regression:
-+# - ionic: NaCl (ISPIN=1 and ISPIN=2 non-magnetic)
-+# - covalent: CH4, CO2
-+# - mixed covalent/ionic: GaAs
-+
-+VASP_STD="${VASP_STD:-/Users/mastreina/Desktop/EOS4VASP/vasp.6.4.3/bin/vasp_std}"
-+POTPAW_TGZ="${POTPAW_TGZ:-/Users/mastreina/Desktop/EOS4VASP/potpaw_PBE.64.tgz}"
-+NP="${NP:-4}"
-+
-+if [[ ! -x "$VASP_STD" ]]; then
-+  echo "ERROR: VASP_STD not found/executable: $VASP_STD" >&2
-+  exit 2
-+fi
-+if [[ ! -f "$POTPAW_TGZ" ]]; then
-+  echo "ERROR: POTPAW_TGZ not found: $POTPAW_TGZ" >&2
-+  exit 2
-+fi
-+
-+check_nelect_wann() {
-+  local label="$1"
-+  local expected actual
-+
-+  expected="$(awk 'NR==6{print $1; exit}' EIGENVAL)"
-+  actual="$(awk '$1=="#" && $2=="NELECT(Wannier)" {print $4; exit}' EOSCAR)"
-+
-+  if [[ -z "${expected:-}" || -z "${actual:-}" ]]; then
-+    echo "FAILED: $label (missing NELECT/Wannier in EIGENVAL/EOSCAR)" >&2
-+    [[ -f EOSCAR ]] && cat EOSCAR >&2
-+    exit 1
-+  fi
-+
-+  if awk -v a="$actual" -v b="$expected" -v tol="0.05" 'BEGIN{d=a-b; if(d<0)d=-d; exit(d>tol)}'; then
-+    return 0
-+  fi
-+
-+  echo "FAILED: $label NELECT mismatch (NELECT=$expected, NELECT(Wannier)=$actual)" >&2
-+  cat EOSCAR >&2
-+  exit 1
-+}
-+
-+run_nacl() {
-+  local ispin="$1"
-+  local work
-+  work="$(mktemp -d "/tmp/leos-smoke-nacl-XXXXXX")"
-+  trap 'rm -rf "$work"' RETURN
-+
-+  cd "$work"
-+
-+  cat > POSCAR <<'EOF'
-+NaCl
-+5.6402
-+0.0 0.5 0.5
-+0.5 0.0 0.5
-+0.5 0.5 0.0
-+Na Cl
-+1 1
-+Direct
-+0 0 0
-+0.5 0.5 0.5
-+EOF
-+
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+4 4 4
-+0 0 0
-+EOF
-+
-+  {
-+    tar -xOf "$POTPAW_TGZ" Na/POTCAR
-+    tar -xOf "$POTPAW_TGZ" Cl/POTCAR
-+  } > POTCAR
-+
-+  {
-+    echo "SYSTEM = NaCl LEOS smoke"
-+    echo "ENCUT = 300"
-+    echo "PREC = Accurate"
-+    echo "ISMEAR = 0"
-+    echo "SIGMA = 0.05"
-+    echo "EDIFF = 1E-6"
-+    echo "IBRION = -1"
-+    echo "NSW = 0"
-+    echo "LWAVE = .FALSE."
-+    echo "LCHARG = .FALSE."
-+    echo "LEOS = .TRUE."
-+    if [[ "$ispin" -eq 2 ]]; then
-+      echo "ISPIN = 2"
-+      echo "MAGMOM = 0 0"
-+    fi
-+  } > INCAR
-+
-+  export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
-+  mpirun -np "$NP" "$VASP_STD" > vasp.out 2> vasp.err
-+
-+  check_nelect_wann "NaCl ISPIN=$ispin"
-+
-+  local na cl
-+  na="$(awk '$2=="Na"{print $6; exit}' EOSCAR)"
-+  cl="$(awk '$2=="Cl"{print $6; exit}' EOSCAR)"
-+
-+  if [[ "$na" != "1" || "$cl" != "-1" ]]; then
-+    echo "FAILED: ISPIN=$ispin (Na=$na, Cl=$cl)" >&2
-+    cat EOSCAR >&2
-+    exit 1
-+  fi
-+}
-+
-+run_ch4() {
-+  local work
-+  work="$(mktemp -d "/tmp/leos-smoke-ch4-XXXXXX")"
-+  trap 'rm -rf "$work"' RETURN
-+
-+  cd "$work"
-+
-+  cat > POSCAR <<'EOF'
-+CH4
-+12.0
-+1 0 0
-+0 1 0
-+0 0 1
-+C H
-+1 4
-+Direct
-+0.5000 0.5000 0.5000
-+0.5700 0.5700 0.5700
-+0.4300 0.4300 0.5700
-+0.4300 0.5700 0.4300
-+0.5700 0.4300 0.4300
-+EOF
-+
-+  cat > KPOINTS <<'EOF'
-+Gamma
-+0
-+Gamma
-+1 1 1
-+0 0 0
-+EOF
-+
-+  {
-+    tar -xOf "$POTPAW_TGZ" C/POTCAR
-+    tar -xOf "$POTPAW_TGZ" H/POTCAR
-+  } > POTCAR
-+
-+  cat > INCAR <<'EOF'
-+SYSTEM = CH4 LEOS smoke
-+ENCUT = 400
-+PREC = Accurate
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+
-+  export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
-+  mpirun -np "$NP" "$VASP_STD" > vasp.out 2> vasp.err
-+
-+  check_nelect_wann "CH4"
-+
-+  local c h1 h2 h3 h4
-+  c="$(awk '$2=="C"{print $6; exit}' EOSCAR)"
-+  h1="$(awk '($2=="H"){print $6; exit}' EOSCAR)"
-+  h2="$(awk '($2=="H"){c++; if(c==2){print $6; exit}}' EOSCAR)"
-+  h3="$(awk '($2=="H"){c++; if(c==3){print $6; exit}}' EOSCAR)"
-+  h4="$(awk '($2=="H"){c++; if(c==4){print $6; exit}}' EOSCAR)"
-+
-+  if [[ "$c" != "-4" || "$h1" != "1" || "$h2" != "1" || "$h3" != "1" || "$h4" != "1" ]]; then
-+    echo "FAILED: CH4 (C=$c H=$h1,$h2,$h3,$h4)" >&2
-+    cat EOSCAR >&2
-+    exit 1
-+  fi
-+}
-+
-+run_co2() {
-+  local work
-+  work="$(mktemp -d "/tmp/leos-smoke-co2-XXXXXX")"
-+  trap 'rm -rf "$work"' RETURN
-+
-+  cd "$work"
-+
-+  cat > POSCAR <<'EOF'
-+CO2
-+12.0
-+1 0 0
-+0 1 0
-+0 0 1
-+C O
-+1 2
-+Direct
-+0.5000 0.5000 0.5000
-+0.5000 0.5000 0.3900
-+0.5000 0.5000 0.6100
-+EOF
-+
-+  cat > KPOINTS <<'EOF'
-+Gamma
-+0
-+Gamma
-+1 1 1
-+0 0 0
-+EOF
-+
-+  {
-+    tar -xOf "$POTPAW_TGZ" C/POTCAR
-+    tar -xOf "$POTPAW_TGZ" O/POTCAR
-+  } > POTCAR
-+
-+  cat > INCAR <<'EOF'
-+SYSTEM = CO2 LEOS smoke
-+ENCUT = 400
-+PREC = Accurate
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+
-+  export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
-+  mpirun -np "$NP" "$VASP_STD" > vasp.out 2> vasp.err
-+
-+  check_nelect_wann "CO2"
-+
-+  local c o1 o2
-+  c="$(awk '$2=="C"{print $6; exit}' EOSCAR)"
-+  o1="$(awk '($2=="O"){print $6; exit}' EOSCAR)"
-+  o2="$(awk '($2=="O"){c++; if(c==2){print $6; exit}}' EOSCAR)"
-+
-+  if [[ "$c" != "4" || "$o1" != "-2" || "$o2" != "-2" ]]; then
-+    echo "FAILED: CO2 (C=$c O=$o1,$o2)" >&2
-+    cat EOSCAR >&2
-+    exit 1
-+  fi
-+}
-+
-+run_gaas() {
-+  local work
-+  work="$(mktemp -d "/tmp/leos-smoke-gaas-XXXXXX")"
-+  trap 'rm -rf "$work"' RETURN
-+
-+  cd "$work"
-+
-+  cat > POSCAR <<'EOF'
-+GaAs
-+5.6533
-+0.0 0.5 0.5
-+0.5 0.0 0.5
-+0.5 0.5 0.0
-+Ga As
-+1 1
-+Direct
-+0.0000 0.0000 0.0000
-+0.2500 0.2500 0.2500
-+EOF
-+
-+  cat > KPOINTS <<'EOF'
-+Gamma mesh
-+0
-+Gamma
-+4 4 4
-+0 0 0
-+EOF
-+
-+  {
-+    tar -xOf "$POTPAW_TGZ" Ga/POTCAR
-+    tar -xOf "$POTPAW_TGZ" As/POTCAR
-+  } > POTCAR
-+
-+  cat > INCAR <<'EOF'
-+SYSTEM = GaAs LEOS smoke
-+ENCUT = 350
-+PREC = Accurate
-+ISMEAR = 0
-+SIGMA = 0.05
-+EDIFF = 1E-6
-+IBRION = -1
-+NSW = 0
-+LWAVE = .FALSE.
-+LCHARG = .FALSE.
-+LEOS = .TRUE.
-+EOF
-+
-+  export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
-+  mpirun -np "$NP" "$VASP_STD" > vasp.out 2> vasp.err
-+
-+  check_nelect_wann "GaAs"
-+
-+  local ga as
-+  ga="$(awk '$2=="Ga"{print $6; exit}' EOSCAR)"
-+  as="$(awk '$2=="As"{print $6; exit}' EOSCAR)"
-+
-+  if [[ "$ga" != "3" || "$as" != "-3" ]]; then
-+    echo "FAILED: GaAs (Ga=$ga As=$as)" >&2
-+    cat EOSCAR >&2
-+    exit 1
-+  fi
-+}
-+
-+cases=("$@")
-+if [[ ${#cases[@]} -eq 0 ]]; then
-+  cases=(nacl1 nacl2 ch4 co2 gaas)
-+fi
-+
-+for c in "${cases[@]}"; do
-+  case "$c" in
-+    nacl) run_nacl 1; run_nacl 2 ;;
-+    nacl1) run_nacl 1 ;;
-+    nacl2) run_nacl 2 ;;
-+    ch4) run_ch4 ;;
-+    co2) run_co2 ;;
-+    gaas) run_gaas ;;
-+    *) echo "ERROR: unknown case: $c" >&2; exit 2 ;;
-+  esac
-+done
-+
-+echo "OK: LEOS smoke test passed (${cases[*]})"
-diff -ruN a/vasp.6.4.3/makefile.include b/vasp.6.4.3/makefile.include
---- a/vasp.6.4.3/makefile.include	1970-01-01 08:00:00
-+++ b/vasp.6.4.3/makefile.include	2026-01-21 00:05:40
-@@ -0,0 +1,69 @@
-+# Default precompiler options
-+CPP_OPTIONS = -DHOST=\"LinuxGNU\" \
-+              -DMPI -DMPI_BLOCK=8000 -Duse_collective \
-+              -DscaLAPACK \
-+              -DCACHE_SIZE=4000 \
-+              -Davoidalloc \
-+              -Dvasp6 \
-+              -Duse_bse_te \
-+              -Dtbdyn \
-+              -Dfock_dblbuf \
-+              -D_OPENMP \
-+              -DVASP2WANNIER90
-+
-+CPP         = gcc -E -C -w $*$(FUFFIX) >$*$(SUFFIX) $(CPP_OPTIONS)
-+
-+FC          = mpif90 -fopenmp
-+FCL         = mpif90 -fopenmp
-+
-+FREE        = -ffree-form -ffree-line-length-none
-+
-+FFLAGS      = -w -ffpe-summary=none
-+
-+OFLAG       = -O2
-+OFLAG_IN    = $(OFLAG)
-+DEBUG       = -O0
-+
-+OBJECTS     = fftmpiw.o fftmpi_map.o fftw3d.o fft3dlib.o
-+OBJECTS_O1 += fftw3d.o fftmpi.o fftmpiw.o
-+OBJECTS_O2 += fft3dlib.o
-+
-+# For what used to be vasp.5.lib
-+CPP_LIB     = $(CPP)
-+FC_LIB      = $(FC)
-+CC_LIB      = gcc
-+CFLAGS_LIB  = -O
-+FFLAGS_LIB  = -O1
-+FREE_LIB    = $(FREE)
-+
-+OBJECTS_LIB = linpack_double.o
-+
-+# For the parser library
-+CXX_PARS    = g++
-+LLIBS       = -lstdc++
-+
-+##
-+## Customize as of this point!
-+##
-+
-+VASP_TARGET_CPU ?= -march=native
-+FFLAGS     += $(VASP_TARGET_CPU)
-+
-+# For gcc-10 and higher (comment out for older versions)
-+FFLAGS     += -fallow-argument-mismatch
-+
-+# BLAS/LAPACK/scaLAPACK (system)
-+BLAS        = -lopenblas
-+LAPACK      = -llapack
-+SCALAPACK   = -lscalapack-openmpi
-+
-+LLIBS      += $(SCALAPACK) $(LAPACK) $(BLAS)
-+
-+# FFTW3 (system)
-+LLIBS      += -lfftw3 -lfftw3_omp
-+INCS       += -I/usr/include
-+
-+# Wannier90 library (required for VASP2WANNIER90)
-+WANNIER90_ROOT ?= /usr/local/wannier90
-+LLIBS          += -L$(WANNIER90_ROOT)/lib -lwannier
-+INCS           += -I$(WANNIER90_ROOT)/include
-diff -ruN a/vasp.6.4.3/src/.objects b/vasp.6.4.3/src/.objects
---- a/vasp.6.4.3/src/.objects	2024-03-19 17:18:07
-+++ b/vasp.6.4.3/src/.objects	2026-01-21 00:03:17
-@@ -220,6 +220,7 @@
+# LEOS (Lattice Effective Oxidation States) patch for VASP 6.4.3
+#
+# Features:
+#   - Core LEOS algorithm: Wannier-centre counting + IUPAC(2014) rule
+#   - Hungarian (Jonker-Volgenant) global optimal assignment (EOS_USE_HUNGARIAN)
+#   - dOS covalency descriptor output
+#   - Trajectory mode: per-step analysis (EOS_EVERY_N)
+#   - Improved auto-window detection for Wannier90 (mlwf.F)
+#
+# Apply:  cd vasp.6.4.3 && git apply ../patches/leos.patch
+# Files:  .objects, eos.F (new), main.F, mlwf.F
+#
+diff --git a/vasp.6.4.3/src/.objects b/vasp.6.4.3/src/.objects
+index 18f5767..e8633a9 100644
+--- a/vasp.6.4.3/src/.objects
++++ b/vasp.6.4.3/src/.objects
+@@ -220,6 +220,7 @@ SOURCE=\
  	minimax.o \
  	umco.o \
  	mlwf.o \
@@ -1804,10 +22,12 @@ diff -ruN a/vasp.6.4.3/src/.objects b/vasp.6.4.3/src/.objects
  	ratpol.o \
  	pade_fit.o \
  	screened_2e.o \
-diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
---- a/vasp.6.4.3/src/eos.F	1970-01-01 08:00:00
-+++ b/vasp.6.4.3/src/eos.F	2026-01-21 17:50:11
-@@ -0,0 +1,454 @@
+diff --git a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
+new file mode 100644
+index 0000000..82de0f8
+--- /dev/null
++++ b/vasp.6.4.3/src/eos.F
+@@ -0,0 +1,787 @@
 +#include "symbol.inc"
 +!> @brief Effective oxidation states from Wannier centres
 +MODULE eos
@@ -1824,13 +44,23 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +  IMPLICIT NONE
 +
 +  PRIVATE
-+  PUBLIC :: LEOS, EOS_READER, EOS_PREPARE_MLWF, EOS_ANALYZE
++  PUBLIC :: LEOS, EOS_READER, EOS_PREPARE_MLWF, EOS_ANALYZE, EOS_DO_THIS_STEP
 +
 +  LOGICAL, SAVE :: LEOS = .FALSE.
 +  REAL(q), SAVE :: EOS_ENEG_TOL = 0.05_q
 +  REAL(q), SAVE :: EOS_ONSITE_CUT = 0.35_q
++  REAL(q), PARAMETER :: EOS_ONSITE_RATIO = 0.5_q
++  REAL(q), PARAMETER :: EOS_ONSITE_SPREAD_MAX = 1.5_q
 +  REAL(q), SAVE :: EOS_O_MAX = 8.0_q
 +  REAL(q), PARAMETER :: EOS_OCC_TOL = 1.E-8_q
++  REAL(q), SAVE :: EOS_NELECT_WARN  = 1.E-2_q
++  REAL(q), SAVE :: EOS_NELECT_ABORT = 0.35_q
++  LOGICAL, SAVE :: EOS_USE_HUNGARIAN = .FALSE.
++  REAL(q), SAVE :: EOS_HUNG_ALPHA = 1.0_q    ! distance weight
++  REAL(q), SAVE :: EOS_HUNG_BETA  = 0.5_q    ! electronegativity weight
++  REAL(q), SAVE :: EOS_HUNG_GAMMA = 5.0_q    ! on-site bonus weight
++  INTEGER, SAVE :: EOS_EVERY_N = 0
++  INTEGER, SAVE :: EOS_STEP_COUNT = 0
 +
 +  ! Pauling electronegativity (1..102); 0 means "no data".
 +  REAL(q), PARAMETER :: PAULING_ENEG(102) = (/ &
@@ -1867,6 +97,11 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +
 +    LOGICAL :: LOPEN
 +    INTEGER :: IERR
++    INTEGER :: NFOUND
++    LOGICAL :: USER_SET_LWANNIER90
++    LOGICAL :: USER_SET_LWANNIER90_RUN
++    LOGICAL :: USER_SET_LSCDM
++    LOGICAL :: USER_SET_AUTO_WINDOW
 +
 +    CALL OPEN_INCAR_IF_FOUND(IO%IU5, LOPEN)
 +
@@ -1876,6 +111,33 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_ENEG_TOL', EOS_ENEG_TOL, IERR, WRITEXMLINCAR)
 +    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_ONSITE_CUT', EOS_ONSITE_CUT, IERR, WRITEXMLINCAR)
 +    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_O_MAX', EOS_O_MAX, IERR, WRITEXMLINCAR)
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_NELECT_WARN', EOS_NELECT_WARN, IERR, WRITEXMLINCAR)
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_NELECT_ABORT', EOS_NELECT_ABORT, IERR, WRITEXMLINCAR)
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_USE_HUNGARIAN', EOS_USE_HUNGARIAN, IERR, WRITEXMLINCAR)
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_HUNG_ALPHA', EOS_HUNG_ALPHA, IERR, WRITEXMLINCAR)
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_HUNG_BETA', EOS_HUNG_BETA, IERR, WRITEXMLINCAR)
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_HUNG_GAMMA', EOS_HUNG_GAMMA, IERR, WRITEXMLINCAR)
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_EVERY_N', EOS_EVERY_N, IERR, WRITEXMLINCAR)
++    EOS_EVERY_N = MAX(0, EOS_EVERY_N)
++
++    EOS_NELECT_WARN = MAX(0._q, EOS_NELECT_WARN)
++    EOS_NELECT_ABORT = MAX(EOS_NELECT_WARN, EOS_NELECT_ABORT)
++
++    NFOUND = 0
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'LWANNIER90', LWANNIER90, IERR, WRITEXMLINCAR, FOUNDNUMBER=NFOUND)
++    USER_SET_LWANNIER90 = (NFOUND > 0)
++
++    NFOUND = 0
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'LWANNIER90_RUN', LWANNIER90_RUN, IERR, WRITEXMLINCAR, FOUNDNUMBER=NFOUND)
++    USER_SET_LWANNIER90_RUN = (NFOUND > 0)
++
++    NFOUND = 0
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'LSCDM', LSCDM, IERR, WRITEXMLINCAR, FOUNDNUMBER=NFOUND)
++    USER_SET_LSCDM = (NFOUND > 0)
++
++    NFOUND = 0
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'LWANNIER90_AUTO_WINDOW', LWANNIER90_AUTO_WINDOW, IERR, WRITEXMLINCAR, FOUNDNUMBER=NFOUND)
++    USER_SET_AUTO_WINDOW = (NFOUND > 0)
 +
 +    CALL CLOSE_INCAR_IF_FOUND(IO%IU5)
 +
@@ -1885,11 +147,11 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +    CALL vtutor%error('LEOS requires VASP2WANNIER90 (link against Wannier90).')
 +#endif
 +
-+    ! Force wannier90 run to obtain wannier centres.
-+    LWANNIER90 = .TRUE.
-+    LWANNIER90_RUN = .TRUE.
-+    LSCDM = .TRUE.
-+    LWANNIER90_AUTO_WINDOW = .TRUE.
++    ! For LEOS we need Wannier centres, but do not overwrite explicit INCAR choices.
++    IF (.NOT. USER_SET_LWANNIER90) LWANNIER90 = .TRUE.
++    IF (.NOT. USER_SET_LWANNIER90_RUN) LWANNIER90_RUN = .TRUE.
++    IF (.NOT. USER_SET_LSCDM) LSCDM = .TRUE.
++    IF (.NOT. USER_SET_AUTO_WINDOW) LWANNIER90_AUTO_WINDOW = .TRUE.
 +  END SUBROUTINE EOS_READER
 +
 +  SUBROUTINE EOS_PREPARE_MLWF(W, INFO, IO)
@@ -1901,12 +163,6 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +    INTEGER :: NLOCAL
 +
 +    IF (.NOT. LEOS) RETURN
-+
-+    ! Safety: ensure we get MLWF centres.
-+    LWANNIER90 = .TRUE.
-+    LWANNIER90_RUN = .TRUE.
-+    LSCDM = .TRUE.
-+    LWANNIER90_AUTO_WINDOW = .TRUE.
 +
 +    NREQ = 0
 +    DO ISP = 1, W%WDES%ISPIN
@@ -1952,9 +208,10 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +
 +    INTEGER :: NIONS, IW, I, I1, I2, ISP, NT, NT1, NT2
 +    INTEGER :: IB, IBP, NKI, NK, NB_USED
-+    INTEGER :: IP, IPP, IK
++    INTEGER :: IP, IK
 +    INTEGER :: IU
 +    INTEGER :: Z1, Z2
++    REAL(q) :: DOS_ABS, DOS_MAX, DOS_SUM, DOS_SQR
 +    REAL(q) :: CENTRE_CART(3), CENTRE_DIR(3)
 +    REAL(q) :: V(3,1)
 +    REAL(q) :: DELTA_DIR(3)
@@ -1964,6 +221,7 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +    INTEGER :: TARGET_SUM
 +    REAL(q) :: WTK_FULL
 +    REAL(q) :: NELECT_WANN
++    REAL(q) :: NELECT_ERR
 +    REAL(q) :: E_WF
 +    REAL(q) :: OCC_WF
 +    COMPLEX(q) :: CTMP
@@ -2014,12 +272,10 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +        NK = MLWF%NEQUIV(NKI)
 +
 +        IP = 0
-+        IPP = 0
 +        DO IB = 1, MLWF%NB_TOT
 +          IF (MLWF%EXCLUDE_BAND(IB)) CYCLE
 +          IP = IP + 1
 +          IF (.NOT. MLWF%lwindow(IP, NKI, ISP)) CYCLE
-+          IPP = IPP + 1
 +
 +          OCC_WF = W%FERTOT(IB, NK, ISP)
 +          IF (OCC_WF <= EOS_OCC_TOL) CYCLE
@@ -2027,7 +283,7 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +          DO IW = 1, MLWF%NUM_WANN
 +            CTMP = (0._q, 0._q)
 +            DO IK = 1, MLWF%NUM_WANN
-+              CTMP = CTMP + MLWF%U_matrix_opt(IPP, IK, NKI, ISP) * MLWF%U_matrix(IK, IW, NKI, ISP)
++              CTMP = CTMP + MLWF%U_matrix_opt(IP, IK, NKI, ISP) * MLWF%U_matrix(IK, IW, NKI, ISP)
 +            ENDDO
 +            WF_OCC(IW, ISP) = WF_OCC(IW, ISP) + WTK_FULL * OCC_WF * REAL(CTMP * CONJG(CTMP), q)
 +          ENDDO
@@ -2036,10 +292,31 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +    ENDDO
 +
 +    NELECT_WANN = SUM(WF_OCC) * W%WDES%RSPIN
-+    IF (ABS(NELECT_WANN - INFO%NELECT) > 1.E-2_q) THEN
-+      IF (IO%IU6 >= 0) WRITE(IO%IU6,'(A,F12.6,A,F12.6)') 'LEOS: warning: NELECT=', INFO%NELECT, ' but NELECT(Wannier)=', NELECT_WANN
++    NELECT_ERR = ABS(NELECT_WANN - INFO%NELECT)
++    IF (NELECT_ERR > EOS_NELECT_ABORT) THEN
++      IF (IO%IU6 >= 0) THEN
++        WRITE(IO%IU6,'(/,A)') 'LEOS: NELECT mismatch too large; skip oxidation-state analysis.'
++        WRITE(IO%IU6,'(A,F12.6)') '  NELECT(input)   = ', INFO%NELECT
++        WRITE(IO%IU6,'(A,F12.6)') '  NELECT(Wannier) = ', NELECT_WANN
++        WRITE(IO%IU6,'(A,ES12.4)') '  |dNe|           = ', NELECT_ERR
++        WRITE(IO%IU6,'(A,ES12.4)') '  EOS_NELECT_ABORT = ', EOS_NELECT_ABORT
++      ENDIF
++      DEALLOCATE(NE_ASSIGNED, OS_RAW, OS_INT, WF_OCC, WF_I1, WF_I2, WF_E1, WF_E2)
++      RETURN
++    ELSEIF (NELECT_ERR > EOS_NELECT_WARN) THEN
++      IF (IO%IU6 >= 0) THEN
++        WRITE(IO%IU6,'(/,A)') 'LEOS: warning: NELECT mismatch may reduce reliability.'
++        WRITE(IO%IU6,'(A,F12.6)') '  NELECT(input)   = ', INFO%NELECT
++        WRITE(IO%IU6,'(A,F12.6)') '  NELECT(Wannier) = ', NELECT_WANN
++        WRITE(IO%IU6,'(A,ES12.4)') '  |dNe|           = ', NELECT_ERR
++        WRITE(IO%IU6,'(A,ES12.4)') '  EOS_NELECT_WARN  = ', EOS_NELECT_WARN
++      ENDIF
 +    ENDIF
 +
++    IF (EOS_USE_HUNGARIAN) THEN
++      CALL EOS_ASSIGN_HUNGARIAN(MLWF, W, T_INFO, LATT_CUR, P, DYN, &
++     &     NIONS, WF_OCC, WF_I1, WF_I2, WF_E1, WF_E2, NE_ASSIGNED)
++    ELSE
 +    DO ISP = 1, MLWF%ISPIN
 +    DO IW = 1, MLWF%NUM_WANN
 +      E_WF = WF_OCC(IW, ISP) * W%WDES%RSPIN
@@ -2078,9 +355,9 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +        CYCLE
 +      ENDIF
 +
-+      ! If a WF centre is very close to one atom, treat it as an on-site
-+      ! (non-bonding) electron pair.
-+      IF (D1 < EOS_ONSITE_CUT) THEN
++      ! Use a robust on-site criterion: geometric dominance or strong localisation.
++      IF (D1 < EOS_ONSITE_CUT .AND. (D2 <= 1.E-12_q .OR. D1 <= EOS_ONSITE_RATIO * D2 .OR. &
++     &    MLWF%wann_spreads(IW, ISP) <= EOS_ONSITE_SPREAD_MAX)) THEN
 +        WF_I1(IW, ISP) = I1
 +        WF_I2(IW, ISP) = I1
 +        WF_E1(IW, ISP) = E_WF
@@ -2115,6 +392,7 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +      ENDIF
 +    ENDDO
 +    ENDDO
++    ENDIF
 +
 +    ! Optional: prevent oxygen from exceeding a closed-shell population (default 8e).
 +    ! This helps recover formal oxidation states for typical oxides where O is -2,
@@ -2186,42 +464,73 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +
 +    CALL EOS_INTEGERIZE(OS_RAW, TARGET_SUM, OS_INT)
 +
++    ! Compute dOS statistics once for both OUTCAR and EOSCAR output.
++    DOS_MAX = 0._q; DOS_SUM = 0._q; DOS_SQR = 0._q
++    DO I = 1, NIONS
++      DOS_ABS = ABS(OS_RAW(I) - REAL(OS_INT(I), q))
++      IF (DOS_ABS > DOS_MAX) DOS_MAX = DOS_ABS
++      DOS_SUM = DOS_SUM + DOS_ABS
++      DOS_SQR = DOS_SQR + DOS_ABS**2
++    ENDDO
++
 +    IF (IO%IU6 >= 0) THEN
 +      WRITE(IO%IU6,'(/,A)') 'Effective oxidation states (LEOS): Wannier-centre counting + IUPAC(2014) rule'
 +      WRITE(IO%IU6,'(A,F8.3)') '  EOS_ENEG_TOL = ', EOS_ENEG_TOL
 +      WRITE(IO%IU6,'(A,F8.3)') '  EOS_ONSITE_CUT = ', EOS_ONSITE_CUT
 +      WRITE(IO%IU6,'(A,F8.3)') '  EOS_O_MAX = ', EOS_O_MAX
 +      WRITE(IO%IU6,'(A,F12.6)') '  NELECT(Wannier) = ', NELECT_WANN
-+      WRITE(IO%IU6,'(A)') '  ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)'
-+      WRITE(IO%IU6,'(A)') '  ---------------------------------------------------'
++      WRITE(IO%IU6,'(A,ES12.4)') '  |dNe| = ', NELECT_ERR
++      WRITE(IO%IU6,'(A,ES12.4)') '  EOS_NELECT_WARN  = ', EOS_NELECT_WARN
++      WRITE(IO%IU6,'(A,ES12.4)') '  EOS_NELECT_ABORT = ', EOS_NELECT_ABORT
++      WRITE(IO%IU6,'(A)') '  ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)      dOS'
++      WRITE(IO%IU6,'(A)') '  ---------------------------------------------------------------'
 +      DO I = 1, NIONS
 +        NT = T_INFO%ITYP(I)
-+        WRITE(IO%IU6,'(I5,2X,A2,1X,F6.2,2X,F12.6,2X,F8.3,2X,I6)') &
-+          I, P(NT)%ELEMENT, P(NT)%ZVALF, NE_ASSIGNED(I), OS_RAW(I), OS_INT(I)
++        WRITE(IO%IU6,'(I5,2X,A2,1X,F6.2,2X,F12.6,2X,F8.3,2X,I6,2X,F8.3)') &
++          I, P(NT)%ELEMENT, P(NT)%ZVALF, NE_ASSIGNED(I), OS_RAW(I), OS_INT(I), &
++          OS_RAW(I) - REAL(OS_INT(I), q)
 +      ENDDO
 +      WRITE(IO%IU6,'(A,I0)') '  Sum OS(int) = ', SUM(OS_INT)
 +      WRITE(IO%IU6,'(A,I0)') '  Target sum  = ', TARGET_SUM
++      WRITE(IO%IU6,'(A,F8.3)') '  |dOS|_max  = ', DOS_MAX
++      WRITE(IO%IU6,'(A,F8.3)') '  |dOS|_mean = ', DOS_SUM / REAL(NIONS, q)
++      WRITE(IO%IU6,'(A,F8.3)') '  |dOS|_rms  = ', SQRT(DOS_SQR / REAL(NIONS, q))
 +    ENDIF
 +
 +    IF (IO%IU6 >= 0) THEN
-+      OPEN(NEWUNIT=IU, FILE='EOSCAR', STATUS='REPLACE', ACTION='WRITE')
++      EOS_STEP_COUNT = EOS_STEP_COUNT + 1
++      IF (EOS_STEP_COUNT == 1) THEN
++        OPEN(NEWUNIT=IU, FILE='EOSCAR', STATUS='REPLACE', ACTION='WRITE')
++      ELSE
++        OPEN(NEWUNIT=IU, FILE='EOSCAR', STATUS='OLD', POSITION='APPEND', ACTION='WRITE')
++      ENDIF
++      IF (EOS_STEP_COUNT > 1 .OR. EOS_EVERY_N > 0) THEN
++        WRITE(IU,'(A,I0)') '# STEP = ', EOS_STEP_COUNT
++      ENDIF
 +      WRITE(IU,'(A)') '# LEOS: Wannier-centre counting + IUPAC(2014) rule'
 +      WRITE(IU,'(A,F10.5)') '# EOS_ENEG_TOL = ', EOS_ENEG_TOL
 +      WRITE(IU,'(A,F10.5)') '# EOS_ONSITE_CUT = ', EOS_ONSITE_CUT
 +      WRITE(IU,'(A,F10.5)') '# EOS_O_MAX = ', EOS_O_MAX
 +      WRITE(IU,'(A,F14.6)') '# NELECT(Wannier) = ', NELECT_WANN
-+      WRITE(IU,'(A)') '# ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)'
++      WRITE(IU,'(A,ES12.4)') '# |dNe| = ', NELECT_ERR
++      WRITE(IU,'(A,ES12.4)') '# EOS_NELECT_WARN = ', EOS_NELECT_WARN
++      WRITE(IU,'(A,ES12.4)') '# EOS_NELECT_ABORT = ', EOS_NELECT_ABORT
++      WRITE(IU,'(A)') '# ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)      dOS'
 +      DO I = 1, NIONS
 +        NT = T_INFO%ITYP(I)
-+        WRITE(IU,'(I5,2X,A2,1X,F6.2,2X,F12.6,2X,F8.3,2X,I6)') &
-+          I, P(NT)%ELEMENT, P(NT)%ZVALF, NE_ASSIGNED(I), OS_RAW(I), OS_INT(I)
++        WRITE(IU,'(I5,2X,A2,1X,F6.2,2X,F12.6,2X,F8.3,2X,I6,2X,F8.3)') &
++          I, P(NT)%ELEMENT, P(NT)%ZVALF, NE_ASSIGNED(I), OS_RAW(I), OS_INT(I), &
++          OS_RAW(I) - REAL(OS_INT(I), q)
 +      ENDDO
 +      WRITE(IU,'(A,I0)') '# Sum OS(int) = ', SUM(OS_INT)
 +      WRITE(IU,'(A,I0)') '# Target sum  = ', TARGET_SUM
++      WRITE(IU,'(A,F8.3)') '# |dOS|_max  = ', DOS_MAX
++      WRITE(IU,'(A,F8.3)') '# |dOS|_mean = ', DOS_SUM / REAL(NIONS, q)
++      WRITE(IU,'(A,F8.3)') '# |dOS|_rms  = ', SQRT(DOS_SQR / REAL(NIONS, q))
 +      CLOSE(IU)
 +    ENDIF
 +
-+    DEALLOCATE(NE_ASSIGNED, OS_RAW, OS_INT, WF_OCC)
++    DEALLOCATE(NE_ASSIGNED, OS_RAW, OS_INT, WF_OCC, WF_I1, WF_I2, WF_E1, WF_E2)
 +  END SUBROUTINE EOS_ANALYZE
 +
 +  SUBROUTINE EOS_INTEGERIZE(OS_RAW, TARGET_SUM, OS_INT)
@@ -2261,10 +570,255 @@ diff -ruN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
 +    ENDDO
 +  END SUBROUTINE EOS_INTEGERIZE
 +
++  SUBROUTINE HUNGARIAN(N, COST, ASSIGNMENT)
++    ! Jonker-Volgenant shortest augmenting path algorithm, O(N^3).
++    ! Solves the linear assignment problem: minimise sum_i COST(i, ASSIGNMENT(i)).
++    INTEGER, INTENT(IN)  :: N
++    REAL(q), INTENT(IN)  :: COST(N, N)
++    INTEGER, INTENT(OUT) :: ASSIGNMENT(N)
++
++    REAL(q) :: U(N), V(N)        ! dual variables (row / col potentials)
++    INTEGER :: COL_MATCH(N)      ! col -> row matching (-1 = free)
++    REAL(q) :: DIST(N)           ! shortest-path distances to columns
++    INTEGER :: PRED(N)           ! predecessor column on the path
++    LOGICAL :: USED(N)           ! column scanned flag
++    INTEGER :: I, J, J0, J1, JMIN, CUR
++    REAL(q) :: H, DMIN
++
++    U = 0._q; V = 0._q
++    COL_MATCH = -1
++    ASSIGNMENT = 0
++
++    DO I = 1, N
++      ! Start augmenting path from unmatched row I.
++      DIST = HUGE(1._q)
++      PRED = 0
++      USED = .FALSE.
++      ! Initialise: relax from row I to all columns.
++      DO J = 1, N
++        DIST(J) = COST(I, J) - U(I) - V(J)
++        PRED(J) = 0   ! predecessor = virtual column 0 (row I directly)
++      ENDDO
++
++      JMIN = 0
++      J0 = 0  ! last absorbed column (0 = start)
++      DO
++        ! Find unscanned column with smallest distance.
++        DMIN = HUGE(1._q)
++        DO J = 1, N
++          IF (.NOT. USED(J) .AND. DIST(J) < DMIN) THEN
++            DMIN = DIST(J)
++            JMIN = J
++          ENDIF
++        ENDDO
++        USED(JMIN) = .TRUE.
++
++        CUR = COL_MATCH(JMIN)
++        IF (CUR == -1) EXIT   ! JMIN is free — augmenting path found
++
++        ! Relax from CUR (the row matched to JMIN) to all unused columns.
++        DO J = 1, N
++          IF (USED(J)) CYCLE
++          H = COST(CUR, J) - U(CUR) - V(J) + DMIN
++          IF (H < DIST(J)) THEN
++            DIST(J) = H
++            PRED(J) = JMIN
++          ENDIF
++        ENDDO
++
++        ! Update dual variable for CUR.
++        U(CUR) = U(CUR) + DIST(JMIN) - DMIN
++      ENDDO
++
++      ! Update dual variables.
++      U(I) = U(I) + DMIN
++      DO J = 1, N
++        IF (USED(J)) THEN
++          IF (COL_MATCH(J) /= -1 .AND. COL_MATCH(J) /= I) &
++     &      U(COL_MATCH(J)) = U(COL_MATCH(J)) + DIST(J) - DMIN
++          V(J) = V(J) - DIST(J) + DMIN
++        ENDIF
++      ENDDO
++
++      ! Trace augmenting path and update matching.
++      J1 = JMIN
++      DO WHILE (J1 /= 0)
++        J0 = PRED(J1)
++        IF (J0 > 0) THEN
++          COL_MATCH(J1) = COL_MATCH(J0)
++        ELSE
++          COL_MATCH(J1) = I
++        ENDIF
++        J1 = J0
++      ENDDO
++    ENDDO
++
++    ! Convert col->row to row->col.
++    DO J = 1, N
++      IF (COL_MATCH(J) >= 1 .AND. COL_MATCH(J) <= N) THEN
++        ASSIGNMENT(COL_MATCH(J)) = J
++      ENDIF
++    ENDDO
++  END SUBROUTINE HUNGARIAN
++
++  SUBROUTINE EOS_ASSIGN_HUNGARIAN(MLWF, W, T_INFO, LATT_CUR, P, DYN, &
++ &   NIONS, WF_OCC, WF_I1, WF_I2, WF_E1, WF_E2, NE_ASSIGNED)
++    TYPE(MLWF_type),   INTENT(IN)    :: MLWF
++    TYPE(wavespin),    INTENT(IN)    :: W
++    TYPE(type_info),   INTENT(IN)    :: T_INFO
++    TYPE(latt),        INTENT(IN)    :: LATT_CUR
++    TYPE(potcar),      INTENT(IN)    :: P(T_INFO%NTYP)
++    TYPE(dynamics),    INTENT(IN)    :: DYN
++    INTEGER,           INTENT(IN)    :: NIONS
++    REAL(q),           INTENT(IN)    :: WF_OCC(MLWF%NUM_WANN, MLWF%ISPIN)
++    INTEGER,           INTENT(INOUT) :: WF_I1(MLWF%NUM_WANN, MLWF%ISPIN)
++    INTEGER,           INTENT(INOUT) :: WF_I2(MLWF%NUM_WANN, MLWF%ISPIN)
++    REAL(q),           INTENT(INOUT) :: WF_E1(MLWF%NUM_WANN, MLWF%ISPIN)
++    REAL(q),           INTENT(INOUT) :: WF_E2(MLWF%NUM_WANN, MLWF%ISPIN)
++    REAL(q),           INTENT(INOUT) :: NE_ASSIGNED(NIONS)
++
++    INTEGER :: ISP, IW, I, J, NT, NSLOTS, NROWS, NDIM
++    INTEGER :: SLOT_OFF, S, ASGN_SLOT
++    REAL(q) :: CENTRE_DIR(3), V(3,1), DELTA_DIR(3), DIST_SQ
++    REAL(q) :: D2, E_WF
++    INTEGER :: I1, I2
++    REAL(q) :: CHI_MAX
++    INTEGER, ALLOCATABLE :: ATOM_CAP(:), SLOT_ATOM(:), MATCH(:)
++    REAL(q), ALLOCATABLE :: CMAT(:,:), DIST_ALL(:,:)
++
++    ! Find maximum electronegativity for normalisation.
++    CHI_MAX = 0._q
++    DO I = 1, NIONS
++      NT = T_INFO%ITYP(I)
++      CHI_MAX = MAX(CHI_MAX, ENEG_PAULING(NINT(P(NT)%ZCORE + P(NT)%ZVALF)))
++    ENDDO
++    IF (CHI_MAX < 1.E-12_q) CHI_MAX = 1._q
++
++    ! Compute per-atom capacity.
++    ALLOCATE(ATOM_CAP(NIONS))
++    NSLOTS = 0
++    DO I = 1, NIONS
++      NT = T_INFO%ITYP(I)
++      ATOM_CAP(I) = CEILING(P(NT)%ZVALF / W%WDES%RSPIN)
++      NSLOTS = NSLOTS + ATOM_CAP(I)
++    ENDDO
++
++    DO ISP = 1, MLWF%ISPIN
++      NROWS = MLWF%NUM_WANN
++      NDIM = MAX(NROWS, NSLOTS)
++
++      ! Build slot-to-atom mapping.
++      ALLOCATE(SLOT_ATOM(NDIM))
++      SLOT_ATOM = 0
++      SLOT_OFF = 0
++      DO I = 1, NIONS
++        DO S = 1, ATOM_CAP(I)
++          SLOT_OFF = SLOT_OFF + 1
++          IF (SLOT_OFF <= NDIM) SLOT_ATOM(SLOT_OFF) = I
++        ENDDO
++      ENDDO
++
++      ! Pre-compute distances (WF -> atom, squared, minimum image).
++      ALLOCATE(DIST_ALL(NROWS, NIONS))
++      DO IW = 1, NROWS
++        V(:,1) = MLWF%wann_centres(:, IW, ISP)
++        CALL KARDIR(1, V, LATT_CUR%B)
++        CENTRE_DIR = MOD(V(:,1) + 60._q, 1._q)
++        DO I = 1, NIONS
++          DELTA_DIR = CENTRE_DIR - DYN%POSION(:, I)
++          DELTA_DIR = DELTA_DIR - NINT(DELTA_DIR)
++          V(:,1) = DELTA_DIR
++          CALL DIRKAR(1, V, LATT_CUR%A)
++          DIST_ALL(IW, I) = V(1,1)**2 + V(2,1)**2 + V(3,1)**2
++        ENDDO
++      ENDDO
++
++      ! Build cost matrix (NDIM x NDIM).
++      ALLOCATE(CMAT(NDIM, NDIM))
++      CMAT = 0._q
++      DO IW = 1, NROWS
++        DO J = 1, NDIM
++          I = SLOT_ATOM(J)
++          IF (I == 0) THEN
++            CMAT(IW, J) = 0._q
++            CYCLE
++          ENDIF
++          NT = T_INFO%ITYP(I)
++          DIST_SQ = DIST_ALL(IW, I)
++          CMAT(IW, J) = EOS_HUNG_ALPHA * DIST_SQ &
++     &      - EOS_HUNG_BETA * ENEG_PAULING(NINT(P(NT)%ZCORE + P(NT)%ZVALF)) / CHI_MAX
++          IF (DIST_SQ < EOS_ONSITE_CUT**2 .AND. &
++     &        MLWF%wann_spreads(IW, ISP) <= EOS_ONSITE_SPREAD_MAX) THEN
++            CMAT(IW, J) = CMAT(IW, J) - EOS_HUNG_GAMMA
++          ENDIF
++        ENDDO
++      ENDDO
++
++      ALLOCATE(MATCH(NDIM))
++      MATCH = 0
++      CALL HUNGARIAN(NDIM, CMAT, MATCH)
++
++      ! Harvest results.
++      DO IW = 1, NROWS
++        E_WF = WF_OCC(IW, ISP) * W%WDES%RSPIN
++        IF (E_WF <= EOS_OCC_TOL) CYCLE
++
++        ASGN_SLOT = MATCH(IW)
++        I1 = SLOT_ATOM(ASGN_SLOT)
++        IF (I1 == 0) THEN
++          ! Assigned to dummy slot — fall back to nearest real atom.
++          I1 = 1
++          DO I = 2, NIONS
++            IF (DIST_ALL(IW, I) < DIST_ALL(IW, I1)) I1 = I
++          ENDDO
++        ENDIF
++
++        WF_I1(IW, ISP) = I1
++        WF_E1(IW, ISP) = E_WF
++        NE_ASSIGNED(I1) = NE_ASSIGNED(I1) + E_WF
++
++        ! Second-nearest atom for WF_I2.
++        D2 = HUGE(1._q)
++        I2 = I1
++        DO I = 1, NIONS
++          IF (I == I1) CYCLE
++          IF (DIST_ALL(IW, I) < D2) THEN
++            D2 = DIST_ALL(IW, I)
++            I2 = I
++          ENDIF
++        ENDDO
++        WF_I2(IW, ISP) = I2
++        WF_E2(IW, ISP) = 0._q
++      ENDDO
++
++      DEALLOCATE(SLOT_ATOM, DIST_ALL, CMAT, MATCH)
++    ENDDO
++
++    DEALLOCATE(ATOM_CAP)
++  END SUBROUTINE EOS_ASSIGN_HUNGARIAN
++
++  LOGICAL FUNCTION EOS_DO_THIS_STEP(NSTEP, NSW, LSTOP)
++    INTEGER, INTENT(IN) :: NSTEP, NSW
++    LOGICAL, INTENT(IN) :: LSTOP
++    EOS_DO_THIS_STEP = .FALSE.
++    IF (.NOT. LEOS) RETURN
++    IF (EOS_EVERY_N == 0) THEN
++      ! Default: only at the last step (includes NSW=0 single-point)
++      EOS_DO_THIS_STEP = (NSTEP >= NSW .OR. LSTOP)
++    ELSEIF (EOS_EVERY_N == 1) THEN
++      EOS_DO_THIS_STEP = .TRUE.
++    ELSE
++      ! Every N steps + always at the last step
++      EOS_DO_THIS_STEP = (MOD(NSTEP, EOS_EVERY_N) == 0) .OR. &
++                         (NSTEP >= NSW .OR. LSTOP)
++    ENDIF
++  END FUNCTION EOS_DO_THIS_STEP
++
 +END MODULE eos
-diff -ruN a/vasp.6.4.3/src/main.F b/vasp.6.4.3/src/main.F
---- a/vasp.6.4.3/src/main.F	2024-03-19 17:18:08
-+++ b/vasp.6.4.3/src/main.F	2026-01-21 01:28:09
+diff --git a/vasp.6.4.3/src/main.F b/vasp.6.4.3/src/main.F
+index 58eb80e..ef4228d 100644
+--- a/vasp.6.4.3/src/main.F
++++ b/vasp.6.4.3/src/main.F
 @@ -167,6 +167,7 @@
        USE dvvtrajectory
  
@@ -2273,37 +827,42 @@ diff -ruN a/vasp.6.4.3/src/main.F b/vasp.6.4.3/src/main.F
        USE umco
        USE dmft
        USE crpa
-@@ -908,7 +909,9 @@
+@@ -908,6 +909,7 @@
        CALL RHFATM_READER(IO)
        CALL CHGFIT_READER(IO,T_INFO%NTYP)
        CALL STOCKHOLDER_READER(IO)
 +      CALL EOS_READER(INFO, T_INFO, P, IO)
        CALL MLWF_READER(INFO,IO%IU5,IO%IU6,IO%IU0)
-+      IF (LEOS) LSCDM = .TRUE.
        CALL WAVE_INTERPOLATOR_READER(IO%IU0,IO%IU5,IO%IU6)
        CALL LPRJ_READER(T_INFO,P,WDES%LNONCOLLINEAR,IO)
-       CALL PEAD_READER(IO%IU5, IO%IU6, IO%IU0)
-@@ -3330,16 +3333,18 @@
+@@ -3329,17 +3331,23 @@ io_end
+          ENDIF
        ENDIF
  
-       IF ((.NOT.L2E4W) .AND. MLWFRUN()) THEN
+-      IF ((.NOT.L2E4W) .AND. MLWFRUN()) THEN
 -         IF (IO%LORBIT==14) THEN
 -            CALL SPHPRO_OPTPROJ(P,T_INFO,W,WDES,LDIMP,LMDIMP,-1,KPOINTS%EMIN,KPOINTS%EMAX)
 -         ENDIF
-+	         IF (IO%LORBIT==14) THEN
-+	            CALL SPHPRO_OPTPROJ(P,T_INFO,W,WDES,LDIMP,LMDIMP,-1,KPOINTS%EMIN,KPOINTS%EMAX)
-+	         ENDIF
- 
+-
 -         CALL MLWF_FREE(MLWF_GLOBAL)
 -         IF (NSTEP == 1) CALL MLWF_MAIN(WDES,W,P,KPOINTS,CQIJ,T_INFO,LATT_CUR,INFO,IO,MLWF_GLOBAL)
 -         IF (LWANNIERINTERPOL.OR.LCRPAPLOT) THEN
 -            BLOCK
 -            TYPE (wannier_interpolator) :: WANN_INTERP
 -            CALL WANNIER_INTERPOL_SETUP_KPOINTS(WANN_INTERP,KPOINTS,LATT_CUR,SYMM,W)
-+	         CALL MLWF_FREE(MLWF_GLOBAL)
++      IF ((.NOT.L2E4W) .AND. (MLWFRUN() .OR. LEOS)) THEN
++	         IF (IO%LORBIT==14) THEN
++	            CALL SPHPRO_OPTPROJ(P,T_INFO,W,WDES,LDIMP,LMDIMP,-1,KPOINTS%EMIN,KPOINTS%EMAX)
++	         ENDIF
++
 +	         IF (NSTEP == 1) CALL EOS_PREPARE_MLWF(W, INFO, IO)
-+	         IF (NSTEP == 1) CALL MLWF_MAIN(WDES,W,P,KPOINTS,CQIJ,T_INFO,LATT_CUR,INFO,IO,MLWF_GLOBAL)
-+	         IF (NSTEP == 1) CALL EOS_ANALYZE(MLWF_GLOBAL, W, T_INFO, LATT_CUR, INFO, P, IO, DYN)
++	         IF (MLWFRUN() .OR. EOS_DO_THIS_STEP(NSTEP, DYN%NSW, INFO%LSTOP)) THEN
++	           CALL MLWF_FREE(MLWF_GLOBAL)
++	           CALL MLWF_MAIN(WDES,W,P,KPOINTS,CQIJ,T_INFO,LATT_CUR,INFO,IO,MLWF_GLOBAL)
++	         ENDIF
++	         IF (EOS_DO_THIS_STEP(NSTEP, DYN%NSW, INFO%LSTOP)) THEN
++	           CALL EOS_ANALYZE(MLWF_GLOBAL, W, T_INFO, LATT_CUR, INFO, P, IO, DYN)
++	         ENDIF
 +	         IF (LWANNIERINTERPOL.OR.LCRPAPLOT) THEN
 +	            BLOCK
 +	            TYPE (wannier_interpolator) :: WANN_INTERP
@@ -2311,10 +870,11 @@ diff -ruN a/vasp.6.4.3/src/main.F b/vasp.6.4.3/src/main.F
              CALL WANNIER_INTERPOL_FROM_MLWF(WANN_INTERP,MLWF_GLOBAL,IO)
              CALL WANNIER_INTERPOL_SETUP_HAM(WANN_INTERP,W,IO)
              CALL WANNIER_INTERPOL_SETUP_CDER(WANN_INTERP,W,KPOINTS,GRID,GRIDC,GRIDUS,C_TO_US,IRDMAX,LMDIM,T_INFO,&
-diff -ruN a/vasp.6.4.3/src/mlwf.F b/vasp.6.4.3/src/mlwf.F
---- a/vasp.6.4.3/src/mlwf.F	2024-03-19 17:18:09
-+++ b/vasp.6.4.3/src/mlwf.F	2026-01-21 09:35:29
-@@ -889,6 +889,8 @@
+diff --git a/vasp.6.4.3/src/mlwf.F b/vasp.6.4.3/src/mlwf.F
+index 83eb235..9e13626 100644
+--- a/vasp.6.4.3/src/mlwf.F
++++ b/vasp.6.4.3/src/mlwf.F
+@@ -889,6 +889,8 @@ MODULE mlwf
  
     INTEGER :: IK,IS,IB
     REAL(q) :: ELIM(2,MLWF%NB_TOT)
@@ -2323,7 +883,7 @@ diff -ruN a/vasp.6.4.3/src/mlwf.F b/vasp.6.4.3/src/mlwf.F
  
     ! set froz_max
     MLWF%DIS_FROZ_MAX = CUTOFF_DES%MU(1)
-@@ -904,7 +906,22 @@
+@@ -904,7 +906,22 @@ MODULE mlwf
           END DO
        END DO
     END DO
