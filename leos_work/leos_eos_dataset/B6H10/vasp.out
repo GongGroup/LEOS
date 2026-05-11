@@ -1,0 +1,48 @@
+ running   14 mpi-ranks, with    1 threads/rank, on    1 nodes
+ distrk:  each k-point on   14 cores,    1 groups
+ distr:  one band on    1 cores,   14 groups
+ vasp.6.4.3 19Mar24 (build Jan 21 2026 00:04:52) complex                         
+ POSCAR found type information on POSCAR H B 
+ POSCAR found :  2 types and      64 ions
+ scaLAPACK will be used
+ -----------------------------------------------------------------------------
+|                                                                             |
+|               ----> ADVICE to this user running VASP <----                  |
+|                                                                             |
+|     You have a (more or less) 'large supercell' and for larger cells it     |
+|     might be more efficient to use real-space projection operators.         |
+|     Therefore, try LREAL= Auto in the INCAR file.                           |
+|     Mind: For very accurate calculation, you might also keep the            |
+|     reciprocal projection scheme (i.e. LREAL=.FALSE.).                      |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ LDA part: xc-table for (Slater+PW92), standard interpolation
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.243985909578E+03    0.24399E+03   -0.41453E+04   392   0.845E+02
+DAV:   2    -0.295784325760E+03   -0.53977E+03   -0.51758E+03   518   0.180E+02
+DAV:   3    -0.325961475424E+03   -0.30177E+02   -0.29977E+02   490   0.441E+01
+DAV:   4    -0.326304398477E+03   -0.34292E+00   -0.34252E+00   532   0.504E+00
+DAV:   5    -0.326311281228E+03   -0.68828E-02   -0.68819E-02   490   0.675E-01    0.252E+01
+DAV:   6    -0.304451000113E+03    0.21860E+02   -0.19703E+01   434   0.115E+01    0.140E+01
+DAV:   7    -0.298538096777E+03    0.59129E+01   -0.18677E+01   490   0.101E+01    0.394E+00
+DAV:   8    -0.298546033677E+03   -0.79369E-02   -0.21613E+00   490   0.431E+00    0.111E+00
+DAV:   9    -0.298505508664E+03    0.40525E-01   -0.31679E-01   490   0.160E+00    0.516E-01
+DAV:  10    -0.298514515034E+03   -0.90064E-02   -0.40424E-02   448   0.509E-01    0.228E-01
+DAV:  11    -0.298517127563E+03   -0.26125E-02   -0.46265E-03   462   0.226E-01    0.724E-02
+DAV:  12    -0.298517433811E+03   -0.30625E-03   -0.89440E-04   490   0.820E-02    0.255E-02
+DAV:  13    -0.298517549858E+03   -0.11605E-03   -0.11341E-04   448   0.341E-02    0.186E-02
+DAV:  14    -0.298517542731E+03    0.71271E-05   -0.34205E-05   518   0.175E-02    0.560E-03
+DAV:  15    -0.298517544956E+03   -0.22252E-05   -0.11193E-05   448   0.884E-03    0.218E-03
+DAV:  16    -0.298517545265E+03   -0.30871E-06   -0.51926E-07   378   0.220E-03
+ Calling wannier_setup of wannier90 in library mode
+ SCDM mode
+ Computing MMN (overlap matrix elements)
+ Calling wannier_run of wannier90 in library mode (check wannier90.wout)
+   1 F= -.29851755E+03 E0= -.29851755E+03  d E =-.120696E-15
