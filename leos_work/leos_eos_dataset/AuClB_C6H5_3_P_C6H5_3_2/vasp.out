@@ -1,0 +1,79 @@
+ running   14 mpi-ranks, with    1 threads/rank, on    1 nodes
+ distrk:  each k-point on   14 cores,    1 groups
+ distr:  one band on    1 cores,   14 groups
+ vasp.6.4.3 19Mar24 (build Jan 21 2026 00:04:52) complex                         
+ POSCAR found type information on POSCAR H B C P ClAu
+ POSCAR found :  6 types and      79 ions
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     Found issues when parsing the INCAR file                                |
+|     In line 1: Groupname /SYSTEM = AUCLB(C6H5)3/ contains invalid           |
+|     characters.                                                             |
+|     Please check if the interpretation in the OUTCAR file is correct.       |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ scaLAPACK will be used
+ -----------------------------------------------------------------------------
+|                                                                             |
+|               ----> ADVICE to this user running VASP <----                  |
+|                                                                             |
+|     You have a (more or less) 'large supercell' and for larger cells it     |
+|     might be more efficient to use real-space projection operators.         |
+|     Therefore, try LREAL= Auto in the INCAR file.                           |
+|     Mind: For very accurate calculation, you might also keep the            |
+|     reciprocal projection scheme (i.e. LREAL=.FALSE.).                      |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ LDA part: xc-table for (Slater+PW92), standard interpolation
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.171920314268E+04    0.17192E+04   -0.62989E+04   420   0.774E+02
+DAV:   2     0.781122283488E+02   -0.16411E+04   -0.15126E+04   518   0.169E+02
+DAV:   3    -0.524725354772E+03   -0.60284E+03   -0.60010E+03   448   0.104E+02
+DAV:   4    -0.568474532731E+03   -0.43749E+02   -0.43404E+02   420   0.383E+01
+DAV:   5    -0.569557377654E+03   -0.10828E+01   -0.10738E+01   448   0.599E+00    0.398E+01
+DAV:   6    -0.526767546743E+03    0.42790E+02   -0.10325E+02   392   0.207E+01    0.276E+01
+DAV:   7    -0.518615572041E+03    0.81520E+01   -0.30171E+01   406   0.144E+01    0.125E+01
+DAV:   8    -0.516216393114E+03    0.23992E+01   -0.42152E+00   420   0.409E+00    0.619E+00
+DAV:   9    -0.515586826003E+03    0.62957E+00   -0.10741E+00   420   0.299E+00    0.181E+00
+DAV:  10    -0.515489849214E+03    0.96977E-01   -0.18341E-01   420   0.131E+00    0.728E-01
+DAV:  11    -0.515455850753E+03    0.33998E-01   -0.25564E-02   434   0.365E-01    0.522E-01
+DAV:  12    -0.515421538601E+03    0.34312E-01   -0.40557E-02   406   0.436E-01    0.283E-01
+DAV:  13    -0.515419584756E+03    0.19538E-02   -0.11906E-02   434   0.284E-01    0.260E-01
+DAV:  14    -0.515432689303E+03   -0.13105E-01   -0.85533E-03   392   0.220E-01    0.121E-01
+DAV:  15    -0.515441309959E+03   -0.86207E-02   -0.35986E-03   392   0.119E-01    0.134E-01
+DAV:  16    -0.515450189254E+03   -0.88793E-02   -0.75568E-04   420   0.617E-02    0.591E-02
+DAV:  17    -0.515462702832E+03   -0.12514E-01   -0.10462E-03   406   0.550E-02    0.388E-02
+DAV:  18    -0.515467361865E+03   -0.46590E-02   -0.27339E-04   434   0.270E-02    0.374E-02
+DAV:  19    -0.515470985721E+03   -0.36239E-02   -0.23802E-04   406   0.226E-02    0.960E-03
+DAV:  20    -0.515472630531E+03   -0.16448E-02   -0.95795E-05   420   0.137E-02    0.708E-03
+DAV:  21    -0.515473361742E+03   -0.73121E-03   -0.29337E-05   392   0.785E-03    0.604E-03
+DAV:  22    -0.515473689581E+03   -0.32784E-03   -0.10129E-05   406   0.486E-03    0.222E-03
+DAV:  23    -0.515473830025E+03   -0.14044E-03   -0.23139E-06   308   0.270E-03    0.132E-03
+DAV:  24    -0.515473911232E+03   -0.81207E-04   -0.19960E-06   322   0.242E-03    0.891E-04
+DAV:  25    -0.515473935079E+03   -0.23847E-04   -0.28369E-07   308   0.125E-03    0.691E-04
+DAV:  26    -0.515473951614E+03   -0.16536E-04   -0.30483E-07   280   0.976E-04    0.729E-04
+DAV:  27    -0.515473957656E+03   -0.60416E-05   -0.72156E-08   294   0.781E-04    0.382E-04
+DAV:  28    -0.515473961170E+03   -0.35136E-05   -0.22505E-08   294   0.450E-04    0.168E-04
+DAV:  29    -0.515473962678E+03   -0.15079E-05    0.24043E-08   280   0.324E-04    0.157E-04
+DAV:  30    -0.515473963746E+03   -0.10688E-05    0.36936E-08   294   0.236E-04    0.719E-05
+DAV:  31    -0.515473964140E+03   -0.39361E-06    0.51076E-08   266   0.160E-04
+ Calling wannier_setup of wannier90 in library mode
+ SCDM mode
+ Computing MMN (overlap matrix elements)
+ Calling wannier_run of wannier90 in library mode (check wannier90.wout)
+   1 F= -.51547396E+03 E0= -.51545986E+03  d E =-.282095E-01
