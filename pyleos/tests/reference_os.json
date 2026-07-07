@@ -1,0 +1,43 @@
+{
+  "_comment": "Element-level expected oxidation states. Values are the ideal chemical assignment (IUPAC / textbook). 'mean' entries are per-element averages for mixed-valence cases. Sources: RESULTS_INDEX.md, realgar/borane chemistry, Allen-scale IUPAC rule for CSe2.",
+  "dataset": {
+    "As4S4":   {"ref": {"As": 2, "S": -2}, "note": "realgar, As-As bonds"},
+    "B6H10":   {"ref_mean": {"B": 1.6667, "H": -1}, "note": "hexaborane(10): B sum +10 per molecule"},
+    "BH6N":    {"ref_mean": {"B": 3, "N": -3, "H": 0}, "note": "ammonia borane: 3 hydridic + 3 protic H"},
+    "CH2F2":   {"ref": {"C": 0, "H": 1, "F": -1}},
+    "CO":      {"ref": {"C": 2, "O": -2}},
+    "CO2":     {"ref": {"C": 4, "O": -2}},
+    "CSe2":    {"ref": {"C": -4, "Se": 2}, "note": "Allen scale: chi(C) > chi(Se)"},
+    "ReO3":    {"ref": {"Re": 6, "O": -2}, "note": "metallic conductor - Wannier risk"},
+    "_Cu5I7_2-": {"ref": {"Cu": 1, "I": -1}, "note": "net charge -2 cell"},
+    "AuClB_C6H5_3_P_C6H5_3_2": {"ref_mean": {}, "note": "complex; run-only, no element-level check"}
+  },
+  "oxides": {
+    "ce2o3":  {"ref": {"Ce": 3, "O": -2}},
+    "ceo2":   {"ref": {"Ce": 4, "O": -2}},
+    "coo":    {"ref": {"Co": 2, "O": -2}},
+    "cu2o":   {"ref": {"Cu": 1, "O": -2}},
+    "cuo":    {"ref": {"Cu": 2, "O": -2}},
+    "feo":    {"ref": {"Fe": 2, "O": -2}},
+    "laco3":  {"ref": {"La": 3, "Co": 3, "O": -2}},
+    "lafeo3": {"ref": {"La": 3, "Fe": 3, "O": -2}},
+    "lavo3":  {"ref": {"La": 3, "V": 3, "O": -2}},
+    "li2o2":  {"ref": {"Li": 1, "O": -1}, "note": "peroxide"},
+    "mno":    {"ref": {"Mn": 2, "O": -2}},
+    "mno2":   {"ref": {"Mn": 4, "O": -2}},
+    "na2cro4": {"ref": {"Na": 1, "Cr": 6, "O": -2}},
+    "namno4": {"ref": {"Na": 1, "Mn": 7, "O": -2}},
+    "nareo4": {"ref": {"Na": 1, "Re": 7, "O": -2}},
+    "nio":    {"ref": {"Ni": 2, "O": -2}},
+    "re2":    {"ref": {"Re": 0}, "note": "elemental metal stress case"},
+    "recl4":  {"ref": {"Re": 4, "Cl": -1}},
+    "ref6":   {"ref": {"Re": 6, "F": -1}},
+    "reo3":   {"ref": {"Re": 6, "O": -2}, "note": "metallic"},
+    "sio2":   {"ref": {"Si": 4, "O": -2}},
+    "sno":    {"ref": {"Sn": 2, "O": -2}},
+    "sno2":   {"ref": {"Sn": 4, "O": -2}},
+    "srtio3": {"ref": {"Sr": 2, "Ti": 4, "O": -2}},
+    "ti2o3":  {"ref": {"Ti": 3, "O": -2}},
+    "tio2":   {"ref": {"Ti": 4, "O": -2}}
+  }
+}
