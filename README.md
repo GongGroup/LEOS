@@ -12,9 +12,8 @@
 | [docs/RESULTS.md](docs/RESULTS.md) | 全部结果：测试设计、主要数据、逐案例解读、术语表 | 看成果从这里 |
 | [pyleos/](pyleos/) | Python 分析包：运输分配器、解析器、批跑驱动 | `pyleos/README.md` |
 | [patch/](patch/) | VASP 6.4.3 补丁：`leos.patch`（v2 基线）+ `v3/`（当前版本增量） | `patch/v3/README.md` |
-| [results_v3/](results_v3/) | v3 版本跑出的全部计算结果（精简存档，pyleos 可直接分析） | 各批次子目录 |
+| [data/](data/) | 全部计算数据：`v1/`（历史基线：oxides 198 个运行目录 + eos_dataset）与 `v3/`（当前版本四个批次的精简结果） | `data/v1/RESULTS_INDEX.md` |
 | [EOS/](EOS/) | 48 个测试结构库（Materials Studio XSD + Bader 电荷分析归档） | — |
-| [leos_work/](leos_work/) | 历史计算数据（v1 时期的 198 个运行目录与汇总表） | `RESULTS_INDEX.md` |
 | [script/](script/) | 独立小工具（Bader 统计、运输原型） | — |
 | docs/refs/ | 参考文献 PDF（版权文件，不入 git） | — |
 
@@ -22,14 +21,14 @@
 
 ```bash
 # 分析一个已归档的算例（无需任何依赖，纯标准库）
-python3 pyleos/cli.py case results_v3/m4_wave2/as4s4 -v
+python3 pyleos/cli.py case data/v3/m4_wave2/as4s4 -v
 
 # 对全部历史回归集跑一遍运输 vs 贪心对比
-python3 pyleos/cli.py regress --root leos_work
+python3 pyleos/cli.py regress          # 默认扫 data/v1
 ```
 
 ## 服务器（sai-pod）
 
 - 生产二进制：`~/apps/vasp.6.4.3_leos_v2/bin/{vasp_std,vasp_gam}`（v3 特性全开）
-- 工作树：`~/LEOS/`（inputs / runs / results / tools，详见其中 README.txt）
+- 工作树：`~/LEOS/`（原始大文件仓：inputs / runs / results / tools）。本地 `data/v3/` 是其 results 的精简镜像（EOSCAR/POSCAR 级），大文件（wout/波函数类）只在服务器保留
 - 批跑：`python3 ~/LEOS/tools/leos_batch.py --help`
