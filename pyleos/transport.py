@@ -179,11 +179,32 @@ def supply_total_of(wfs: List["WfInfo"]) -> int:
     return sum(w.supply for w in wfs)
 
 
+# Cost-gap below which tier-2 composition may arbitrate. Chosen as the widest
+# zero-damage point on the 38-case #WP bench: tau=1.0 fixes hi3 + the Rh
+# complex and breaks nothing; 1.5 starts overriding clear geometry (tmao).
+ARBITER_TAU = 1.0
+ARBITER_PMARGIN = 0.05  # composition lead required to overturn the geometry
+
+
 def _build_costs(case: CaseData, beta: float, eneg_scale: str,
-                 drop_stray: bool, gamma: float):
+                 drop_stray: bool, gamma: float, tier2: str = "linear"):
     """WF geometry + per-(wf,atom) transport costs + capacity bounds + flow
     target. Split out so reliability_margins can re-solve with perturbed
-    bounds without recomputing the (dominant) minimum-image geometry."""
+    bounds without recomputing the (dominant) minimum-image geometry.
+
+    tier2 modes (all need the EOSCAR v3 #WP block):
+      linear   - historical v1 formula: c -= gamma * p_hat (p_hat per-WF
+                 normalised). Fails systematically: heavy atoms carry more
+                 and stronger projectors, so raw shares drag every electron
+                 towards them.
+      arbiter  - tier-2 information only breaks near-ties: when the two
+                 cheapest hosts of a WF sit within ARBITER_TAU of each other
+                 and the composition clearly prefers the runner-up, nudge it
+                 just below the leader. Clear geometry is never overridden.
+      baseline - per-atom renormalisation: an atom's share only counts to
+                 the extent it exceeds that atom's own average share across
+                 all WFs (removing the heavy-atom bias at its source), then
+                 c -= gamma * excess."""
     st = case.structure
     na = len(st.elements)
     binv = inv3(st.lattice)
@@ -214,19 +235,51 @@ def _build_costs(case: CaseData, beta: float, eneg_scale: str,
 
     nw = len(wfs)
     chi_max = max(eneg(e, eneg_scale) for e in set(st.elements)) or 1.0
-    cost_rows: List[List[float]] = []
-    for w, wf in enumerate(wfs):
+
+    phat_rows: List[Dict[int, float]] = []
+    use_wp = case.eoscar.wp_detail and (gamma > 0.0 or tier2 == "arbiter")
+    for wf in wfs:
         phat = {}
-        if gamma > 0.0 and case.eoscar.wp_detail:
+        if use_wp:
             pairs = case.eoscar.wp_detail.get((wf.channel, wf.index), [])
             tot = sum(x for _, x in pairs)
             if tot > 1e-8:
                 phat = {at - 1: x / tot for at, x in pairs}
-        cost_rows.append([
-            d2rows[w][a]
-            + beta * (1.0 - eneg(st.elements[a], eneg_scale) / chi_max)
-            - gamma * phat.get(a, 0.0)
-            for a in range(na)])
+        phat_rows.append(phat)
+
+    if tier2 == "baseline" and use_wp:
+        # An atom's average share across all WFs is its "always there"
+        # projector background; only the excess above it is chemical signal.
+        base = [0.0] * na
+        for phat in phat_rows:
+            for a, x in phat.items():
+                base[a] += x
+        base = [b / max(1, nw) for b in base]
+        phat_rows = [{a: max(0.0, x - base[a]) for a, x in phat.items()}
+                     for phat in phat_rows]
+
+    cost_rows: List[List[float]] = []
+    for w in range(nw):
+        geo = [d2rows[w][a]
+               + beta * (1.0 - eneg(st.elements[a], eneg_scale) / chi_max)
+               for a in range(na)]
+        if tier2 in ("linear", "baseline"):
+            row = [geo[a] - gamma * phat_rows[w].get(a, 0.0) for a in range(na)]
+        elif tier2 == "arbiter":
+            row = list(geo)
+            if phat_rows[w] and na >= 2:
+                order = sorted(range(na), key=geo.__getitem__)
+                a1, a2 = order[0], order[1]
+                if geo[a2] - geo[a1] < ARBITER_TAU:
+                    p1 = phat_rows[w].get(a1, 0.0)
+                    p2 = phat_rows[w].get(a2, 0.0)
+                    if p2 > p1 + ARBITER_PMARGIN:
+                        # Composition overrules a near-tie: put the runner-up
+                        # just below the geometric leader.
+                        row[a2] = geo[a1] - 0.2 * ARBITER_TAU
+        else:
+            raise ValueError(f"unknown tier2 mode {tier2!r}")
+        cost_rows.append(row)
 
     bounds = [capacity_bounds(el, zval[el]) for el in st.elements]
     target = None
@@ -308,7 +361,8 @@ def assign_case(case: CaseData, beta: float = 3.0,
                 eneg_scale: str = "allen",
                 drop_stray: bool = False,
                 gamma: float = 0.0,
-                fragments: Optional[List[List[int]]] = None) -> AssignResult:
+                fragments: Optional[List[List[int]]] = None,
+                tier2: str = "linear") -> AssignResult:
     """gamma > 0 enables the tier-2 cost: c -= gamma * p_hat(w,a), where
     p_hat is the per-WF-normalised projector-norm composition from the
     EOSCAR v3 #WP block (chemical fingerprint; complements the centre
@@ -320,7 +374,7 @@ def assign_case(case: CaseData, beta: float = 3.0,
     st = case.structure
     zval = case.eoscar.zval if case.eoscar else {}
     wfs, cost_rows, bounds, target, na, nw = _build_costs(
-        case, beta, eneg_scale, drop_stray, gamma)
+        case, beta, eneg_scale, drop_stray, gamma, tier2)
     for f in (fragments or []):
         for a in f:
             if a < 0 or a >= na:
@@ -388,8 +442,8 @@ def reliability_margins(case: CaseData, beta: float = 3.0,
                         drop_stray: bool = False,
                         gamma: float = 0.0,
                         res: Optional[AssignResult] = None,
-                        fragments: Optional[List[List[int]]] = None
-                        ) -> AssignResult:
+                        fragments: Optional[List[List[int]]] = None,
+                        tier2: str = "linear") -> AssignResult:
     """R(%)-counterpart reliability: for every assignment unit (atom or
     fragment), the cheapest total transport-cost increase of forcing its
     electron count to ne+1 or ne-1 (full re-solve, so chain rearrangements
@@ -402,7 +456,7 @@ def reliability_margins(case: CaseData, beta: float = 3.0,
     whose count cannot change at all (capacity-infeasible both ways) gets
     margin inf / R = 100."""
     wfs, cost_rows, bounds, target, na, nw = _build_costs(
-        case, beta, eneg_scale, drop_stray, gamma)
+        case, beta, eneg_scale, drop_stray, gamma, tier2)
     units, unit_of = _make_units(na, fragments)
     nu = len(units)
     u_cost, u_bounds = _unit_problem(cost_rows, bounds, units, nw)
@@ -410,7 +464,7 @@ def reliability_margins(case: CaseData, beta: float = 3.0,
     if res is None:
         res = assign_case(case, beta=beta, eneg_scale=eneg_scale,
                           drop_stray=drop_stray, gamma=gamma,
-                          fragments=fragments)
+                          fragments=fragments, tier2=tier2)
     for u, members in enumerate(units):
         if len(members) == 1:
             assert res.ne[members[0]] == ne0[u], \
@@ -433,13 +487,16 @@ def reliability_margins(case: CaseData, beta: float = 3.0,
 
     def _try(u: int, forced: int) -> Optional[Tuple[float, bool]]:
         n_min, n_max = u_bounds[u]
-        if forced < 0 or forced > n_max:
+        # n_min is a PHYSICAL floor (semicore shells must stay filled):
+        # raiding it is not a legitimate alternative assignment, so a unit
+        # sitting at its floor simply cannot lose an electron.
+        if forced < n_min or forced > n_max:
             return None
         b2 = list(u_bounds)
         if forced > ne0[u]:
             b2[u] = (forced, n_max)            # reward edge pulls one in
         else:
-            b2[u] = (min(n_min, forced), forced)   # hard cap pushes one out
+            b2[u] = (n_min, forced)            # hard cap pushes one out
         _, ne1, _, _, geo1 = _solve_flow(wfs, u_cost, b2, target, nu, nw)
         if ne1[u] != forced or sum(ne1) != sum(ne0):
             return None                        # force did not take: infeasible
@@ -448,7 +505,12 @@ def reliability_margins(case: CaseData, beta: float = 3.0,
         for b in range(nu):
             if b != u and ne1[b] < min(u_bounds[b][0], ne0[b]):
                 return None
-        return geo1 - geo0, _ledger(ne1) != ledger0
+        delta = geo1 - geo0
+        # The perturbed problem is a restriction of the base feasible set, so
+        # its optimum can only be costlier; anything below the float noise
+        # floor indicates a solver/bookkeeping bug.
+        assert delta > -1e-6, f"negative margin {delta} forcing unit {u}"
+        return delta, _ledger(ne1) != ledger0
 
     unit_margin: List[float] = []
     unit_margin_elem: List[float] = []
