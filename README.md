@@ -12,8 +12,7 @@
 | [docs/RESULTS.md](docs/RESULTS.md) | 全部结果：测试设计、主要数据、逐案例解读、术语表 | 看成果从这里 |
 | [pyleos/](pyleos/) | Python 分析包：运输分配器、解析器、批跑驱动 | `pyleos/README.md` |
 | [patch/](patch/) | VASP 6.4.3 补丁：`leos.patch`（v2 基线）+ `v3/`（当前版本增量） | `patch/v3/README.md` |
-| [data/](data/) | 全部计算数据：`v1/`（历史基线：oxides 198 个运行目录 + eos_dataset）与 `v3/`（当前版本四个批次的精简结果） | `data/v1/RESULTS_INDEX.md` |
-| [EOS/](EOS/) | 48 个测试结构库（Materials Studio XSD + Bader 电荷分析归档） | — |
+| [data/](data/) | 全部数据：`structures/`（48 个测试结构库：XSD + Bader 归档）、`v1/`（历史基线运行目录）、`v3/`（当前版本四批精简结果） | `data/v1/RESULTS_INDEX.md` |
 | [script/](script/) | 独立小工具（Bader 统计、运输原型） | — |
 | docs/refs/ | 参考文献 PDF（版权文件，不入 git） | — |
 
