@@ -2,10 +2,14 @@
 #
 # Features:
 #   - Core LEOS algorithm: Wannier-centre counting + IUPAC(2014) rule
-#   - Hungarian (Jonker-Volgenant) global optimal assignment (EOS_USE_HUNGARIAN)
+#   - Allen electronegativity scale by default (EOS_ENEG_PAULING to revert)
 #   - dOS covalency descriptor output
 #   - Trajectory mode: per-step analysis (EOS_EVERY_N)
 #   - Improved auto-window detection for Wannier90 (mlwf.F)
+#   - (k,band)-resolved electron-loss diagnostics (frozen-window misses)
+#   - Per-WF detail block in EOSCAR (#WF lines) feeding the pyleos
+#     transport/min-cost-flow assignment (the Hungarian in-code branch
+#     was removed: its neutral-atom slot model could not describe anions)
 #
 # Apply:  cd vasp.6.4.3 && git apply ../patches/leos.patch
 # Files:  .objects, eos.F (new), main.F, mlwf.F
@@ -18,7 +22,7 @@ index 18f5767..e8633a9 100644
  	minimax.o \
  	umco.o \
  	mlwf.o \
-+	eos.o \
++eos.o \
  	ratpol.o \
  	pade_fit.o \
  	screened_2e.o \
@@ -27,9 +31,13 @@ new file mode 100644
 index 0000000..82de0f8
 --- /dev/null
 +++ b/vasp.6.4.3/src/eos.F
-@@ -0,0 +1,787 @@
+@@ -0,0 +1,620 @@
 +#include "symbol.inc"
-+!> @brief Effective oxidation states from Wannier centres
++!> @brief Effective oxidation states from Wannier centres (LEOS)
++!> Assignment: nearest-two-atom greedy + IUPAC electronegativity rule
++!> (in-situ fast path; the transport/min-cost-flow solver lives in pyleos).
++!> Electronegativity: Allen scale by default (IUPAC 2014-consistent),
++!> EOS_ENEG_PAULING=.TRUE. restores the legacy Pauling table.
 +MODULE eos
 +  USE prec
 +  USE base
@@ -55,12 +63,28 @@ index 0000000..82de0f8
 +  REAL(q), PARAMETER :: EOS_OCC_TOL = 1.E-8_q
 +  REAL(q), SAVE :: EOS_NELECT_WARN  = 1.E-2_q
 +  REAL(q), SAVE :: EOS_NELECT_ABORT = 0.35_q
-+  LOGICAL, SAVE :: EOS_USE_HUNGARIAN = .FALSE.
-+  REAL(q), SAVE :: EOS_HUNG_ALPHA = 1.0_q    ! distance weight
-+  REAL(q), SAVE :: EOS_HUNG_BETA  = 0.5_q    ! electronegativity weight
-+  REAL(q), SAVE :: EOS_HUNG_GAMMA = 5.0_q    ! on-site bonus weight
 +  INTEGER, SAVE :: EOS_EVERY_N = 0
 +  INTEGER, SAVE :: EOS_STEP_COUNT = 0
++
++  LOGICAL, SAVE :: EOS_ENEG_PAULING = .FALSE.
++  LOGICAL, SAVE :: EOS_WF_DETAIL = .TRUE.
++
++  ! Allen electronegativity (1..102); 0 means "no data". Lanthanide/actinide
++  ! entries fall back to Pauling values (no published Allen data).
++  REAL(q), PARAMETER :: ALLEN_ENEG(102) = (/ &
++    2.300_q, 4.160_q, 0.912_q, 1.576_q, 2.051_q, 2.544_q, 3.066_q, 3.610_q, &
++    4.193_q, 4.787_q, 0.869_q, 1.293_q, 1.613_q, 1.916_q, 2.253_q, 2.589_q, &
++    2.869_q, 3.242_q, 0.734_q, 1.034_q, 1.19_q,  1.38_q,  1.53_q,  1.65_q,  &
++    1.75_q,  1.80_q,  1.84_q,  1.88_q,  1.85_q,  1.588_q, 1.756_q, 1.994_q, &
++    2.211_q, 2.424_q, 2.685_q, 2.966_q, 0.706_q, 0.963_q, 1.12_q,  1.32_q,  &
++    1.41_q,  1.47_q,  1.51_q,  1.54_q,  1.56_q,  1.58_q,  1.87_q,  1.52_q,  &
++    1.656_q, 1.824_q, 1.984_q, 2.158_q, 2.359_q, 2.582_q, 0.659_q, 0.881_q, &
++    1.10_q,  1.12_q,  1.13_q,  1.14_q,  1.10_q,  1.17_q,  1.1_q,   1.20_q,  &
++    1.1_q,   1.22_q,  1.23_q,  1.24_q,  1.25_q,  1.1_q,   1.27_q,  1.16_q,  &
++    1.34_q,  1.47_q,  1.60_q,  1.65_q,  1.68_q,  1.72_q,  1.92_q,  1.76_q,  &
++    1.789_q, 1.854_q, 2.01_q,  2.19_q,  2.39_q,  2.60_q,  0.67_q,  0.89_q,  &
++    1.1_q,   1.3_q,   1.5_q,   1.38_q,  1.36_q,  1.28_q,  1.3_q,   1.3_q,   &
++    1.3_q,   1.3_q,   1.3_q,   1.3_q,   1.3_q,   1.3_q /)
 +
 +  ! Pauling electronegativity (1..102); 0 means "no data".
 +  REAL(q), PARAMETER :: PAULING_ENEG(102) = (/ &
@@ -80,14 +104,16 @@ index 0000000..82de0f8
 +
 +CONTAINS
 +
-+  PURE REAL(q) FUNCTION ENEG_PAULING(Z)
++  PURE REAL(q) FUNCTION ENEG_OF(Z)
 +    INTEGER, INTENT(IN) :: Z
-+    IF (Z >= 1 .AND. Z <= SIZE(PAULING_ENEG)) THEN
-+      ENEG_PAULING = PAULING_ENEG(Z)
++    IF (Z < 1 .OR. Z > SIZE(ALLEN_ENEG)) THEN
++      ENEG_OF = 0._q
++    ELSEIF (EOS_ENEG_PAULING) THEN
++      ENEG_OF = PAULING_ENEG(Z)
 +    ELSE
-+      ENEG_PAULING = 0._q
++      ENEG_OF = ALLEN_ENEG(Z)
 +    ENDIF
-+  END FUNCTION ENEG_PAULING
++  END FUNCTION ENEG_OF
 +
 +  SUBROUTINE EOS_READER(INFO, T_INFO, P, IO)
 +    TYPE(info_struct), INTENT(IN) :: INFO
@@ -113,10 +139,8 @@ index 0000000..82de0f8
 +    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_O_MAX', EOS_O_MAX, IERR, WRITEXMLINCAR)
 +    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_NELECT_WARN', EOS_NELECT_WARN, IERR, WRITEXMLINCAR)
 +    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_NELECT_ABORT', EOS_NELECT_ABORT, IERR, WRITEXMLINCAR)
-+    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_USE_HUNGARIAN', EOS_USE_HUNGARIAN, IERR, WRITEXMLINCAR)
-+    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_HUNG_ALPHA', EOS_HUNG_ALPHA, IERR, WRITEXMLINCAR)
-+    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_HUNG_BETA', EOS_HUNG_BETA, IERR, WRITEXMLINCAR)
-+    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_HUNG_GAMMA', EOS_HUNG_GAMMA, IERR, WRITEXMLINCAR)
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_ENEG_PAULING', EOS_ENEG_PAULING, IERR, WRITEXMLINCAR)
++    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_WF_DETAIL', EOS_WF_DETAIL, IERR, WRITEXMLINCAR)
 +    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_EVERY_N', EOS_EVERY_N, IERR, WRITEXMLINCAR)
 +    EOS_EVERY_N = MAX(0, EOS_EVERY_N)
 +
@@ -232,6 +256,10 @@ index 0000000..82de0f8
 +    REAL(q), ALLOCATABLE :: NE_ASSIGNED(:)
 +    REAL(q), ALLOCATABLE :: OS_RAW(:)
 +    INTEGER, ALLOCATABLE :: OS_INT(:)
++    INTEGER :: NLOST
++    REAL(q) :: LOST_NE
++    INTEGER :: LOST_REC(3,32)
++    REAL(q) :: LOST_OCC(32)
 +    REAL(q), ALLOCATABLE :: WF_OCC(:,:)
 +    INTEGER, ALLOCATABLE :: WF_I1(:,:), WF_I2(:,:)
 +    REAL(q), ALLOCATABLE :: WF_E1(:,:), WF_E2(:,:)
@@ -266,6 +294,8 @@ index 0000000..82de0f8
 +    WF_I1 = 0; WF_I2 = 0
 +    WF_E1 = 0._q; WF_E2 = 0._q
 +
++    NLOST = 0
++    LOST_NE = 0._q
 +    WTK_FULL = 1._q / REAL(MLWF%NKPTS, q)
 +    DO ISP = 1, MLWF%ISPIN
 +      DO NKI = 1, MLWF%NKPTS
@@ -275,9 +305,23 @@ index 0000000..82de0f8
 +        DO IB = 1, MLWF%NB_TOT
 +          IF (MLWF%EXCLUDE_BAND(IB)) CYCLE
 +          IP = IP + 1
-+          IF (.NOT. MLWF%lwindow(IP, NKI, ISP)) CYCLE
-+
 +          OCC_WF = W%FERTOT(IB, NK, ISP)
++          IF (.NOT. MLWF%lwindow(IP, NKI, ISP)) THEN
++            ! Occupied band outside the disentanglement window: its charge
++            ! never enters the Wannier subspace. Record it so the NELECT
++            ! mismatch can be traced to specific (spin, k, band) states.
++            IF (OCC_WF > EOS_OCC_TOL) THEN
++              LOST_NE = LOST_NE + WTK_FULL * OCC_WF * W%WDES%RSPIN
++              NLOST = NLOST + 1
++              IF (NLOST <= SIZE(LOST_OCC)) THEN
++                LOST_REC(1,NLOST) = ISP
++                LOST_REC(2,NLOST) = NK
++                LOST_REC(3,NLOST) = IB
++                LOST_OCC(NLOST) = OCC_WF
++              ENDIF
++            ENDIF
++            CYCLE
++          ENDIF
 +          IF (OCC_WF <= EOS_OCC_TOL) CYCLE
 +
 +          DO IW = 1, MLWF%NUM_WANN
@@ -293,6 +337,16 @@ index 0000000..82de0f8
 +
 +    NELECT_WANN = SUM(WF_OCC) * W%WDES%RSPIN
 +    NELECT_ERR = ABS(NELECT_WANN - INFO%NELECT)
++    IF (NLOST > 0 .AND. IO%IU6 >= 0) THEN
++      WRITE(IO%IU6,'(/,A,I0,A,F12.6)') 'LEOS: ', NLOST, &
++     &  ' occupied (spin,k,band) states outside the frozen window; lost n_e = ', LOST_NE
++      DO I = 1, MIN(NLOST, SIZE(LOST_OCC))
++        WRITE(IO%IU6,'(A,I2,A,I5,A,I5,A,F8.4)') '  LEOS lost: spin ', LOST_REC(1,I), &
++     &    '  k ', LOST_REC(2,I), '  band ', LOST_REC(3,I), '  occ ', LOST_OCC(I)
++      ENDDO
++      IF (NLOST > SIZE(LOST_OCC)) WRITE(IO%IU6,'(A,I0,A)') '  LEOS lost: (first ', &
++     &  SIZE(LOST_OCC), ' shown)'
++    ENDIF
 +    IF (NELECT_ERR > EOS_NELECT_ABORT) THEN
 +      IF (IO%IU6 >= 0) THEN
 +        WRITE(IO%IU6,'(/,A)') 'LEOS: NELECT mismatch too large; skip oxidation-state analysis.'
@@ -313,10 +367,6 @@ index 0000000..82de0f8
 +      ENDIF
 +    ENDIF
 +
-+    IF (EOS_USE_HUNGARIAN) THEN
-+      CALL EOS_ASSIGN_HUNGARIAN(MLWF, W, T_INFO, LATT_CUR, P, DYN, &
-+     &     NIONS, WF_OCC, WF_I1, WF_I2, WF_E1, WF_E2, NE_ASSIGNED)
-+    ELSE
 +    DO ISP = 1, MLWF%ISPIN
 +    DO IW = 1, MLWF%NUM_WANN
 +      E_WF = WF_OCC(IW, ISP) * W%WDES%RSPIN
@@ -327,7 +377,7 @@ index 0000000..82de0f8
 +      ! Cartesian -> direct and wrap to [0,1)
 +      V(:,1) = CENTRE_CART
 +      CALL KARDIR(1, V, LATT_CUR%B)
-+      CENTRE_DIR = MOD(V(:,1) + 60._q, 1._q)
++      CENTRE_DIR = V(:,1) - FLOOR(V(:,1))
 +
 +      I1 = 1; I2 = 1
 +      D1 = HUGE(1._q); D2 = HUGE(1._q)
@@ -369,8 +419,8 @@ index 0000000..82de0f8
 +      NT2 = T_INFO%ITYP(I2)
 +      Z1 = NINT(P(NT1)%ZCORE + P(NT1)%ZVALF)
 +      Z2 = NINT(P(NT2)%ZCORE + P(NT2)%ZVALF)
-+      CHI1 = ENEG_PAULING(Z1)
-+      CHI2 = ENEG_PAULING(Z2)
++      CHI1 = ENEG_OF(Z1)
++      CHI2 = ENEG_OF(Z2)
 +
 +      IF (ABS(CHI1-CHI2) <= EOS_ENEG_TOL) THEN
 +        WF_I1(IW, ISP) = I1
@@ -392,7 +442,6 @@ index 0000000..82de0f8
 +      ENDIF
 +    ENDDO
 +    ENDDO
-+    ENDIF
 +
 +    ! Optional: prevent oxygen from exceeding a closed-shell population (default 8e).
 +    ! This helps recover formal oxidation states for typical oxides where O is -2,
@@ -513,6 +562,8 @@ index 0000000..82de0f8
 +      WRITE(IU,'(A,F10.5)') '# EOS_O_MAX = ', EOS_O_MAX
 +      WRITE(IU,'(A,F14.6)') '# NELECT(Wannier) = ', NELECT_WANN
 +      WRITE(IU,'(A,ES12.4)') '# |dNe| = ', NELECT_ERR
++      WRITE(IU,'(A,I0)') '# N_LOST_STATES = ', NLOST
++      WRITE(IU,'(A,F14.6)') '# N_LOST_E = ', LOST_NE
 +      WRITE(IU,'(A,ES12.4)') '# EOS_NELECT_WARN = ', EOS_NELECT_WARN
 +      WRITE(IU,'(A,ES12.4)') '# EOS_NELECT_ABORT = ', EOS_NELECT_ABORT
 +      WRITE(IU,'(A)') '# ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)      dOS'
@@ -527,6 +578,18 @@ index 0000000..82de0f8
 +      WRITE(IU,'(A,F8.3)') '# |dOS|_max  = ', DOS_MAX
 +      WRITE(IU,'(A,F8.3)') '# |dOS|_mean = ', DOS_SUM / REAL(NIONS, q)
 +      WRITE(IU,'(A,F8.3)') '# |dOS|_rms  = ', SQRT(DOS_SQR / REAL(NIONS, q))
++      IF (EOS_WF_DETAIL) THEN
++        WRITE(IU,'(A)') '#WF spin    wf    occ(e)      centre_x      centre_y      centre_z    spread   at1      e1   at2      e2'
++        DO ISP = 1, MLWF%ISPIN
++          DO IW = 1, MLWF%NUM_WANN
++            WRITE(IU,'(A,I3,1X,I5,1X,F9.6,3(1X,F13.6),1X,F9.4,2(1X,I5,1X,F7.4))') &
++     &        '#WF', ISP, IW, WF_OCC(IW,ISP)*W%WDES%RSPIN, &
++     &        MLWF%wann_centres(1,IW,ISP), MLWF%wann_centres(2,IW,ISP), &
++     &        MLWF%wann_centres(3,IW,ISP), MLWF%wann_spreads(IW,ISP), &
++     &        WF_I1(IW,ISP), WF_E1(IW,ISP), WF_I2(IW,ISP), WF_E2(IW,ISP)
++          ENDDO
++        ENDDO
++      ENDIF
 +      CLOSE(IU)
 +    ENDIF
 +
@@ -570,232 +633,6 @@ index 0000000..82de0f8
 +    ENDDO
 +  END SUBROUTINE EOS_INTEGERIZE
 +
-+  SUBROUTINE HUNGARIAN(N, COST, ASSIGNMENT)
-+    ! Jonker-Volgenant shortest augmenting path algorithm, O(N^3).
-+    ! Solves the linear assignment problem: minimise sum_i COST(i, ASSIGNMENT(i)).
-+    INTEGER, INTENT(IN)  :: N
-+    REAL(q), INTENT(IN)  :: COST(N, N)
-+    INTEGER, INTENT(OUT) :: ASSIGNMENT(N)
-+
-+    REAL(q) :: U(N), V(N)        ! dual variables (row / col potentials)
-+    INTEGER :: COL_MATCH(N)      ! col -> row matching (-1 = free)
-+    REAL(q) :: DIST(N)           ! shortest-path distances to columns
-+    INTEGER :: PRED(N)           ! predecessor column on the path
-+    LOGICAL :: USED(N)           ! column scanned flag
-+    INTEGER :: I, J, J0, J1, JMIN, CUR
-+    REAL(q) :: H, DMIN
-+
-+    U = 0._q; V = 0._q
-+    COL_MATCH = -1
-+    ASSIGNMENT = 0
-+
-+    DO I = 1, N
-+      ! Start augmenting path from unmatched row I.
-+      DIST = HUGE(1._q)
-+      PRED = 0
-+      USED = .FALSE.
-+      ! Initialise: relax from row I to all columns.
-+      DO J = 1, N
-+        DIST(J) = COST(I, J) - U(I) - V(J)
-+        PRED(J) = 0   ! predecessor = virtual column 0 (row I directly)
-+      ENDDO
-+
-+      JMIN = 0
-+      J0 = 0  ! last absorbed column (0 = start)
-+      DO
-+        ! Find unscanned column with smallest distance.
-+        DMIN = HUGE(1._q)
-+        DO J = 1, N
-+          IF (.NOT. USED(J) .AND. DIST(J) < DMIN) THEN
-+            DMIN = DIST(J)
-+            JMIN = J
-+          ENDIF
-+        ENDDO
-+        USED(JMIN) = .TRUE.
-+
-+        CUR = COL_MATCH(JMIN)
-+        IF (CUR == -1) EXIT   ! JMIN is free — augmenting path found
-+
-+        ! Relax from CUR (the row matched to JMIN) to all unused columns.
-+        DO J = 1, N
-+          IF (USED(J)) CYCLE
-+          H = COST(CUR, J) - U(CUR) - V(J) + DMIN
-+          IF (H < DIST(J)) THEN
-+            DIST(J) = H
-+            PRED(J) = JMIN
-+          ENDIF
-+        ENDDO
-+
-+        ! Update dual variable for CUR.
-+        U(CUR) = U(CUR) + DIST(JMIN) - DMIN
-+      ENDDO
-+
-+      ! Update dual variables.
-+      U(I) = U(I) + DMIN
-+      DO J = 1, N
-+        IF (USED(J)) THEN
-+          IF (COL_MATCH(J) /= -1 .AND. COL_MATCH(J) /= I) &
-+     &      U(COL_MATCH(J)) = U(COL_MATCH(J)) + DIST(J) - DMIN
-+          V(J) = V(J) - DIST(J) + DMIN
-+        ENDIF
-+      ENDDO
-+
-+      ! Trace augmenting path and update matching.
-+      J1 = JMIN
-+      DO WHILE (J1 /= 0)
-+        J0 = PRED(J1)
-+        IF (J0 > 0) THEN
-+          COL_MATCH(J1) = COL_MATCH(J0)
-+        ELSE
-+          COL_MATCH(J1) = I
-+        ENDIF
-+        J1 = J0
-+      ENDDO
-+    ENDDO
-+
-+    ! Convert col->row to row->col.
-+    DO J = 1, N
-+      IF (COL_MATCH(J) >= 1 .AND. COL_MATCH(J) <= N) THEN
-+        ASSIGNMENT(COL_MATCH(J)) = J
-+      ENDIF
-+    ENDDO
-+  END SUBROUTINE HUNGARIAN
-+
-+  SUBROUTINE EOS_ASSIGN_HUNGARIAN(MLWF, W, T_INFO, LATT_CUR, P, DYN, &
-+ &   NIONS, WF_OCC, WF_I1, WF_I2, WF_E1, WF_E2, NE_ASSIGNED)
-+    TYPE(MLWF_type),   INTENT(IN)    :: MLWF
-+    TYPE(wavespin),    INTENT(IN)    :: W
-+    TYPE(type_info),   INTENT(IN)    :: T_INFO
-+    TYPE(latt),        INTENT(IN)    :: LATT_CUR
-+    TYPE(potcar),      INTENT(IN)    :: P(T_INFO%NTYP)
-+    TYPE(dynamics),    INTENT(IN)    :: DYN
-+    INTEGER,           INTENT(IN)    :: NIONS
-+    REAL(q),           INTENT(IN)    :: WF_OCC(MLWF%NUM_WANN, MLWF%ISPIN)
-+    INTEGER,           INTENT(INOUT) :: WF_I1(MLWF%NUM_WANN, MLWF%ISPIN)
-+    INTEGER,           INTENT(INOUT) :: WF_I2(MLWF%NUM_WANN, MLWF%ISPIN)
-+    REAL(q),           INTENT(INOUT) :: WF_E1(MLWF%NUM_WANN, MLWF%ISPIN)
-+    REAL(q),           INTENT(INOUT) :: WF_E2(MLWF%NUM_WANN, MLWF%ISPIN)
-+    REAL(q),           INTENT(INOUT) :: NE_ASSIGNED(NIONS)
-+
-+    INTEGER :: ISP, IW, I, J, NT, NSLOTS, NROWS, NDIM
-+    INTEGER :: SLOT_OFF, S, ASGN_SLOT
-+    REAL(q) :: CENTRE_DIR(3), V(3,1), DELTA_DIR(3), DIST_SQ
-+    REAL(q) :: D2, E_WF
-+    INTEGER :: I1, I2
-+    REAL(q) :: CHI_MAX
-+    INTEGER, ALLOCATABLE :: ATOM_CAP(:), SLOT_ATOM(:), MATCH(:)
-+    REAL(q), ALLOCATABLE :: CMAT(:,:), DIST_ALL(:,:)
-+
-+    ! Find maximum electronegativity for normalisation.
-+    CHI_MAX = 0._q
-+    DO I = 1, NIONS
-+      NT = T_INFO%ITYP(I)
-+      CHI_MAX = MAX(CHI_MAX, ENEG_PAULING(NINT(P(NT)%ZCORE + P(NT)%ZVALF)))
-+    ENDDO
-+    IF (CHI_MAX < 1.E-12_q) CHI_MAX = 1._q
-+
-+    ! Compute per-atom capacity.
-+    ALLOCATE(ATOM_CAP(NIONS))
-+    NSLOTS = 0
-+    DO I = 1, NIONS
-+      NT = T_INFO%ITYP(I)
-+      ATOM_CAP(I) = CEILING(P(NT)%ZVALF / W%WDES%RSPIN)
-+      NSLOTS = NSLOTS + ATOM_CAP(I)
-+    ENDDO
-+
-+    DO ISP = 1, MLWF%ISPIN
-+      NROWS = MLWF%NUM_WANN
-+      NDIM = MAX(NROWS, NSLOTS)
-+
-+      ! Build slot-to-atom mapping.
-+      ALLOCATE(SLOT_ATOM(NDIM))
-+      SLOT_ATOM = 0
-+      SLOT_OFF = 0
-+      DO I = 1, NIONS
-+        DO S = 1, ATOM_CAP(I)
-+          SLOT_OFF = SLOT_OFF + 1
-+          IF (SLOT_OFF <= NDIM) SLOT_ATOM(SLOT_OFF) = I
-+        ENDDO
-+      ENDDO
-+
-+      ! Pre-compute distances (WF -> atom, squared, minimum image).
-+      ALLOCATE(DIST_ALL(NROWS, NIONS))
-+      DO IW = 1, NROWS
-+        V(:,1) = MLWF%wann_centres(:, IW, ISP)
-+        CALL KARDIR(1, V, LATT_CUR%B)
-+        CENTRE_DIR = MOD(V(:,1) + 60._q, 1._q)
-+        DO I = 1, NIONS
-+          DELTA_DIR = CENTRE_DIR - DYN%POSION(:, I)
-+          DELTA_DIR = DELTA_DIR - NINT(DELTA_DIR)
-+          V(:,1) = DELTA_DIR
-+          CALL DIRKAR(1, V, LATT_CUR%A)
-+          DIST_ALL(IW, I) = V(1,1)**2 + V(2,1)**2 + V(3,1)**2
-+        ENDDO
-+      ENDDO
-+
-+      ! Build cost matrix (NDIM x NDIM).
-+      ALLOCATE(CMAT(NDIM, NDIM))
-+      CMAT = 0._q
-+      DO IW = 1, NROWS
-+        DO J = 1, NDIM
-+          I = SLOT_ATOM(J)
-+          IF (I == 0) THEN
-+            CMAT(IW, J) = 0._q
-+            CYCLE
-+          ENDIF
-+          NT = T_INFO%ITYP(I)
-+          DIST_SQ = DIST_ALL(IW, I)
-+          CMAT(IW, J) = EOS_HUNG_ALPHA * DIST_SQ &
-+     &      - EOS_HUNG_BETA * ENEG_PAULING(NINT(P(NT)%ZCORE + P(NT)%ZVALF)) / CHI_MAX
-+          IF (DIST_SQ < EOS_ONSITE_CUT**2 .AND. &
-+     &        MLWF%wann_spreads(IW, ISP) <= EOS_ONSITE_SPREAD_MAX) THEN
-+            CMAT(IW, J) = CMAT(IW, J) - EOS_HUNG_GAMMA
-+          ENDIF
-+        ENDDO
-+      ENDDO
-+
-+      ALLOCATE(MATCH(NDIM))
-+      MATCH = 0
-+      CALL HUNGARIAN(NDIM, CMAT, MATCH)
-+
-+      ! Harvest results.
-+      DO IW = 1, NROWS
-+        E_WF = WF_OCC(IW, ISP) * W%WDES%RSPIN
-+        IF (E_WF <= EOS_OCC_TOL) CYCLE
-+
-+        ASGN_SLOT = MATCH(IW)
-+        I1 = SLOT_ATOM(ASGN_SLOT)
-+        IF (I1 == 0) THEN
-+          ! Assigned to dummy slot — fall back to nearest real atom.
-+          I1 = 1
-+          DO I = 2, NIONS
-+            IF (DIST_ALL(IW, I) < DIST_ALL(IW, I1)) I1 = I
-+          ENDDO
-+        ENDIF
-+
-+        WF_I1(IW, ISP) = I1
-+        WF_E1(IW, ISP) = E_WF
-+        NE_ASSIGNED(I1) = NE_ASSIGNED(I1) + E_WF
-+
-+        ! Second-nearest atom for WF_I2.
-+        D2 = HUGE(1._q)
-+        I2 = I1
-+        DO I = 1, NIONS
-+          IF (I == I1) CYCLE
-+          IF (DIST_ALL(IW, I) < D2) THEN
-+            D2 = DIST_ALL(IW, I)
-+            I2 = I
-+          ENDIF
-+        ENDDO
-+        WF_I2(IW, ISP) = I2
-+        WF_E2(IW, ISP) = 0._q
-+      ENDDO
-+
-+      DEALLOCATE(SLOT_ATOM, DIST_ALL, CMAT, MATCH)
-+    ENDDO
-+
-+    DEALLOCATE(ATOM_CAP)
-+  END SUBROUTINE EOS_ASSIGN_HUNGARIAN
 +
 +  LOGICAL FUNCTION EOS_DO_THIS_STEP(NSTEP, NSW, LSTOP)
 +    INTEGER, INTENT(IN) :: NSTEP, NSW
@@ -851,22 +688,22 @@ index 58eb80e..ef4228d 100644
 -            TYPE (wannier_interpolator) :: WANN_INTERP
 -            CALL WANNIER_INTERPOL_SETUP_KPOINTS(WANN_INTERP,KPOINTS,LATT_CUR,SYMM,W)
 +      IF ((.NOT.L2E4W) .AND. (MLWFRUN() .OR. LEOS)) THEN
-+	         IF (IO%LORBIT==14) THEN
-+	            CALL SPHPRO_OPTPROJ(P,T_INFO,W,WDES,LDIMP,LMDIMP,-1,KPOINTS%EMIN,KPOINTS%EMAX)
-+	         ENDIF
++         IF (IO%LORBIT==14) THEN
++            CALL SPHPRO_OPTPROJ(P,T_INFO,W,WDES,LDIMP,LMDIMP,-1,KPOINTS%EMIN,KPOINTS%EMAX)
++         ENDIF
 +
-+	         IF (NSTEP == 1) CALL EOS_PREPARE_MLWF(W, INFO, IO)
-+	         IF (MLWFRUN() .OR. EOS_DO_THIS_STEP(NSTEP, DYN%NSW, INFO%LSTOP)) THEN
-+	           CALL MLWF_FREE(MLWF_GLOBAL)
-+	           CALL MLWF_MAIN(WDES,W,P,KPOINTS,CQIJ,T_INFO,LATT_CUR,INFO,IO,MLWF_GLOBAL)
-+	         ENDIF
-+	         IF (EOS_DO_THIS_STEP(NSTEP, DYN%NSW, INFO%LSTOP)) THEN
-+	           CALL EOS_ANALYZE(MLWF_GLOBAL, W, T_INFO, LATT_CUR, INFO, P, IO, DYN)
-+	         ENDIF
-+	         IF (LWANNIERINTERPOL.OR.LCRPAPLOT) THEN
-+	            BLOCK
-+	            TYPE (wannier_interpolator) :: WANN_INTERP
-+	            CALL WANNIER_INTERPOL_SETUP_KPOINTS(WANN_INTERP,KPOINTS,LATT_CUR,SYMM,W)
++         IF (NSTEP == 1) CALL EOS_PREPARE_MLWF(W, INFO, IO)
++         IF (MLWFRUN() .OR. EOS_DO_THIS_STEP(NSTEP, DYN%NSW, INFO%LSTOP)) THEN
++           CALL MLWF_FREE(MLWF_GLOBAL)
++           CALL MLWF_MAIN(WDES,W,P,KPOINTS,CQIJ,T_INFO,LATT_CUR,INFO,IO,MLWF_GLOBAL)
++         ENDIF
++         IF (EOS_DO_THIS_STEP(NSTEP, DYN%NSW, INFO%LSTOP)) THEN
++           CALL EOS_ANALYZE(MLWF_GLOBAL, W, T_INFO, LATT_CUR, INFO, P, IO, DYN)
++         ENDIF
++         IF (LWANNIERINTERPOL.OR.LCRPAPLOT) THEN
++            BLOCK
++            TYPE (wannier_interpolator) :: WANN_INTERP
++            CALL WANNIER_INTERPOL_SETUP_KPOINTS(WANN_INTERP,KPOINTS,LATT_CUR,SYMM,W)
              CALL WANNIER_INTERPOL_FROM_MLWF(WANN_INTERP,MLWF_GLOBAL,IO)
              CALL WANNIER_INTERPOL_SETUP_HAM(WANN_INTERP,W,IO)
              CALL WANNIER_INTERPOL_SETUP_CDER(WANN_INTERP,W,KPOINTS,GRID,GRIDC,GRIDUS,C_TO_US,IRDMAX,LMDIM,T_INFO,&
@@ -879,7 +716,7 @@ index 83eb235..9e13626 100644
     INTEGER :: IK,IS,IB
     REAL(q) :: ELIM(2,MLWF%NB_TOT)
 +   REAL(q) :: E_OCC_MAX, E_NEXT_MIN, GAP
-+   REAL(q), PARAMETER :: GAP_TOL = 1.E-3_q
++   REAL(q), PARAMETER :: GAP_TOL = 5.E-2_q
  
     ! set froz_max
     MLWF%DIS_FROZ_MAX = CUTOFF_DES%MU(1)
