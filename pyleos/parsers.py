@@ -186,18 +186,32 @@ def parse_eoscar(path: Path) -> EoscarData:
 
 
 def load_case(case_dir: Path) -> CaseData:
-    """Load one calculation directory (POSCAR + wout channel(s) + EOSCAR)."""
+    """Load one calculation directory.
+
+    Wannier channels come from wannier90 .wout files when present; for
+    EOSCAR v3 outputs the #WF detail block already carries every centre,
+    spread and occupation, so a bare EOSCAR + POSCAR pair is sufficient
+    (this is what the archived results_v3/ directories rely on)."""
     case_dir = Path(case_dir)
     structure = parse_poscar(case_dir / "POSCAR")
+    eoscar_path = case_dir / "EOSCAR"
+    eoscar = parse_eoscar(eoscar_path) if eoscar_path.is_file() else None
     spin_files = [case_dir / "wannier90.1.wout", case_dir / "wannier90.2.wout"]
     if all(p.is_file() for p in spin_files):
         channels = [parse_wout(p) for p in spin_files]
         ispin = 2
-    else:
+    elif (case_dir / "wannier90.wout").is_file():
         channels = [parse_wout(case_dir / "wannier90.wout")]
         ispin = 1
-    eoscar_path = case_dir / "EOSCAR"
-    eoscar = parse_eoscar(eoscar_path) if eoscar_path.is_file() else None
+    elif eoscar and eoscar.wf_detail:
+        ispin = 2 if any(w.spin == 2 for w in eoscar.wf_detail) else 1
+        channels = []
+        for ch in range(1, ispin + 1):
+            ws = [w for w in eoscar.wf_detail if w.spin == ch]
+            channels.append(WannierChannel([list(w.centre) for w in ws],
+                                           [w.spread for w in ws]))
+    else:
+        raise FileNotFoundError(f"{case_dir}: no wout and no #WF block in EOSCAR")
     if structure.elements and structure.elements[0].startswith("X") and eoscar:
         if len(eoscar.elements) == len(structure.elements):
             structure.elements = list(eoscar.elements)   # VASP4 POSCAR fallback
