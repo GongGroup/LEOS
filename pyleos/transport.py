@@ -50,6 +50,7 @@ class MinCostFlow:
     def __init__(self, n: int):
         self.n = n
         self.g: List[List[List[float]]] = [[] for _ in range(n)]
+        self.pot: List[float] = []      # final SSP potentials (dual solution)
 
     def add(self, u: int, v: int, cap: int, cost: float) -> None:
         self.g[u].append([v, cap, cost, len(self.g[v])])
@@ -128,6 +129,7 @@ class MinCostFlow:
                 self.g[v][self.g[u][i][3]][1] += f
                 total += f * self.g[u][i][2]
                 v = u
+        self.pot = pot
         return total
 
 
@@ -145,7 +147,7 @@ class WfInfo:
 @dataclass
 class AssignResult:
     ne: List[int]
-    os_int: List[int]
+    os_int: List[Optional[int]]     # None for atoms folded into a fragment
     wfs: List[WfInfo]
     stray: List[WfInfo]
     supply_total: int        # 2*n_wann (or n_wann per spin channel)
@@ -153,20 +155,35 @@ class AssignResult:
     ghost: int               # supply beyond NELECT excluded by the flow cap
     infeasible: int          # target electrons that found no capacity (0 = OK)
     transport_cost: float
+    # Dual-margin reliability (counterpart of Comas-Vila's R(%)): how much
+    # extra transport cost the cheapest single rerouting would incur.
+    wf_margin: List[float] = field(default_factory=list)    # per WF (arc bound)
+    atom_margin: List[float] = field(default_factory=list)  # site level (cost units)
+    atom_conf: List[float] = field(default_factory=list)    # site level, 0-100
+    case_conf: float = 100.0                                # min site R
+    # Element-ledger level: cheapest +-1 rearrangement that CHANGES some
+    # element's total electron count. Intra-element shuffles (homonuclear
+    # bond splits, equivalent sites) are excluded - they cannot move the
+    # element-mean OS that the dev benchmark scores.
+    atom_margin_elem: List[float] = field(default_factory=list)
+    case_conf_elem: float = 100.0
+    # Manual fragments (delocalised multi-centre units, e.g. I3-): each entry
+    # is the 0-based atom-index list of one merged warehouse. Members report
+    # os_int None; the unit's total charge state lives in frag_os.
+    fragments: List[List[int]] = field(default_factory=list)
+    frag_ne: List[int] = field(default_factory=list)
+    frag_os: List[int] = field(default_factory=list)
 
 
 def supply_total_of(wfs: List["WfInfo"]) -> int:
     return sum(w.supply for w in wfs)
 
 
-def assign_case(case: CaseData, beta: float = 3.0,
-                eneg_scale: str = "allen",
-                drop_stray: bool = False,
-                gamma: float = 0.0) -> AssignResult:
-    """gamma > 0 enables the tier-2 cost: c -= gamma * p_hat(w,a), where
-    p_hat is the per-WF-normalised projector-norm composition from the
-    EOSCAR v3 #WP block (chemical fingerprint; complements the centre
-    geometry and stays informative for stray WFs)."""
+def _build_costs(case: CaseData, beta: float, eneg_scale: str,
+                 drop_stray: bool, gamma: float):
+    """WF geometry + per-(wf,atom) transport costs + capacity bounds + flow
+    target. Split out so reliability_margins can re-solve with perturbed
+    bounds without recomputing the (dominant) minimum-image geometry."""
     st = case.structure
     na = len(st.elements)
     binv = inv3(st.lattice)
@@ -197,54 +214,266 @@ def assign_case(case: CaseData, beta: float = 3.0,
 
     nw = len(wfs)
     chi_max = max(eneg(e, eneg_scale) for e in set(st.elements)) or 1.0
-
-    # nodes: 0 source | 1..nw WFs | nw+1..nw+na atoms | nw+na+1 sink
-    S, T = 0, nw + na + 1
-    mcf = MinCostFlow(nw + na + 2)
+    cost_rows: List[List[float]] = []
     for w, wf in enumerate(wfs):
-        mcf.add(S, 1 + w, wf.supply, 0.0)
         phat = {}
         if gamma > 0.0 and case.eoscar.wp_detail:
             pairs = case.eoscar.wp_detail.get((wf.channel, wf.index), [])
             tot = sum(x for _, x in pairs)
             if tot > 1e-8:
                 phat = {at - 1: x / tot for at, x in pairs}
-        for a in range(na):
-            c = d2rows[w][a] + beta * (1.0 - eneg(st.elements[a], eneg_scale) / chi_max)
-            c -= gamma * phat.get(a, 0.0)
-            mcf.add(1 + w, 1 + nw + a, wf.supply, c)
-    for a in range(na):
-        n_min, n_max = capacity_bounds(st.elements[a], zval[st.elements[a]])
-        if n_min > 0:
-            mcf.add(1 + nw + a, T, n_min, -BIG_NEG)
-        if n_max > n_min:
-            mcf.add(1 + nw + a, T, n_max - n_min, 0.0)
-    # Ghost-WF guard: num_wann can exceed the truly occupied manifold, and
-    # the full-occupancy assumption then injects electrons that do not exist.
-    # Capping total flow at NELECT(Wannier) keeps the min-cost k-flow optimal
-    # (SSP ships cheapest units first), so ghost WFs are excluded naturally.
+        cost_rows.append([
+            d2rows[w][a]
+            + beta * (1.0 - eneg(st.elements[a], eneg_scale) / chi_max)
+            - gamma * phat.get(a, 0.0)
+            for a in range(na)])
+
+    bounds = [capacity_bounds(el, zval[el]) for el in st.elements]
     target = None
     if case.eoscar.nelect_wann is not None:
         target = min(round(case.eoscar.nelect_wann), supply_total_of(wfs))
     elif drop_stray:
         target = supply_total_of(wfs)
-    cost = mcf.solve(S, T, max_flow=target)
+    return wfs, cost_rows, bounds, target, na, nw
 
+
+def _solve_flow(wfs: List[WfInfo], cost_rows: List[List[float]],
+                bounds: List[Tuple[int, int]], target: Optional[int],
+                na: int, nw: int):
+    """Build the flow network for the given bounds and solve. Returns the
+    solver (for duals), per-atom electron counts, per-WF destination lists,
+    raw cost, and the geometric cost with the n_min reward term removed."""
+    S, T = 0, nw + na + 1
+    mcf = MinCostFlow(nw + na + 2)
+    for w, wf in enumerate(wfs):
+        mcf.add(S, 1 + w, wf.supply, 0.0)
+        for a in range(na):
+            mcf.add(1 + w, 1 + nw + a, wf.supply, cost_rows[w][a])
+    for a in range(na):
+        n_min, n_max = bounds[a]
+        if n_min > 0:
+            mcf.add(1 + nw + a, T, n_min, -BIG_NEG)
+        if n_max > n_min:
+            mcf.add(1 + nw + a, T, n_max - n_min, 0.0)
+    cost = mcf.solve(S, T, max_flow=target)
     ne = [0] * na
+    dests: List[List[Tuple[int, int]]] = [[] for _ in wfs]
     for w, wf in enumerate(wfs):
         for v, cap_left, c, _ in mcf.g[1 + w]:
-            if 1 + nw <= v <= nw + na and c >= 0:
+            # Forward wf->atom arcs are exactly those pointing into the atom
+            # node range (a sign test on c breaks once gamma makes costs
+            # negative, which silently dropped assignments in the tier-2 runs).
+            if 1 + nw <= v <= nw + na:
                 sent = wf.supply - cap_left
                 if sent > 0:
                     a = v - 1 - nw
                     ne[a] += sent
-                    wf.dests.append((a, sent))
+                    dests[w].append((a, sent))
+    # Undo the n_min reward so solutions with different bounds are comparable
+    # on pure geometry+electronegativity cost.
+    reward_flow = sum(min(ne[a], bounds[a][0]) for a in range(na))
+    geo_cost = cost + BIG_NEG * reward_flow
+    return mcf, ne, dests, cost, geo_cost
 
-    routed = sum(ne)
+
+def _make_units(na: int, fragments: Optional[List[List[int]]]):
+    """Assignment units: one per unmerged atom plus one per fragment (merged
+    warehouse: capacities add, an electron pays the fare to its nearest
+    member). Returns (units, unit_of_atom)."""
+    frags = [sorted(f) for f in (fragments or [])]
+    seen: set = set()
+    for f in frags:
+        for a in f:
+            if a in seen:
+                raise ValueError(f"atom {a+1} appears in two fragments")
+            seen.add(a)
+    units = [[a] for a in range(na) if a not in seen] + frags
+    unit_of = {a: u for u, members in enumerate(units) for a in members}
+    return units, unit_of
+
+
+def _unit_problem(cost_rows, bounds, units, nw):
+    """Collapse atom-level costs/bounds onto units. Identity when every unit
+    is a single atom (list order then equals atom order)."""
+    if all(len(m) == 1 for m in units):
+        return cost_rows, bounds
+    u_cost = [[min(cost_rows[w][a] for a in members) for members in units]
+              for w in range(nw)]
+    u_bounds = [(sum(bounds[a][0] for a in members),
+                 sum(bounds[a][1] for a in members)) for members in units]
+    return u_cost, u_bounds
+
+
+def assign_case(case: CaseData, beta: float = 3.0,
+                eneg_scale: str = "allen",
+                drop_stray: bool = False,
+                gamma: float = 0.0,
+                fragments: Optional[List[List[int]]] = None) -> AssignResult:
+    """gamma > 0 enables the tier-2 cost: c -= gamma * p_hat(w,a), where
+    p_hat is the per-WF-normalised projector-norm composition from the
+    EOSCAR v3 #WP block (chemical fingerprint; complements the centre
+    geometry and stays informative for stray WFs).
+
+    fragments: 0-based atom-index groups treated as single merged warehouses
+    (delocalised multi-centre units such as I3- or metal clusters); the group
+    reports one total charge state instead of per-member integers."""
+    st = case.structure
+    zval = case.eoscar.zval if case.eoscar else {}
+    wfs, cost_rows, bounds, target, na, nw = _build_costs(
+        case, beta, eneg_scale, drop_stray, gamma)
+    for f in (fragments or []):
+        for a in f:
+            if a < 0 or a >= na:
+                raise ValueError(f"fragment atom index {a+1} out of range")
+    units, _unit_of = _make_units(na, fragments)
+    nu = len(units)
+    u_cost, u_bounds = _unit_problem(cost_rows, bounds, units, nw)
+    mcf, ne_u, dests, cost, _geo = _solve_flow(wfs, u_cost, u_bounds, target,
+                                               nu, nw)
+    for w, wf in enumerate(wfs):
+        wf.dests = dests[w]        # unit indices when fragments are active
+
+    routed = sum(ne_u)
     supply_total = sum(w.supply for w in wfs)
     tgt = target if target is not None else supply_total
-    os_int = [round(zval[st.elements[a]]) - ne[a] for a in range(na)]
+    ne = [0] * na
+    os_int: List[Optional[int]] = [None] * na
+    frag_list: List[List[int]] = []
+    frag_ne: List[int] = []
+    frag_os: List[int] = []
+    for u, members in enumerate(units):
+        if len(members) == 1:
+            a = members[0]
+            ne[a] = ne_u[u]
+            os_int[a] = round(zval[st.elements[a]]) - ne_u[u]
+        else:
+            frag_list.append(members)
+            frag_ne.append(ne_u[u])
+            frag_os.append(round(sum(zval[st.elements[a]] for a in members))
+                           - ne_u[u])
     stray = [w for w in wfs
              if w.spread > STRAY_SPREAD or w.d1 > STRAY_DIST]
+
+    # Per-WF ambiguity margin from the duals: for an UNUSED wf->atom arc the
+    # reduced cost rc = c + pot[wf] - pot[atom] lower-bounds the extra cost of
+    # rerouting one unit along it (used arcs sit at rc ~ 0 by complementary
+    # slackness). A small wf_margin marks an electron pair with a near-tie
+    # alternative host - the fragment-suggestion diagnostic feeds on this.
+    # NOTE: this is a per-arc lower bound only; for atom/case-level
+    # reliability use reliability_margins(), which re-solves with forced
+    # +-1 electron counts and therefore prices the full chain rearrangement.
+    pot = mcf.pot
+    wf_margin: List[float] = []
+    for w, wf in enumerate(wfs):
+        used = {u for u, _ in wf.dests}
+        m = math.inf
+        for v, _cap, c, _ in mcf.g[1 + w]:
+            if not (1 + nw <= v <= nw + nu):
+                continue
+            u = v - 1 - nw
+            if u in used:
+                continue
+            rc = max(0.0, c + pot[1 + w] - pot[v])
+            if rc < m:
+                m = rc
+        wf_margin.append(m)
     return AssignResult(ne, os_int, wfs, stray, supply_total, tgt,
-                        supply_total - tgt, tgt - routed, cost)
+                        supply_total - tgt, tgt - routed, cost,
+                        wf_margin, fragments=frag_list, frag_ne=frag_ne,
+                        frag_os=frag_os)
+
+
+def reliability_margins(case: CaseData, beta: float = 3.0,
+                        eneg_scale: str = "allen",
+                        drop_stray: bool = False,
+                        gamma: float = 0.0,
+                        res: Optional[AssignResult] = None,
+                        fragments: Optional[List[List[int]]] = None
+                        ) -> AssignResult:
+    """R(%)-counterpart reliability: for every assignment unit (atom or
+    fragment), the cheapest total transport-cost increase of forcing its
+    electron count to ne+1 or ne-1 (full re-solve, so chain rearrangements
+    are priced in, unlike the single-arc wf_margin bound). Fragment members
+    share their unit's margin. Fills atom_margin/atom_conf/case_conf (and
+    the element-ledger variants) on the AssignResult and returns it.
+
+    Cost units are ~ Angstrom^2 of squared-distance detour; the 0-100
+    normalisation R = 100*m/(m+1) maps a 1 A^2 margin to R = 50. A unit
+    whose count cannot change at all (capacity-infeasible both ways) gets
+    margin inf / R = 100."""
+    wfs, cost_rows, bounds, target, na, nw = _build_costs(
+        case, beta, eneg_scale, drop_stray, gamma)
+    units, unit_of = _make_units(na, fragments)
+    nu = len(units)
+    u_cost, u_bounds = _unit_problem(cost_rows, bounds, units, nw)
+    _, ne0, _, _, geo0 = _solve_flow(wfs, u_cost, u_bounds, target, nu, nw)
+    if res is None:
+        res = assign_case(case, beta=beta, eneg_scale=eneg_scale,
+                          drop_stray=drop_stray, gamma=gamma,
+                          fragments=fragments)
+    for u, members in enumerate(units):
+        if len(members) == 1:
+            assert res.ne[members[0]] == ne0[u], \
+                "reliability re-solve disagrees with base solve"
+
+    elements = case.structure.elements
+    # Ledger label per unit: element symbol, or a pseudo-element per fragment
+    # (moving charge between a fragment and anything else always counts as a
+    # ledger change; shuffles inside the merged unit are invisible anyway).
+    labels = [elements[m[0]] if len(m) == 1 else f"FRAG{u}"
+              for u, m in enumerate(units)]
+
+    def _ledger(ne: List[int]) -> Dict[str, int]:
+        s: Dict[str, int] = {}
+        for x, lb in zip(ne, labels):
+            s[lb] = s.get(lb, 0) + x
+        return s
+
+    ledger0 = _ledger(ne0)
+
+    def _try(u: int, forced: int) -> Optional[Tuple[float, bool]]:
+        n_min, n_max = u_bounds[u]
+        if forced < 0 or forced > n_max:
+            return None
+        b2 = list(u_bounds)
+        if forced > ne0[u]:
+            b2[u] = (forced, n_max)            # reward edge pulls one in
+        else:
+            b2[u] = (min(n_min, forced), forced)   # hard cap pushes one out
+        _, ne1, _, _, geo1 = _solve_flow(wfs, u_cost, b2, target, nu, nw)
+        if ne1[u] != forced or sum(ne1) != sum(ne0):
+            return None                        # force did not take: infeasible
+        # Semicore integrity: reject a solution that raids another unit's
+        # mandatory n_min shell (rewards cancel in geo, so check explicitly).
+        for b in range(nu):
+            if b != u and ne1[b] < min(u_bounds[b][0], ne0[b]):
+                return None
+        return geo1 - geo0, _ledger(ne1) != ledger0
+
+    unit_margin: List[float] = []
+    unit_margin_elem: List[float] = []
+    for u in range(nu):
+        site, elem = [], []
+        for forced in (ne0[u] + 1, ne0[u] - 1):
+            r = _try(u, forced)
+            if r is None:
+                continue
+            delta, changed = r
+            site.append(delta)
+            if changed:
+                elem.append(delta)
+        unit_margin.append(max(0.0, min(site)) if site else math.inf)
+        # inf here means: no single-unit rearrangement can move any ledger
+        # total - the element-mean OS is immune to +-1 perturbations.
+        unit_margin_elem.append(max(0.0, min(elem)) if elem else math.inf)
+
+    def _conf(ms: List[float]) -> List[float]:
+        return [100.0 if m == math.inf else 100.0 * m / (m + 1.0) for m in ms]
+
+    res.atom_margin = [unit_margin[unit_of[a]] for a in range(na)]
+    res.atom_conf = _conf(res.atom_margin)
+    res.case_conf = min(res.atom_conf) if res.atom_conf else 100.0
+    res.atom_margin_elem = [unit_margin_elem[unit_of[a]] for a in range(na)]
+    conf_elem = _conf(res.atom_margin_elem)
+    res.case_conf_elem = min(conf_elem) if conf_elem else 100.0
+    return res
