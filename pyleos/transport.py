@@ -161,7 +161,12 @@ def supply_total_of(wfs: List["WfInfo"]) -> int:
 
 def assign_case(case: CaseData, beta: float = 3.0,
                 eneg_scale: str = "allen",
-                drop_stray: bool = False) -> AssignResult:
+                drop_stray: bool = False,
+                gamma: float = 0.0) -> AssignResult:
+    """gamma > 0 enables the tier-2 cost: c -= gamma * p_hat(w,a), where
+    p_hat is the per-WF-normalised projector-norm composition from the
+    EOSCAR v3 #WP block (chemical fingerprint; complements the centre
+    geometry and stays informative for stray WFs)."""
     st = case.structure
     na = len(st.elements)
     binv = inv3(st.lattice)
@@ -198,8 +203,15 @@ def assign_case(case: CaseData, beta: float = 3.0,
     mcf = MinCostFlow(nw + na + 2)
     for w, wf in enumerate(wfs):
         mcf.add(S, 1 + w, wf.supply, 0.0)
+        phat = {}
+        if gamma > 0.0 and case.eoscar.wp_detail:
+            pairs = case.eoscar.wp_detail.get((wf.channel, wf.index), [])
+            tot = sum(x for _, x in pairs)
+            if tot > 1e-8:
+                phat = {at - 1: x / tot for at, x in pairs}
         for a in range(na):
             c = d2rows[w][a] + beta * (1.0 - eneg(st.elements[a], eneg_scale) / chi_max)
+            c -= gamma * phat.get(a, 0.0)
             mcf.add(1 + w, 1 + nw + a, wf.supply, c)
     for a in range(na):
         n_min, n_max = capacity_bounds(st.elements[a], zval[st.elements[a]])

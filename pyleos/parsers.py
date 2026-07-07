@@ -62,6 +62,8 @@ class EoscarData:
     n_lost_states: Optional[int] = None       # EOSCAR v2 loss diagnostics
     n_lost_e: Optional[float] = None
     wf_detail: List[WfDetail] = field(default_factory=list)   # v2 #WF block
+    wp_detail: Dict[Tuple[int, int], List[Tuple[int, float]]] = field(
+        default_factory=dict)   # v3 #WP block: (spin, wf) -> [(atom, weight)]
 
 
 @dataclass
@@ -142,6 +144,7 @@ def parse_eoscar(path: Path) -> EoscarData:
     nelect_wann = dne = None
     n_lost_states = n_lost_e = None
     wf_detail: List[WfDetail] = []
+    wp_detail: Dict[Tuple[int, int], List[Tuple[int, float]]] = {}
     for line in path.read_text().splitlines():
         s = line.strip()
         if s.startswith("#"):
@@ -153,6 +156,14 @@ def parse_eoscar(path: Path) -> EoscarData:
                 n_lost_states = int(s.split("=")[1])
             elif s.startswith("# N_LOST_E"):
                 n_lost_e = float(s.split("=")[1])
+            elif s.startswith("#WP") and len(s.split()) >= 11 and s.split()[1].isdigit():
+                q = s.split()
+                pairs = []
+                for k in range(3, 11, 2):
+                    at, w = int(q[k]), float(q[k + 1])
+                    if at > 0 and w > 1e-4:
+                        pairs.append((at, w))
+                wp_detail[(int(q[1]), int(q[2]))] = pairs
             elif s.startswith("#WF") and len(s.split()) >= 11 and s.split()[1].isdigit():
                 q = s.split()
                 wf_detail.append(WfDetail(
@@ -171,7 +182,7 @@ def parse_eoscar(path: Path) -> EoscarData:
     if not elements:
         raise ValueError(f"{path}: no atom rows parsed")
     return EoscarData(zval, ne, osi, elements, nelect_wann, dne,
-                      n_lost_states, n_lost_e, wf_detail)
+                      n_lost_states, n_lost_e, wf_detail, wp_detail)
 
 
 def load_case(case_dir: Path) -> CaseData:
