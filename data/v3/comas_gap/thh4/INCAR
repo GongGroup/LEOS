@@ -2,8 +2,8 @@ SYSTEM = LEOS batch case
 PREC = Accurate
 ENCUT = 600
 EDIFF = 1e-06
-ISMEAR = 0
-SIGMA = 0.05
+ISMEAR = 1
+SIGMA = 0.2
 ISYM = 0
 NSW = 0
 IBRION = -1
@@ -14,4 +14,5 @@ LSCDM = .TRUE.
 LWANNIER90_AUTO_WINDOW = .TRUE.
 EOS_WF_DETAIL = .TRUE.
 EOS_PROJ_WEIGHT = .TRUE.
-ALGO = Normal
+
+WANNIER90_WIN = "search_shells = 36"
