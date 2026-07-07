@@ -8,10 +8,10 @@ LEOS 的离线分析包：把 Wannier 电子对原子的归属表述为**容量�
 
 ```bash
 # 单案例（case 目录需含 POSCAR、EOSCAR、wannier90[.1/.2].wout）
-python3 pyleos/cli.py case leos_work/leos_eos_dataset/As4S4 -v
+python3 pyleos/cli.py case data/v1/eos_dataset/As4S4 -v
 
 # 全量回归（对照 tests/reference_os.json 的理想氧化态）
-python3 pyleos/cli.py regress --root leos_work
+python3 pyleos/cli.py regress
 
 # 参数：--beta 电负性权重（默认 10.0；X-H 键的正确判定需要 β≥10，36 案例回归显示 β=10 无副作用）；--eneg allen|pauling（默认 allen）
 ```

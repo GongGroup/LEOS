@@ -3,7 +3,7 @@
 
 Usage:
   python3 pyleos/cli.py case <case_dir> [--beta B] [--eneg allen|pauling] [-v]
-  python3 pyleos/cli.py regress [--root leos_work] [--beta B] [--eneg SCALE]
+  python3 pyleos/cli.py regress [--root data/v1] [--beta B] [--eneg SCALE]
 """
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ def run_case(case_dir: Path, beta: float, eneg_scale: str, verbose: bool = False
 
 
 def find_oxide_dir(root: Path, name: str):
-    for d in sorted(root.glob(f"leos-oxide-{name}-*")):
+    for d in sorted((root / "oxides").glob(f"leos-oxide-{name}-*")):
         if (d / "EOSCAR").is_file() and (
                 (d / "wannier90.wout").is_file() or (d / "wannier90.1.wout").is_file()):
             return d
@@ -86,7 +86,7 @@ def regress(root: Path, beta: float, eneg_scale: str):
     ref = json.loads(REF_PATH.read_text())
     rows = []
     targets = []
-    ds_root = root / "leos_eos_dataset"
+    ds_root = root / "eos_dataset"
     for name, meta in ref["dataset"].items():
         d = ds_root / name
         if d.is_dir() and (d / "EOSCAR").is_file():
@@ -161,7 +161,7 @@ def main():
     p1.add_argument("--gamma", type=float, default=0.0,
                     help="tier-2 projector-composition weight (needs #WP data)")
     p2 = sub.add_parser("regress")
-    p2.add_argument("--root", type=Path, default=Path("leos_work"))
+    p2.add_argument("--root", type=Path, default=Path("data/v1"))
     p2.add_argument("--beta", type=float, default=10.0)
     p2.add_argument("--eneg", default="allen", choices=["allen", "pauling"])
     args = ap.parse_args()
