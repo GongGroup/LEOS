@@ -97,6 +97,17 @@ Wannier 中心/投影自动判定固体与分子晶体的 IUPAC 氧化态。目�
 - **M3 sai-pod 编译与批跑**：官方工具链（vasp/6.4.3-nvhpc25.7-ompi5.0.10 或
   自编 CPU 链）+ wannier90；GPU VASP ↔ CPU W90 库兼容性实测（退路：CPU 编译）；
   Python 批跑驱动替代 bash（16V100 分区 4-GPU 粒度，一节点 4 算例并行）。
+  **进度 2026-07-07**：发现生产树 vasp.6.4.3_ccqn 已含 LEOS v1 + W90 链接
+  （历史 198 算例即出自它）。新建隔离树 ~/apps/vasp.6.4.3_leos_v2（v2 eos.F
+  覆盖 + GAP_TOL 修改 + makefile.include 去 ccqn 硬路径），
+  `make DEPS=1 -j8` 并行编译通过（nvhpc 24.3 GPU 链，作业 593747）。
+  CO2 验证（作业 593776，4×V100）：EOSCAR v2 全功能正常——N_LOST_* 诊断头、
+  #WF 明细块（占据/中心/spread/归属）；物理结果 C+4/O−2 正确，dNe=9.6e-11；
+  Allen 标度生效（8 个 C-O 键 WF 全判给 O）。pyleos 已支持 v2 解析并端到端
+  对账通过（#WF 占据总和=NELECT，运输结果与贪心/理想三方一致）。
+  测试算例位于 ~/leos_v2_test/CO2。**M3 剩余**：Python 批跑驱动、
+  投影权重导出（档 2 数据）、EOS_SCDM_ONLY、warm start（M2 递延项，
+  现在有编译环境可开发）。
 - **M4 全量基准**：Comas-Vilà 40 固体输入准备（COD/CCDC 结构）+ 74 现有案例，
   四配置全跑 + 敏感性扫描。
 - **M5 应用演示**：A → C → B（见决策 8）。
