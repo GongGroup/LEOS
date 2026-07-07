@@ -20,6 +20,13 @@ Failure triage (status/harvest):
   OK         - EOSCAR present
 Retry ladders (retry command): DFT -> ALGO=Normal then ALGO=All;
 W90 -> EOS_SCDM_ONLY=.FALSE. + larger NBANDS margin.
+
+Tiered screening (stage --mode tiered + escalate):
+  stage assigns SCDM-only fast mode to every case EXCEPT those containing
+  4d/5d/f-block elements (d/f manifolds are sensitive to the initial guess -
+  the WCl4/5/6 + MoCl2 lesson), which start on full MLWF directly.
+  After runs finish, `escalate` re-queues any SCDM-only case whose EOSCAR
+  carries quality flags (stray WFs, |dNe| drift, ghost excess) as full MLWF.
 """
 from __future__ import annotations
 
@@ -79,6 +86,49 @@ echo LEOS_BATCH_DONE
 """
 
 
+# 4d/5d/f-block elements whose localised manifolds are sensitive to the SCDM
+# initial guess (WCl4/5/6 + MoCl2 benchmark lesson): these skip the fast
+# screening tier and start on full MLWF directly.
+HEAVY_TM = {
+    "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd",
+    "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg",
+    "La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er",
+    "Tm", "Yb", "Lu", "Th", "U",
+}
+
+
+def poscar_elements(path: Path) -> set:
+    lines = path.read_text().splitlines()
+    toks = lines[5].split()
+    return set() if all(t.isdigit() for t in toks) else set(toks)
+
+
+def eoscar_quality(path: Path) -> list:
+    """Self-contained quality read of an EOSCAR (no pyleos import on the
+    cluster): returns the list of flags that warrant escalating a fast
+    SCDM-only screen to full MLWF."""
+    flags = []
+    n_stray = 0
+    for line in path.read_text(errors="replace").splitlines():
+        s = line.split()
+        if line.startswith("#") and "|dNe|" in line:
+            try:
+                if abs(float(line.split("=")[1])) > 1e-3:
+                    flags.append("dNe")
+            except ValueError:
+                pass
+        elif line.startswith("#WF") and len(s) >= 8 and s[1].isdigit():
+            # columns: #WF spin idx occ cx cy cz spread ...
+            try:
+                if float(s[7]) > 3.0:
+                    n_stray += 1
+            except ValueError:
+                pass
+    if n_stray:
+        flags.append(f"stray:{n_stray}")
+    return flags
+
+
 def write_incar(path: Path, overrides: dict) -> None:
     tags = dict(INCAR_TEMPLATE)
     tags.update(overrides or {})
@@ -96,7 +146,8 @@ def save_state(dest: Path, state: dict) -> None:
     (dest / "batch_state.json").write_text(json.dumps(state, indent=1))
 
 
-def stage(dest: Path, cases_file: Path, qos: str, walltime: str) -> None:
+def stage(dest: Path, cases_file: Path, qos: str, walltime: str,
+          mode: str = "full") -> None:
     cases = json.loads(cases_file.read_text())
     dest.mkdir(parents=True, exist_ok=True)
     state = load_state(dest)
@@ -111,12 +162,60 @@ def stage(dest: Path, cases_file: Path, qos: str, walltime: str) -> None:
                 break
             shutil.copy2(src / f, d / f)
         else:
-            write_incar(d / "INCAR", c.get("incar", {}))
+            tier = mode
+            if mode == "tiered":
+                heavy = poscar_elements(d / "POSCAR") & HEAVY_TM
+                tier = "full" if heavy else "scdm"
+                if heavy:
+                    print(f"[{name}] heavy TM {sorted(heavy)} -> full MLWF")
+            overrides = dict(c.get("incar", {}))
+            if tier == "scdm":
+                overrides.setdefault("EOS_SCDM_ONLY", ".TRUE.")
+            write_incar(d / "INCAR", overrides)
             (d / "run.sbatch").write_text(SBATCH_TEMPLATE.format(
                 name=name[:12], qos=qos, walltime=walltime, vasp=VASP_BIN))
-            state.setdefault(name, {"status": "STAGED", "jobid": None, "retries": 0})
-            print(f"[{name}] staged")
+            state.setdefault(name, {"status": "STAGED", "jobid": None,
+                                    "retries": 0, "tier": tier})
+            print(f"[{name}] staged ({tier})")
     save_state(dest, state)
+
+
+def escalate(dest: Path) -> None:
+    """Re-queue SCDM-only screens whose EOSCAR carries quality flags as full
+    MLWF runs (the second rung of the tiered strategy)."""
+    state = load_state(dest)
+    n = 0
+    for name, rec in sorted(state.items()):
+        if rec.get("tier") != "scdm" or rec.get("status") == "ESCALATED":
+            continue
+        d = dest / name
+        eoscar = d / "EOSCAR"
+        if not eoscar.is_file():
+            continue                     # failures go through retry, not here
+        flags = eoscar_quality(eoscar)
+        if not flags:
+            print(f"[{name}] clean screen - keep")
+            continue
+        incar = d / "INCAR"
+        tags = {}
+        for line in incar.read_text().splitlines():
+            if "=" in line:
+                k, v = line.split("=", 1)
+                tags[k.strip()] = v.strip()
+        tags["EOS_SCDM_ONLY"] = ".FALSE."
+        with incar.open("w") as fh:
+            for k, v in tags.items():
+                fh.write(f"{k} = {v}\n")
+        for f in ("EOSCAR", "print-out"):
+            p = d / f
+            if p.is_file():
+                p.rename(d / (f + ".scdm"))   # keep the screen for comparison
+        rec.update(status="RETRY", tier="full")
+        rec["status_note"] = "escalated: " + ",".join(flags)
+        n += 1
+        print(f"[{name}] ESCALATE ({','.join(flags)}) -> full MLWF re-queued")
+    save_state(dest, state)
+    print(f"{n} case(s) escalated; run submit to launch them")
 
 
 def squeue_ids() -> set:
@@ -249,6 +348,9 @@ def main() -> None:
     p.add_argument("--cases", type=Path, required=True)
     p.add_argument("--qos", default="rush-gpu")
     p.add_argument("--walltime", default="02:00:00")
+    p.add_argument("--mode", default="full", choices=["full", "scdm", "tiered"])
+    p = sub.add_parser("escalate")
+    p.add_argument("--dest", type=Path, required=True)
     p = sub.add_parser("submit")
     p.add_argument("--dest", type=Path, required=True)
     p.add_argument("--max-queue", type=int, default=8)
@@ -261,7 +363,9 @@ def main() -> None:
     p.add_argument("--out", type=Path, required=True)
     a = ap.parse_args()
     if a.cmd == "stage":
-        stage(a.dest.expanduser(), a.cases, a.qos, a.walltime)
+        stage(a.dest.expanduser(), a.cases, a.qos, a.walltime, a.mode)
+    elif a.cmd == "escalate":
+        escalate(a.dest.expanduser())
     elif a.cmd == "submit":
         submit(a.dest.expanduser(), a.max_queue)
     elif a.cmd == "status":
