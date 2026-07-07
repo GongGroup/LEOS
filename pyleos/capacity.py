@@ -30,6 +30,10 @@ OS_BOUNDS: Dict[str, Tuple[int, int]] = {
     "La": (0, 3), "Ce": (0, 4), "Hf": (-2, 4), "Ta": (-3, 5),
     "W": (-4, 6), "Re": (-3, 7), "Os": (-4, 8), "Ir": (-3, 8),
     "Pt": (-3, 6), "Au": (-3, 5), "Hg": (-2, 4),
+    # Noble gases: high-pressure chemistry reaches Xe(+8)/XeF4 on one side
+    # and anionic Xe (MgXe electride discussion) on the other - keep wide.
+    "He": (0, 0), "Ne": (0, 2), "Ar": (-1, 2), "Kr": (-1, 4), "Xe": (-2, 8),
+    "Th": (0, 4), "U": (-1, 6),
 }
 DEFAULT_BOUNDS = (-4, 8)
 
@@ -48,6 +52,10 @@ ENEG_ALLEN: Dict[str, float] = {
     "La": 1.09, "Ce": 1.09, "Hf": 1.16, "Ta": 1.34, "W": 1.47,
     "Re": 1.60, "Os": 1.65, "Ir": 1.68, "Pt": 1.72, "Au": 1.92,
     "Hg": 1.76, "Pb": 1.854, "Bi": 2.01,
+    # Noble gases (Allen defines them; needed for the XeO/XeF high-pressure
+    # set). Th/U have no Allen value - Pauling-anchored estimates, flagged.
+    "He": 4.160, "Ne": 4.787, "Ar": 3.242, "Kr": 2.966, "Xe": 2.582,
+    "Th": 1.3, "U": 1.38,
 }
 
 # Pauling scale kept for comparison with the current Fortran greedy.
@@ -63,6 +71,7 @@ ENEG_PAULING: Dict[str, float] = {
     "Cs": 0.79, "Ba": 0.89, "La": 1.10, "Ce": 1.12, "Hf": 1.3, "Ta": 1.5,
     "W": 2.36, "Re": 1.9, "Os": 2.2, "Ir": 2.20, "Pt": 2.28, "Au": 2.54,
     "Hg": 2.00, "Pb": 2.33, "Bi": 2.02,
+    "Kr": 3.00, "Xe": 2.60, "Th": 1.3, "U": 1.38,
 }
 
 
