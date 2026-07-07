@@ -174,6 +174,13 @@ IUPAC 2014/2016 技术报告配套的是 Allen 标度；旧实现用 Pauling 属
   学追踪氧化态。与我们轨迹能力重叠，但他们只能处理 Hubbard 位点（d/f
   金属），氧的价态是结构性盲区——所以我们的演示 A 选阴离子氧化还原。
 
+### 写作注意：术语歧义
+
+论文里 "transport" 一词对凝聚态读者的第一联想是**电子输运**（电导、迁移率，
+Wannier 插值 + 玻尔兹曼方程那条线），与我们的运筹学"运输问题"完全无关。
+首次出现处必须显式限定——用 "optimal assignment / minimum-cost-flow
+formulation"，或写明 "optimal transport (in the operations-research sense)"。
+
 ## 7. 风险与未决事项
 
 1. **档 2 代价公式重设计**：第一版失败（重原子的投影权重天然偏大，把
