@@ -256,6 +256,10 @@ def triage(d: Path) -> str:
     text = log.read_text(errors="replace") if log.is_file() else ""
     if any(k in text for k in ("I REFUSE", "EDDDAV: Call to ZHEGV", "BAD TERMINATION")):
         return "FAIL_DFT"
+    if "Not enough bvectors" in text:
+        # wannier90 kmesh failure (skewed/body-centred small cells with an
+        # unlucky grid) - a k-grid problem, not an SCF one
+        return "FAIL_W90"
     wouts = list(d.glob("wannier90*.wout"))
     if not wouts or not any("Final State" in w.read_text(errors="replace") for w in wouts):
         outcar = d / "OUTCAR"
