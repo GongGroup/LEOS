@@ -69,6 +69,10 @@ def main():
     ap.add_argument("--out", type=Path, default=ROOT / "data/v3/reliability_74.tsv")
     ap.add_argument("--beta", type=float, default=10.0)
     ap.add_argument("--gamma", type=float, default=0.0)
+    ap.add_argument("--tier2", default="linear",
+                    choices=["linear", "arbiter", "baseline"])
+    ap.add_argument("--only-wp", action="store_true",
+                    help="restrict to cases with a #WP block (tier-2 bench)")
     ap.add_argument("--no-reliability", action="store_true")
     args = ap.parse_args()
 
@@ -80,10 +84,15 @@ def main():
         print(f"[{i+1:2d}/{len(cases)}] {name} ...", end=" ")
         try:
             case = load_case(d)
-            res = assign_case(case, beta=args.beta, gamma=args.gamma)
+            if args.only_wp and not (case.eoscar and case.eoscar.wp_detail):
+                print("skip (no #WP)")
+                continue
+            res = assign_case(case, beta=args.beta, gamma=args.gamma,
+                              tier2=args.tier2)
             if not args.no_reliability:
                 res = reliability_margins(case, beta=args.beta,
-                                          gamma=args.gamma, res=res)
+                                          gamma=args.gamma, res=res,
+                                          tier2=args.tier2)
         except Exception as exc:
             print(f"ERROR {str(exc)[:50]}")
             rows.append((batch, name, "ERROR", "", "", "", "", ""))
