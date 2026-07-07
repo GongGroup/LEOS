@@ -105,9 +105,25 @@ Wannier 中心/投影自动判定固体与分子晶体的 IUPAC 氧化态。目�
   #WF 明细块（占据/中心/spread/归属）；物理结果 C+4/O−2 正确，dNe=9.6e-11；
   Allen 标度生效（8 个 C-O 键 WF 全判给 O）。pyleos 已支持 v2 解析并端到端
   对账通过（#WF 占据总和=NELECT，运输结果与贪心/理想三方一致）。
-  测试算例位于 ~/leos_v2_test/CO2。**M3 剩余**：Python 批跑驱动、
-  投影权重导出（档 2 数据）、EOS_SCDM_ONLY、warm start（M2 递延项，
-  现在有编译环境可开发）。
+  测试算例位于 ~/leos_v2_test/CO2。
+  **M3 四件套完成（同日晚，v3，patch/v3/）**：
+  ① 投影权重导出：#WP 块 = 每 WF 的原子投影仪范数指纹（QION 增广差
+  方案实测对比度不足 1.35:1 已弃用；投影范数恢复 ~5:1，键 WF 呈 C/O
+  双成分 0.81/0.55——档 2 代价的数据基础就位）。
+  ② EOS_SCDM_ONLY：CO2 验证 OS 完全不变，W90 2s→0.023s（~86×）。
+  ③ warm start：guiding centres 注入验证生效（MD 第 2 步起 win 带
+  40 个 c= 投影行）；小体系开销>收益（0.58→1.3s），收益场景在大体系
+  难收敛案例，待基准。
+  ④ 批跑框架 pyleos/batch.py：stage/submit/status 实测通过（服务器端
+  自足，失败三级归因+重试阶梯）。
+  **重大修复**：服务器生产树 main.F 是写死 IF(NSTEP==1) 的老集成，
+  EOS_EVERY_N 轨迹特性在 v1/v2 中从未真正执行（历史算例全单点故未
+  暴露）；v3 重写钩子后 3 步 MD 验证 STEP 1/2/3 齐全。
+  **新观察**：92K CO2 MD 第 3 步贪心 OS 漂移（C+4→+3/+2）——朴素贪心
+  在轨迹上不稳定，运输后处理的直接价值点；MD 中 num_wann 随部分占据
+  虚胖（32→40），pyleos NELECT 上限流自动处理。
+  **待办**：patch/leos.patch 的 v3 正式合并（当前 v3 = v2 patch +
+  patch/v3/ 的 eos.F 全量与两个注入脚本）；warm start 大体系基准。
 - **M4 全量基准**：Comas-Vilà 40 固体输入准备（COD/CCDC 结构）+ 74 现有案例，
   四配置全跑 + 敏感性扫描。
 - **M5 应用演示**：A → C → B（见决策 8）。
