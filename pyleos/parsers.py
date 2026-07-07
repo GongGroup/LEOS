@@ -39,6 +39,19 @@ class WannierChannel:
 
 
 @dataclass
+class WfDetail:
+    spin: int
+    index: int
+    occ: float                                # electrons carried (RSPIN-scaled)
+    centre: Tuple[float, float, float]        # cartesian, Angstrom
+    spread: float
+    at1: int                                  # greedy primary atom (1-based)
+    e1: float
+    at2: int
+    e2: float
+
+
+@dataclass
 class EoscarData:
     zval: Dict[str, float]                    # element -> ZVAL
     greedy_ne: List[float]                    # per atom, n_e assigned by greedy
@@ -46,6 +59,9 @@ class EoscarData:
     elements: List[str]                       # per atom
     nelect_wann: Optional[float] = None
     dne: Optional[float] = None
+    n_lost_states: Optional[int] = None       # EOSCAR v2 loss diagnostics
+    n_lost_e: Optional[float] = None
+    wf_detail: List[WfDetail] = field(default_factory=list)   # v2 #WF block
 
 
 @dataclass
@@ -124,6 +140,8 @@ def parse_eoscar(path: Path) -> EoscarData:
     ne: List[float] = []
     osi: List[int] = []
     nelect_wann = dne = None
+    n_lost_states = n_lost_e = None
+    wf_detail: List[WfDetail] = []
     for line in path.read_text().splitlines():
         s = line.strip()
         if s.startswith("#"):
@@ -131,6 +149,17 @@ def parse_eoscar(path: Path) -> EoscarData:
                 nelect_wann = float(s.split("=")[1])
             elif "|dNe|" in s:
                 dne = float(s.split("=")[1])
+            elif s.startswith("# N_LOST_STATES"):
+                n_lost_states = int(s.split("=")[1])
+            elif s.startswith("# N_LOST_E"):
+                n_lost_e = float(s.split("=")[1])
+            elif s.startswith("#WF") and len(s.split()) >= 11 and s.split()[1].isdigit():
+                q = s.split()
+                wf_detail.append(WfDetail(
+                    int(q[1]), int(q[2]), float(q[3]),
+                    (float(q[4]), float(q[5]), float(q[6])),
+                    float(q[7]), int(q[8]), float(q[9]),
+                    int(q[10]), float(q[11]) if len(q) > 11 else 0.0))
             continue
         parts = s.split()
         if len(parts) >= 6 and parts[0].isdigit():
@@ -141,7 +170,8 @@ def parse_eoscar(path: Path) -> EoscarData:
             osi.append(int(parts[5]))
     if not elements:
         raise ValueError(f"{path}: no atom rows parsed")
-    return EoscarData(zval, ne, osi, elements, nelect_wann, dne)
+    return EoscarData(zval, ne, osi, elements, nelect_wann, dne,
+                      n_lost_states, n_lost_e, wf_detail)
 
 
 def load_case(case_dir: Path) -> CaseData:
