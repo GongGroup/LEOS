@@ -35,9 +35,10 @@ def element_summary(elements, values):
 
 
 def run_case(case_dir: Path, beta: float, eneg_scale: str, verbose: bool = False,
-             drop_stray: bool = False):
+             drop_stray: bool = False, gamma: float = 0.0):
     case = load_case(case_dir)
-    res = assign_case(case, beta=beta, eneg_scale=eneg_scale, drop_stray=drop_stray)
+    res = assign_case(case, beta=beta, eneg_scale=eneg_scale, drop_stray=drop_stray,
+                      gamma=gamma)
     st = case.structure
     print(f"\n=== {case.name}  (ISPIN={case.ispin}, WFs={len(res.wfs)}, "
           f"electrons={res.supply_total}) ===")
@@ -157,13 +158,16 @@ def main():
     p1.add_argument("-v", "--verbose", action="store_true")
     p1.add_argument("--drop-stray", action="store_true",
                     help="exclude unlocalised WFs (attribution diagnostic)")
+    p1.add_argument("--gamma", type=float, default=0.0,
+                    help="tier-2 projector-composition weight (needs #WP data)")
     p2 = sub.add_parser("regress")
     p2.add_argument("--root", type=Path, default=Path("leos_work"))
     p2.add_argument("--beta", type=float, default=10.0)
     p2.add_argument("--eneg", default="allen", choices=["allen", "pauling"])
     args = ap.parse_args()
     if args.cmd == "case":
-        run_case(args.dir, args.beta, args.eneg, args.verbose, args.drop_stray)
+        run_case(args.dir, args.beta, args.eneg, args.verbose, args.drop_stray,
+                 args.gamma)
     else:
         regress(args.root, args.beta, args.eneg)
 
