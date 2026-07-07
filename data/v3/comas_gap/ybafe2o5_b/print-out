@@ -1,0 +1,45 @@
+ running    4 mpi-ranks, on    1 nodes
+ distrk:  each k-point on    4 cores,    1 groups
+ distr:  one band on    1 cores,    4 groups
+ OpenACC runtime initialized ...    4 GPUs detected
+ vasp.6.4.3 19Mar24 (build Jul  7 2026 09:30:57) complex                         
+ POSCAR found type information on POSCAR BaFeO Y 
+ POSCAR found :  4 types and       9 ions
+ scaLAPACK will be used selectively (only on CPU)
+ LDA part: xc-table for (Slater+PW92), standard interpolation
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.806896825915E+03    0.80690E+03   -0.34176E+04  9856   0.180E+03
+DAV:   2     0.410508663267E+02   -0.76585E+03   -0.71182E+03 10328   0.467E+02
+DAV:   3    -0.778360741630E+02   -0.11889E+03   -0.11478E+03 12380   0.189E+02
+DAV:   4    -0.854489424092E+02   -0.76129E+01   -0.75093E+01 15896   0.457E+01
+DAV:   5    -0.857525369749E+02   -0.30359E+00   -0.30261E+00 15632   0.736E+00    0.267E+01
+DAV:   6    -0.793833480045E+02    0.63692E+01   -0.15523E+02 14168   0.102E+02    0.464E+01
+DAV:   7    -0.693361150077E+02    0.10047E+02   -0.58302E+01 14488   0.120E+02    0.121E+01
+DAV:   8    -0.708089890836E+02   -0.14729E+01   -0.15751E+01 14396   0.233E+01    0.149E+01
+DAV:   9    -0.696480845646E+02    0.11609E+01   -0.29311E+00 16028   0.159E+01    0.808E+00
+DAV:  10    -0.693716696591E+02    0.27641E+00   -0.14348E+00 15864   0.127E+01    0.495E+00
+DAV:  11    -0.692714492296E+02    0.10022E+00   -0.42528E-01 15084   0.839E+00    0.264E+00
+DAV:  12    -0.692504915253E+02    0.20958E-01   -0.18377E-01 15152   0.305E+00    0.182E+00
+DAV:  13    -0.692557799540E+02   -0.52884E-02   -0.22333E-02 13804   0.192E+00    0.991E-01
+DAV:  14    -0.692512830338E+02    0.44969E-02   -0.26948E-02 15224   0.208E+00    0.872E-01
+DAV:  15    -0.692542725368E+02   -0.29895E-02   -0.16186E-02 14428   0.706E-01    0.553E-01
+DAV:  16    -0.692546807768E+02   -0.40824E-03   -0.18734E-03 14376   0.746E-01    0.235E-01
+DAV:  17    -0.692543840060E+02    0.29677E-03   -0.88132E-04 15120   0.374E-01    0.130E-01
+DAV:  18    -0.692543109212E+02    0.73085E-04   -0.31529E-04 15256   0.249E-01    0.522E-02
+DAV:  19    -0.692543193183E+02   -0.83971E-05   -0.77178E-05 14416   0.720E-02    0.323E-02
+DAV:  20    -0.692543189118E+02    0.40652E-06   -0.37988E-05 13804   0.846E-02    0.268E-02
+DAV:  21    -0.692543186190E+02    0.29283E-06   -0.17861E-05 13632   0.472E-02    0.117E-02
+DAV:  22    -0.692543187119E+02   -0.92938E-07   -0.20485E-06  7544   0.184E-02
+ Calling wannier_setup of wannier90 in library mode
+ SCDM mode
+ Computing MMN (overlap matrix elements)
+ Running wannier90 in library mode for spin up   (check wannier90.wout)
+ Running wannier90 in library mode for spin down (check wannier90.wout)
+   1 F= -.69254319E+02 E0= -.69250368E+02  d E =-.790204E-02  mag=     7.9991
+LEOS_BATCH_DONE

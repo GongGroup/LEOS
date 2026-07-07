@@ -215,4 +215,21 @@ def load_case(case_dir: Path) -> CaseData:
     if structure.elements and structure.elements[0].startswith("X") and eoscar:
         if len(eoscar.elements) == len(structure.elements):
             structure.elements = list(eoscar.elements)   # VASP4 POSCAR fallback
+    if eoscar and len(eoscar.elements) == len(structure.elements):
+        # Pseudopotential VRHFIN quirks truncate element names in the EOSCAR
+        # atom rows (the official Xe POTCAR carries "VRHFIN =X :", so VASP
+        # reports the element as "X"). When EOSCAR names disagree with the
+        # POSCAR but match as prefixes, trust the POSCAR.
+        ren = {}
+        ok = True
+        for eo, po in zip(eoscar.elements, structure.elements):
+            if eo != po:
+                if po.startswith(eo) and ren.get(eo, po) == po:
+                    ren[eo] = po
+                else:
+                    ok = False
+                    break
+        if ok and ren:
+            eoscar.zval = {ren.get(k, k): v for k, v in eoscar.zval.items()}
+            eoscar.elements = [ren.get(e, e) for e in eoscar.elements]
     return CaseData(case_dir, structure, channels, eoscar, ispin)
