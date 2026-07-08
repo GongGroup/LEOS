@@ -189,6 +189,16 @@ IUPAC 2014/2016 技术报告配套的是 Allen 标度；旧实现用 Pauling 属
 
 （2026-07-07 起进入第二阶段，执行计划见第 7 节。）
 
+| 第二阶段 | 内容 | 状态 |
+|---|---|---|
+| P1 | 补丁合并 leos_v3.patch + 全流程验证 | 完成（三重验证，patch/README.md） |
+| P2 | 纯后处理四件套（fragment / 档 2 双路线 / 对偶 margin / SCDM 分层） | 完成（RESULTS 3.8-3.11） |
+| P3 | 极化子破缺 + HSE 印证 + Fe3O4 复用 | 完成（RESULTS 3.10） |
+| P4 | Comas-Vilà 测试集补齐 | 39/40（RESULTS 3.13；MgXe 等 SI） |
+| P5 | M5-B 三体系全链 | 完成（9×50ps + 180 帧 + 9/9 序列，RESULTS 3.12） |
+| P6 | 效率基准双判决 | 完成（RESULTS 3.7） |
+| 追加 | 旧版问题体系的 v3 实测验证（师弟七目录） | 5/6 闭环（RESULTS 3.14；ce_fs/ce_ts 在跑） |
+
 ## 6. 关键文献
 
 - **Comas-Vilà et al., JCTC 2025**（docs/refs/ 有 PDF）："EOS"这个名字的
