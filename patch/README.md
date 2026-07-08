@@ -31,6 +31,19 @@ make DEPS=1 -j8 std
    EOSCAR 整数氧化态精确相等、数值字段 1e-6 内一致（残差为编译产物间
    的浮点末位抖动），#WP/#WF 数据块齐全。
 
+### 使用注意（实测积累）
+
+- **bvector 失败**（`kmesh_get_bvector: Not enough bvectors found`）：
+  体心/倾斜小胞或某些分子晶体大胞的特定 k 网格会触发 wannier90 的
+  b 向量完备性检查失败。两个对症解，按序尝试：换偶数/匹配胞形状的
+  网格；或 INCAR 注入 `WANNIER90_WIN = "\nkmesh_tol = 0.00001\n"`
+  （默认 1e-6 放宽到 1e-5，多行字符串可同时注入 dis_num_iter 等）。
+  不要降到 Gamma-only 回避——Gamma 模式下局域化行为不同，实测会
+  产生大面积 stray。
+- **NELECT mismatch too large**：根因几乎总是解纠缠缺冻结窗口。开
+  `LWANNIER90_AUTO_WINDOW = .TRUE.`（配 LSCDM）即根治；不要手写
+  wannier90.win。
+
 ### 合并时的审计发现
 
 - 生产树上曾叠加过另一个项目（CCQN-TS）的补丁，`leos_v3.patch` 已剥离；
