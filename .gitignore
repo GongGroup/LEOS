@@ -5,3 +5,37 @@ __pycache__/
 .DS_Store
 # reference PDFs (copyrighted, not tracked)
 docs/refs/*.pdf
+
+# --- job data guard: raw VASP/wannier90/MD outputs stay on the cluster ---
+# Harvest convention (v3+): only EOSCAR / INCAR / POSCAR / CONTCAR / KPOINTS /
+# *.win / *.wout / summary tsv+json go into git. Rules below only block NEW
+# files; v1-era files already tracked are unaffected. Override: git add -f.
+WAVECAR*
+CHGCAR*
+CHG
+PROCAR*
+LOCPOT
+ELFCAR
+AECCAR*
+DOSCAR*
+EIGENVAL*
+IBZKPT
+XDATCAR*
+OUTCAR*
+vasprun.xml
+vaspout.h5
+REPORT
+PCDAT
+ML_AB*
+ML_FF*
+# licensed pseudopotentials — never commit new copies
+POTCAR*
+# wannier90 binary / intermediate files
+*.chk
+*.amn
+*.mmn
+*.spn
+*.eig
+UNK*
+# MD trajectories
+*.extxyz
