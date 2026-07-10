@@ -16,8 +16,10 @@ a 4-GPU sbatch, and a state entry in <dest>/batch_state.json.
 Failure triage (status/harvest):
   FAIL_DFT   - SCF crashed (EDDDAV/ZHEGV/"I REFUSE") or OUTCAR incomplete
   FAIL_W90   - DFT fine but no wannier90 Final State
-  FAIL_LEOS  - Wannierisation fine but no EOSCAR (e.g. NELECT abort)
-  OK         - EOSCAR present
+  FAIL_LEOS  - Wannierisation fine but no usable EOSCAR: file missing, or it
+               carries the LEOS_ABORTED marker (the NELECT-abort path writes
+               a diagnostics-only EOSCAR, which is not a result)
+  OK         - EOSCAR present without LEOS_ABORTED
 Retry ladders (retry command): DFT -> ALGO=Normal then ALGO=All;
 W90 -> EOS_SCDM_ONLY=.FALSE. + larger NBANDS margin.
 
@@ -31,7 +33,10 @@ Tiered screening (stage --mode tiered + escalate):
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
+import os
+import re
 import shutil
 import subprocess
 import sys
@@ -218,18 +223,38 @@ def escalate(dest: Path) -> None:
     print(f"{n} case(s) escalated; run submit to launch them")
 
 
-def squeue_ids() -> set:
+def squeue_ids() -> set | None:
+    """Ids of this user's queued/running jobs, or None when the query fails.
+
+    None means "queue state unknown": callers must treat it conservatively -
+    change no case state, (re)submit nothing - because an empty answer from a
+    failed query would make every still-running job look finished."""
     try:
-        out = subprocess.run(["squeue", "-u", subprocess.os.environ.get("USER", ""),
-                              "-h", "-o", "%A"], capture_output=True, text=True).stdout
-        return set(out.split())
+        user = os.environ.get("USER") or getpass.getuser()
+    except OSError:
+        user = ""
+    if not user:
+        print("WARNING: could not determine the username - queue state unknown")
+        return None
+    try:
+        r = subprocess.run(["squeue", "-u", user, "-h", "-o", "%A"],
+                           capture_output=True, text=True)
     except FileNotFoundError:
-        return set()
+        print("WARNING: squeue not found - queue state unknown")
+        return None
+    if r.returncode != 0:
+        print(f"WARNING: squeue failed (rc={r.returncode}): "
+              f"{r.stderr.strip()[:120]} - queue state unknown")
+        return None
+    return set(r.stdout.split())
 
 
 def submit(dest: Path, max_queue: int) -> None:
     state = load_state(dest)
     in_queue = squeue_ids()
+    if in_queue is None:
+        print("queue query failed - submitting nothing (occupancy unknown)")
+        return
     active = sum(1 for v in state.values() if v.get("jobid") in in_queue)
     for name, rec in state.items():
         if rec["status"] not in ("STAGED", "RETRY"):
@@ -250,7 +275,14 @@ def submit(dest: Path, max_queue: int) -> None:
 
 
 def triage(d: Path) -> str:
-    if (d / "EOSCAR").is_file():
+    eoscar = d / "EOSCAR"
+    if eoscar.is_file():
+        with eoscar.open(errors="replace") as fh:
+            head = [fh.readline() for _ in range(5)]
+        if any("LEOS_ABORTED" in ln for ln in head):
+            # NELECT abort writes a diagnostics-only EOSCAR (no OS analysis):
+            # a failure to retry, not a success
+            return "FAIL_LEOS"
         return "OK"
     log = d / "print-out"
     text = log.read_text(errors="replace") if log.is_file() else ""
@@ -272,9 +304,13 @@ def triage(d: Path) -> str:
 def status(dest: Path) -> None:
     state = load_state(dest)
     in_queue = squeue_ids()
+    if in_queue is None:
+        print("queue query failed - showing stored statuses, re-triaging nothing")
     counts: dict = {}
     for name, rec in sorted(state.items()):
-        if rec.get("jobid") in in_queue:
+        if in_queue is None:
+            st = rec["status"]          # unknown queue: change no state
+        elif rec.get("jobid") in in_queue:
             st = "QUEUED/RUNNING"
         elif rec["status"] in ("SUBMITTED", "DONE", "RETRY_DONE"):
             st = triage(dest / name)
@@ -283,15 +319,44 @@ def status(dest: Path) -> None:
             st = rec["status"]
         counts[st] = counts.get(st, 0) + 1
         print(f"{name:<28} {st}")
-    save_state(dest, state)
+    if in_queue is not None:
+        save_state(dest, state)
     print("\nsummary:", "  ".join(f"{k}:{v}" for k, v in sorted(counts.items())))
 
 
 RETRY_LADDER = {
     "FAIL_DFT": [{"ALGO": "Normal"}, {"ALGO": "All", "EDIFF": 1e-5}],
-    "FAIL_W90": [{"NBANDS_SCALE": 1.3}],       # placeholder: raise NBANDS margin
+    # NBANDS_SCALE is not an INCAR tag: retry() resolves it to a concrete
+    # NBANDS (docstring promise: SCDM off + larger NBANDS margin)
+    "FAIL_W90": [{"EOS_SCDM_ONLY": ".FALSE.", "NBANDS_SCALE": 1.3}],
     "FAIL_LEOS": [{"EOS_NELECT_ABORT": 0.5}],  # diagnose-mode rerun
 }
+
+
+def resolve_nbands(d: Path, tags: dict) -> int | None:
+    """NBANDS actually in effect for a case: the INCAR tag if set, else the
+    value VASP printed in OUTCAR, else one found in the EOSCAR header."""
+    try:
+        return int(float(tags["NBANDS"]))
+    except (KeyError, ValueError):
+        pass
+    outcar = d / "OUTCAR"
+    if outcar.is_file():
+        with outcar.open(errors="replace") as fh:
+            for line in fh:
+                m = re.search(r"NBANDS\s*=\s*(\d+)", line)
+                if m:
+                    return int(m.group(1))
+    eoscar = d / "EOSCAR"
+    if eoscar.is_file():
+        with eoscar.open(errors="replace") as fh:
+            for line in fh:
+                if not line.startswith("#"):
+                    break
+                m = re.search(r"NBANDS\s*=\s*(\d+)", line)
+                if m:
+                    return int(m.group(1))
+    return None
 
 
 def retry(dest: Path) -> None:
@@ -304,7 +369,7 @@ def retry(dest: Path) -> None:
         if rec["retries"] >= len(ladder):
             print(f"[{name}] ladder exhausted ({st})")
             continue
-        overrides = ladder[rec["retries"]]
+        overrides = dict(ladder[rec["retries"]])   # copy: rungs are shared
         d = dest / name
         incar = d / "INCAR"
         tags = {}
@@ -312,7 +377,20 @@ def retry(dest: Path) -> None:
             if "=" in line:
                 k, v = line.split("=", 1)
                 tags[k.strip()] = v.strip()
-        tags.update({k: str(v) for k, v in overrides.items() if k != "NBANDS_SCALE"})
+        scale = overrides.pop("NBANDS_SCALE", None)
+        if scale is not None:
+            nb = resolve_nbands(d, tags)
+            if nb is None:
+                # nothing to scale: fall back to a tag that still guarantees
+                # the rerun differs from the failed one, and say so
+                overrides.setdefault("EOS_SCDM_ONLY", ".FALSE.")
+                print(f"[{name}] NBANDS not found in INCAR/OUTCAR/EOSCAR - "
+                      f"skipping the x{scale} margin, retrying with "
+                      f"EOS_SCDM_ONLY=.FALSE. only")
+            else:
+                # strictly larger margin even when rounding would not move
+                overrides["NBANDS"] = max(int(round(nb * scale)), nb + 1)
+        tags.update({k: str(v) for k, v in overrides.items()})
         with incar.open("w") as fh:
             for k, v in tags.items():
                 fh.write(f"{k} = {v}\n")
