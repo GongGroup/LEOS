@@ -610,10 +610,22 @@ SCDM 分层自动化（batch.py 的 tiered/escalate，5 个单元测试）；极
    （per-spin）意外构成幽灵修复的 A/B 对照——Ce +4（幽灵偏置）
    vs +3（修复后），是 5.2 偏置机制的最干净实证。工程留档：
    gnu+OpenMPI5 的 w90 多 rank 必崩，用 ifort+IntelMPI+MKL；
-   工作流手册在服务器 ~/LEOS/w90_offline/README.md。缺口：
-   per-spin win 导出、batch.py 集成。SCF 配方对照（G0-G3）
-   进行中，初步信号：ALGO=ALL 下混合参数几乎无关（三组同步
-   同能量），决定性对照在 G3 Davidson。
+   工作流手册在服务器 ~/LEOS/w90_offline/README.md。导出机制
+   验证闭环：LWRITE_MMN_AMN + LWANNIER90_RUN=F 产出 per-spin
+   四件套（wannier90.{1,2}.{mmn,amn}）。缺口：per-spin win 的
+   num_wann/froz_max 数值导出、batch.py 集成。
+
+   **SCF 配方对照定论（G0-G3 四组，Ce_IS）**：① ALGO=ALL 是
+   必需品——G3 换 Davidson 在 176 步内发散到 −2.6×10⁷ eV
+   （电荷振荡跑飞，证据 OSZICAR.diverged 留档），当年的保守
+   选择不是多余；② ALL 模式下混合参数无关紧要——极端保守
+   （AMIX=0.1/BMIX=1e-4）545 步 vs 默认 Broyden 526 步 vs 温和
+   Kerker 511 步，仅差 3-6%，三组能量/磁矩一致（mag=6，差
+   0.1 meV 级）；③ 实证有效的加速只有补 MAGMOM 初猜（FS 像
+   539→454 步，−16%）；④ 像间 WAVECAR 接力未测，留为下一
+   候选。"554 步减半"的答案：**靠调参不行，这个体系的收敛
+   成本基本是本征的**。运维教训（sbatch 相对路径陷阱、二进制
+   重建空窗）已录 patch/README 与 hpc skill。
 
 ## 8. 术语表
 
