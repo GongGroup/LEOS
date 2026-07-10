@@ -996,6 +996,17 @@ CONTAINS
           ENDDO
         ENDDO
 
+        ! Merge the band-group partial sums BEFORE taking |.|^2: the
+        ! fingerprint is |sum over ALL bands|^2, and squaring per-group
+        ! partial sums drops the cross terms - under NB_PAR>1 the #WP
+        ! block degrades into platform-dependent garbage (adjudicated on
+        ! CO2, serial vs 4-rank). After the merge every band-group rank
+        ! holds the full CW; the duplicate PW accumulation across the
+        ! group is compensated by the 1/NCPU factor below, which keeps
+        ! NCORE>1 ion partitioning and the final COMM-wide reduction
+        ! semantics intact (NCPU=1 in serial: bitwise-identical to old).
+        CALLMPI( M_sum_z8(W%WDES%COMM_INTER, CW(1,1), SIZE(CW, KIND=qi8)) )
+
         ! per-atom QION-weighted norms; SPHPRO-style local-ion bookkeeping
         NIS = 1
         NPROO = 0
@@ -1025,7 +1036,7 @@ CONTAINS
                     ACC = ACC + REAL(CONJG(CW(LMIND, IW)) * CW(LMIND, IW), q)
                   ENDDO
                 ENDDO
-                PW(IW, NI, ISP) = PW(IW, NI, ISP) + WTK * ACC
+                PW(IW, NI, ISP) = PW(IW, NI, ISP) + WTK * ACC / REAL(W%WDES%COMM_INTER%NCPU, q)
               ENDDO
               LMBASE = LMBASE + (LHI - LOW + 1) * MMAX
               LOW = LHI + 1
