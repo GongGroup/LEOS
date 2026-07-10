@@ -1,7 +1,8 @@
 #include "symbol.inc"
 !> @brief Effective oxidation states from Wannier centres (LEOS)
 !> Assignment: nearest-two-atom greedy + IUPAC electronegativity rule
-!> (in-situ fast path; the transport/min-cost-flow solver lives in pyleos).
+!> (in-situ baseline columns) plus the tier-1 transport verdict OS(flow)
+!> (min-cost flow ported from pyleos; EOS_FLOW=.FALSE. disables it).
 !> Electronegativity: Allen scale by default (IUPAC 2014-consistent),
 !> EOS_ENEG_PAULING=.TRUE. restores the legacy Pauling table.
 MODULE eos
@@ -14,7 +15,7 @@ MODULE eos
   USE poscar_struct_def, ONLY: type_info, dynamics
   USE pseudo_struct_def, ONLY: potcar
   USE wave, ONLY: wavespin, NI_LOCAL
-  USE mlwf, ONLY: MLWF_type, LWANNIER90, LWANNIER90_RUN, NUM_WANN, LSCDM, LWANNIER90_AUTO_WINDOW, &
+  USE mlwf, ONLY: MLWF_type, LWANNIER90, LWANNIER90_RUN, NUM_WANN, NUM_WANN_SPIN, LSCDM, LWANNIER90_AUTO_WINDOW, &
  &                LEOS_SCDM_ONLY, LEOS_GUIDE, EOS_GUIDE_CENTRES
   IMPLICIT NONE
 
@@ -71,6 +72,82 @@ MODULE eos
     1.1_q, 1.3_q, 1.5_q, 1.38_q, 1.36_q, 1.28_q, 1.3_q, 1.3_q, &
     1.3_q, 1.3_q, 1.3_q, 1.3_q, 1.3_q, 1.3_q /)
 
+  !---------------------------------------------------------------------
+  ! Tier-1 transport solver (min-cost flow), ported from pyleos
+  ! (transport.py tier-1 path + capacity.py). Writes the trailing
+  ! OS(flow) column of the EOSCAR/OUTCAR per-ion tables; the greedy
+  ! columns above stay the unchanged in-situ baseline.
+  !---------------------------------------------------------------------
+  LOGICAL, SAVE :: EOS_FLOW = .TRUE.
+
+  ! Tier-1 electronegativity weight (pyleos production default, cli.py).
+  REAL(q), PARAMETER :: EOS_FLOW_BETA = 10._q
+
+  ! Reward for filling mandatory n_min capacity (semicore shells). Must
+  ! beat any geometric detour (max d^2 + beta ~ 1e2) but stay small
+  ! enough that potentials keep float headroom above the comparison
+  ! tolerance.
+  ! 坑 2（RESULTS 4.3 原文照录）：大数值奖励（1e5）与浮点容差（1e-12）
+  ! 数量级太接近时，舍入残渣会被误判为改进，造成死循环（CH2F2 案例
+  ! 定位）；改成 1e3 与 1e-9。
+  ! (Pitfall 2: at 1e5 reward scale the potential ULP reaches a 1e-12
+  ! tolerance, cancellation residue registers as fake improvements and
+  ! Dijkstra stalls re-pushing the same nodes. Keep 1e3 with 1e-9.)
+  REAL(q), PARAMETER :: EOS_FLOW_BIGNEG = 1.0E3_q
+  REAL(q), PARAMETER :: EOS_FLOW_TOL    = 1.0E-9_q
+
+  ! Stray-WF diagnostics (pyleos STRAY_SPREAD / STRAY_DIST): unlocalised
+  ! functions whose centres carry no chemical information. Count is
+  ! reported in the EOSCAR header; strays still carry supply (pyleos
+  ! drop_stray=False semantics).
+  REAL(q), PARAMETER :: EOS_FLOW_STRAY_SPREAD = 3.0_q   ! Angstrom^2
+  REAL(q), PARAMETER :: EOS_FLOW_STRAY_DIST   = 1.6_q   ! Angstrom
+
+  ! Allen electronegativity for the FLOW cost only, indexed by Z.
+  ! NOT the module ALLEN_ENEG table: that one carries Pauling-anchored
+  ! fallbacks for the lanthanides (La 1.10, Ce 1.12, Pr..Lu, Tc, Tl,
+  ! Po..Ac, Pa, Np..) that pyleos capacity.ENEG_ALLEN does not have
+  ! (pyleos: La = Ce = 1.09, missing elements = 0.0). Per-atom parity
+  ! with pyleos - the acceptance criterion - therefore requires this
+  ! dedicated copy of the pyleos table. The greedy columns keep using
+  ! ALLEN_ENEG unchanged. 0.0 means "no data" (enters chi_max as 0).
+  REAL(q), PARAMETER :: EOS_FLOW_ENEG(102) = (/ &
+    2.300_q, 4.160_q, 0.912_q, 1.576_q, 2.051_q, 2.544_q, 3.066_q, 3.610_q, &
+    4.193_q, 4.787_q, 0.869_q, 1.293_q, 1.613_q, 1.916_q, 2.253_q, 2.589_q, &
+    2.869_q, 3.242_q, 0.734_q, 1.034_q, 1.19_q,  1.38_q,  1.53_q,  1.65_q,  &
+    1.75_q,  1.80_q,  1.84_q,  1.88_q,  1.85_q,  1.588_q, 1.756_q, 1.994_q, &
+    2.211_q, 2.424_q, 2.685_q, 2.966_q, 0.706_q, 0.963_q, 1.12_q,  1.32_q,  &
+    1.41_q,  1.47_q,  0.0_q,   1.54_q,  1.56_q,  1.58_q,  1.87_q,  1.52_q,  &
+    1.656_q, 1.824_q, 1.984_q, 2.158_q, 2.359_q, 2.582_q, 0.659_q, 0.881_q, &
+    1.09_q,  1.09_q,  0.0_q,   0.0_q,   0.0_q,   0.0_q,   0.0_q,   0.0_q,   &
+    0.0_q,   0.0_q,   0.0_q,   0.0_q,   0.0_q,   0.0_q,   0.0_q,   1.16_q,  &
+    1.34_q,  1.47_q,  1.60_q,  1.65_q,  1.68_q,  1.72_q,  1.92_q,  1.76_q,  &
+    0.0_q,   1.854_q, 2.01_q,  0.0_q,   0.0_q,   0.0_q,   0.0_q,   0.0_q,   &
+    0.0_q,   1.3_q,   0.0_q,   1.38_q,  0.0_q,   0.0_q,   0.0_q,   0.0_q,   &
+    0.0_q,   0.0_q,   0.0_q,   0.0_q,   0.0_q,   0.0_q /)
+
+  ! Wide physical OS bounds (pyleos capacity.OS_BOUNDS), indexed by Z.
+  ! Encode only what is physically impossible, not what is chemically
+  ! unusual; they prevent catastrophic over-assignment, not steer the
+  ! answer. Elements absent from the pyleos dict carry its
+  ! DEFAULT_BOUNDS = (-4, 8).
+  INTEGER, PARAMETER :: EOS_FLOW_OSMIN(102) = (/ &
+    -1,  0, -1,  0, -5, -4, -3, -2, -1,  0, -1,  0, -2, -4, -3, -2, &
+    -1, -1, -1, -1, -1, -2, -3, -4, -3, -4, -3, -2, -2, -2, -5, -4, &
+    -3, -2, -1, -1, -1, -1, -1, -2, -3, -4, -4, -4, -3,  0, -2, -2, &
+    -5, -4, -3, -2, -1, -2, -1, -1,  0,  0, -4, -4, -4, -4, -4, -4, &
+    -4, -4, -4, -4, -4, -4, -4, -2, -3, -4, -3, -4, -3, -3, -3, -2, &
+    -4, -4, -3, -4, -4, -4, -4, -4, -4,  0, -4, -1, -4, -4, -4, -4, &
+    -4, -4, -4, -4, -4, -4 /)
+  INTEGER, PARAMETER :: EOS_FLOW_OSMAX(102) = (/ &
+     1,  0,  1,  2,  3,  4,  5,  2,  0,  2,  1,  2,  3,  4,  5,  6, &
+     7,  2,  1,  2,  3,  4,  5,  6,  7,  6,  5,  4,  4,  2,  3,  4, &
+     5,  6,  7,  4,  1,  2,  3,  4,  5,  6,  8,  8,  6,  4,  3,  2, &
+     3,  4,  5,  6,  7,  8,  1,  2,  3,  4,  8,  8,  8,  8,  8,  8, &
+     8,  8,  8,  8,  8,  8,  8,  4,  5,  6,  7,  8,  8,  6,  5,  4, &
+     8,  4,  5,  8,  8,  8,  8,  8,  8,  4,  8,  6,  8,  8,  8,  8, &
+     8,  8,  8,  8,  8,  8 /)
+
 CONTAINS
 
   PURE REAL(q) FUNCTION ENEG_OF(Z)
@@ -113,6 +190,7 @@ CONTAINS
     CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_SCDM_ONLY', LEOS_SCDM_ONLY, IERR, WRITEXMLINCAR)
     CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_WARM_START', EOS_WARM_START, IERR, WRITEXMLINCAR)
     CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_PROJ_WEIGHT', EOS_PROJ_WEIGHT, IERR, WRITEXMLINCAR)
+    CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_FLOW', EOS_FLOW, IERR, WRITEXMLINCAR)
     CALL PROCESS_INCAR(LOPEN, IO%IU0, IO%IU5, 'EOS_EVERY_N', EOS_EVERY_N, IERR, WRITEXMLINCAR)
     EOS_EVERY_N = MAX(0, EOS_EVERY_N)
 
@@ -157,16 +235,22 @@ CONTAINS
 
     INTEGER :: ISP, NK, NREQ
     INTEGER :: NLOCAL
+    INTEGER :: NREQ_SPIN(2)
 
     IF (.NOT. LEOS) RETURN
 
-    NREQ = 0
+    ! Per-spin occupied-manifold requirement (ghost fix): sharing
+    ! max(N_up,N_dn) between both channels forces every excess function in
+    ! the minority channel to become a ghost. Track both counts; arrays are
+    ! still sized by the max, but wannier90 runs each spin with its own value.
+    NREQ_SPIN = 0
     DO ISP = 1, W%WDES%ISPIN
       DO NK = 1, W%WDES%NKPTS
         NLOCAL = COUNT(W%FERTOT(:, NK, ISP) > EOS_OCC_TOL)
-        IF (NLOCAL > NREQ) NREQ = NLOCAL
+        IF (NLOCAL > NREQ_SPIN(ISP)) NREQ_SPIN(ISP) = NLOCAL
       ENDDO
     ENDDO
+    NREQ = MAXVAL(NREQ_SPIN(1:W%WDES%ISPIN))
 
     IF (NREQ <= 0) THEN
       CALL vtutor%error('LEOS: cannot determine occupied manifold (no occupied bands found).')
@@ -174,13 +258,31 @@ CONTAINS
 
     IF (NUM_WANN == 0) THEN
       NUM_WANN = NREQ
-      IF (IO%IU6 >= 0) WRITE(IO%IU6,'(A,I0)') 'LEOS: auto set NUM_WANN = ', NUM_WANN
+      NUM_WANN_SPIN = NREQ
+      NUM_WANN_SPIN(1:W%WDES%ISPIN) = NREQ_SPIN(1:W%WDES%ISPIN)
+      IF (IO%IU6 >= 0) THEN
+        WRITE(IO%IU6,'(A,I0)') 'LEOS: auto set NUM_WANN = ', NUM_WANN
+        IF (W%WDES%ISPIN == 2 .AND. NREQ_SPIN(1) /= NREQ_SPIN(2)) &
+     &    WRITE(IO%IU6,'(A,I0,A,I0,A)') 'LEOS: per-spin num_wann = ', &
+     &      NREQ_SPIN(1), ' (up) / ', NREQ_SPIN(2), ' (down) - ghost fix active'
+      ENDIF
     ELSEIF (NUM_WANN < NREQ) THEN
       IF (IO%IU6 >= 0) THEN
         WRITE(IO%IU6,'(A,I0)') 'LEOS: NUM_WANN is too small. Required >= ', NREQ
         WRITE(IO%IU6,'(A,I0)') 'LEOS: NUM_WANN provided = ', NUM_WANN
       ENDIF
       CALL vtutor%error('LEOS: please increase NUM_WANN to cover all occupied bands (including partial occupancies).')
+    ENDIF
+
+    ! Trajectory steps after the first: the per-spin counts may only grow
+    ! (a later frame can occupy more bands in one channel). An explicit INCAR
+    ! NUM_WANN leaves NUM_WANN_SPIN at 0 = old shared-upper-bound semantics.
+    IF (NUM_WANN_SPIN(1) > 0) THEN
+      DO ISP = 1, W%WDES%ISPIN
+        NUM_WANN_SPIN(ISP) = MAX(NUM_WANN_SPIN(ISP), NREQ_SPIN(ISP))
+      ENDDO
+    ELSEIF (IO%IU6 >= 0 .AND. W%WDES%ISPIN == 2) THEN
+      WRITE(IO%IU6,'(A)') 'LEOS: explicit NUM_WANN is the shared upper bound for both spin channels (no per-spin trimming).'
     ENDIF
 
     IF (NUM_WANN > W%WDES%NB_TOT) THEN
@@ -204,6 +306,7 @@ CONTAINS
 
     INTEGER :: NIONS, IW, I, I1, I2, ISP, NT, NT1, NT2
     INTEGER :: IB, IBP, NKI, NK, NB_USED
+    INTEGER :: NWS(2)
     INTEGER :: IP, IK
     INTEGER :: IU
     INTEGER :: Z1, Z2
@@ -232,12 +335,27 @@ CONTAINS
     REAL(q) :: LOST_NE
     INTEGER :: LOST_REC(3,32)
     REAL(q) :: LOST_OCC(32)
+    ! Diffuse-loss localisation: occupied bands inside the outer window whose
+    ! projection onto the disentangled subspace is incomplete. In practice
+    ! this is THE loss mode (a missing frozen window lets the optimal
+    ! subspace rotate away from parts of the occupied manifold); the
+    ! lwindow=F records above additionally need an explicit outer window.
+    INTEGER :: NLOSTD
+    REAL(q) :: LOST_NED
+    INTEGER :: LOST_RECD(3,32)
+    REAL(q) :: LOST_VALD(32)
+    REAL(q) :: FID_BAND, FID_W, LOST_B
+    REAL(q), PARAMETER :: EOS_NLD_TOL = 1.E-3_q
     REAL(q), ALLOCATABLE :: WF_OCC(:,:)
     REAL(q), ALLOCATABLE :: PW(:,:,:)
     INTEGER :: TOPA(4)
     REAL(q) :: TOPW(4), PSUM
     INTEGER, ALLOCATABLE :: WF_I1(:,:), WF_I2(:,:)
     REAL(q), ALLOCATABLE :: WF_E1(:,:), WF_E2(:,:)
+    INTEGER, ALLOCATABLE :: OS_FLOW(:)
+    INTEGER :: FLOW_TARGET, FLOW_GHOST, FLOW_INFEAS, FLOW_NSTRAY
+    REAL(q) :: FLOW_COST
+    LOGICAL :: LFLOW
 
     IF (.NOT. LEOS) RETURN
 
@@ -262,6 +380,14 @@ CONTAINS
       RETURN
     ENDIF
 
+    ! Per-spin effective WF counts (ghost fix): arrays are sized by the max,
+    ! loops and the EOSCAR #WF/#WP blocks only visit the real functions.
+    NWS = MLWF%NUM_WANN
+    DO ISP = 1, MLWF%ISPIN
+      IF (MLWF%NUM_WANN_SPIN(ISP) > 0 .AND. MLWF%NUM_WANN_SPIN(ISP) <= MLWF%NUM_WANN) &
+     &  NWS(ISP) = MLWF%NUM_WANN_SPIN(ISP)
+    ENDDO
+
     ALLOCATE(WF_OCC(MLWF%NUM_WANN, MLWF%ISPIN))
     WF_OCC = 0._q
     ALLOCATE(WF_I1(MLWF%NUM_WANN, MLWF%ISPIN), WF_I2(MLWF%NUM_WANN, MLWF%ISPIN))
@@ -271,6 +397,9 @@ CONTAINS
 
     NLOST = 0
     LOST_NE = 0._q
+    NLOSTD = 0
+    LOST_NED = 0._q
+    LOST_VALD = 0._q
     WTK_FULL = 1._q / REAL(MLWF%NKPTS, q)
     DO ISP = 1, MLWF%ISPIN
       DO NKI = 1, MLWF%NKPTS
@@ -299,13 +428,36 @@ CONTAINS
           ENDIF
           IF (OCC_WF <= EOS_OCC_TOL) CYCLE
 
-          DO IW = 1, MLWF%NUM_WANN
+          FID_BAND = 0._q
+          DO IW = 1, NWS(ISP)
             CTMP = (0._q, 0._q)
-            DO IK = 1, MLWF%NUM_WANN
+            DO IK = 1, NWS(ISP)
               CTMP = CTMP + MLWF%U_matrix_opt(IP, IK, NKI, ISP) * MLWF%U_matrix(IK, IW, NKI, ISP)
             ENDDO
-            WF_OCC(IW, ISP) = WF_OCC(IW, ISP) + WTK_FULL * OCC_WF * REAL(CTMP * CONJG(CTMP), q)
+            FID_W = REAL(CTMP * CONJG(CTMP), q)
+            WF_OCC(IW, ISP) = WF_OCC(IW, ISP) + WTK_FULL * OCC_WF * FID_W
+            FID_BAND = FID_BAND + FID_W
           ENDDO
+          ! Diffuse loss of this occupied band (kept: the 32 largest).
+          LOST_B = WTK_FULL * OCC_WF * (1._q - FID_BAND) * W%WDES%RSPIN
+          IF (LOST_B > EOS_NLD_TOL) THEN
+            LOST_NED = LOST_NED + LOST_B
+            NLOSTD = NLOSTD + 1
+            IF (NLOSTD <= SIZE(LOST_VALD)) THEN
+              LOST_RECD(1,NLOSTD) = ISP
+              LOST_RECD(2,NLOSTD) = NK
+              LOST_RECD(3,NLOSTD) = IB
+              LOST_VALD(NLOSTD) = LOST_B
+            ELSE
+              J = MINLOC(LOST_VALD, DIM=1)
+              IF (LOST_B > LOST_VALD(J)) THEN
+                LOST_RECD(1,J) = ISP
+                LOST_RECD(2,J) = NK
+                LOST_RECD(3,J) = IB
+                LOST_VALD(J) = LOST_B
+              ENDIF
+            ENDIF
+          ENDIF
         ENDDO
       ENDDO
     ENDDO
@@ -322,6 +474,16 @@ CONTAINS
       IF (NLOST > SIZE(LOST_OCC)) WRITE(IO%IU6,'(A,I0,A)') '  LEOS lost: (first ', &
      &  SIZE(LOST_OCC), ' shown)'
     ENDIF
+    IF (NLOSTD > 0 .AND. IO%IU6 >= 0) THEN
+      WRITE(IO%IU6,'(/,A,I0,A,F12.6)') 'LEOS: ', NLOSTD, &
+     &  ' occupied states with incomplete Wannier projection (diffuse loss); lost n_e = ', LOST_NED
+      DO I = 1, MIN(NLOSTD, SIZE(LOST_VALD))
+        WRITE(IO%IU6,'(A,I2,A,I5,A,I5,A,F8.4)') '  LEOS diffuse: spin ', LOST_RECD(1,I), &
+     &    '  k ', LOST_RECD(2,I), '  band ', LOST_RECD(3,I), '  lost_e ', LOST_VALD(I)
+      ENDDO
+      IF (NLOSTD > SIZE(LOST_VALD)) WRITE(IO%IU6,'(A,I0,A)') '  LEOS diffuse: (largest ', &
+     &  SIZE(LOST_VALD), ' shown)'
+    ENDIF
     IF (NELECT_ERR > EOS_NELECT_ABORT) THEN
       IF (IO%IU6 >= 0) THEN
         WRITE(IO%IU6,'(/,A)') 'LEOS: NELECT mismatch too large; skip oxidation-state analysis.'
@@ -329,6 +491,48 @@ CONTAINS
         WRITE(IO%IU6,'(A,F12.6)') '  NELECT(Wannier) = ', NELECT_WANN
         WRITE(IO%IU6,'(A,ES12.4)') '  |dNe|           = ', NELECT_ERR
         WRITE(IO%IU6,'(A,ES12.4)') '  EOS_NELECT_ABORT = ', EOS_NELECT_ABORT
+        ! Aborted systems are exactly the ones that need the lost-electron
+        ! localisation, so write a diagnostics-only EOSCAR (header + per-
+        ! (spin,k,band) loss records, no per-ion table) before giving up.
+        EOS_STEP_COUNT = EOS_STEP_COUNT + 1
+        IF (EOS_STEP_COUNT == 1) THEN
+          OPEN(NEWUNIT=IU, FILE='EOSCAR', STATUS='REPLACE', ACTION='WRITE')
+        ELSE
+          OPEN(NEWUNIT=IU, FILE='EOSCAR', STATUS='OLD', POSITION='APPEND', ACTION='WRITE')
+        ENDIF
+        IF (EOS_STEP_COUNT > 1 .OR. EOS_EVERY_N > 0) THEN
+          WRITE(IU,'(A,I0)') '# STEP = ', EOS_STEP_COUNT
+        ENDIF
+        WRITE(IU,'(A)') '# LEOS: Wannier-centre counting + IUPAC(2014) rule'
+        WRITE(IU,'(A)') '# LEOS_ABORTED = NELECT_MISMATCH (diagnostics only, no OS analysis)'
+        WRITE(IU,'(A,F14.6)') '# NELECT(input) = ', INFO%NELECT
+        WRITE(IU,'(A,F14.6)') '# NELECT(Wannier) = ', NELECT_WANN
+        WRITE(IU,'(A,ES12.4)') '# |dNe| = ', NELECT_ERR
+        WRITE(IU,'(A,I0)') '# N_LOST_STATES = ', NLOST
+        WRITE(IU,'(A,F14.6)') '# N_LOST_E = ', LOST_NE
+        WRITE(IU,'(A,I0)') '# N_LOST_STATES_DIFFUSE = ', NLOSTD
+        WRITE(IU,'(A,F14.6)') '# N_LOST_E_DIFFUSE = ', LOST_NED
+        WRITE(IU,'(A,ES12.4)') '# EOS_NELECT_WARN = ', EOS_NELECT_WARN
+        WRITE(IU,'(A,ES12.4)') '# EOS_NELECT_ABORT = ', EOS_NELECT_ABORT
+        IF (NLOST > 0) THEN
+          WRITE(IU,'(A)') '#NL spin     k  band     occ   (occupied states outside the frozen window)'
+          DO I = 1, MIN(NLOST, SIZE(LOST_OCC))
+            WRITE(IU,'(A,I3,1X,I5,1X,I5,1X,F7.4)') '#NL', LOST_REC(1,I), &
+     &        LOST_REC(2,I), LOST_REC(3,I), LOST_OCC(I)
+          ENDDO
+          IF (NLOST > SIZE(LOST_OCC)) WRITE(IU,'(A,I0,A)') '# N_LOST_SHOWN = ', &
+     &      SIZE(LOST_OCC), ' (first records only)'
+        ENDIF
+        IF (NLOSTD > 0) THEN
+          WRITE(IU,'(A)') '#NLD spin     k  band   lost_e   (incomplete Wannier projection; largest records)'
+          DO I = 1, MIN(NLOSTD, SIZE(LOST_VALD))
+            WRITE(IU,'(A,I3,1X,I5,1X,I5,1X,F8.4)') '#NLD', LOST_RECD(1,I), &
+     &        LOST_RECD(2,I), LOST_RECD(3,I), LOST_VALD(I)
+          ENDDO
+          IF (NLOSTD > SIZE(LOST_VALD)) WRITE(IU,'(A,I0,A)') '# N_LOSTD_SHOWN = ', &
+     &      SIZE(LOST_VALD), ' (largest records only)'
+        ENDIF
+        CLOSE(IU)
       ENDIF
       DEALLOCATE(NE_ASSIGNED, OS_RAW, OS_INT, WF_OCC, WF_I1, WF_I2, WF_E1, WF_E2)
       RETURN
@@ -348,7 +552,7 @@ CONTAINS
     ENDIF
 
     DO ISP = 1, MLWF%ISPIN
-    DO IW = 1, MLWF%NUM_WANN
+    DO IW = 1, NWS(ISP)
       E_WF = WF_OCC(IW, ISP) * W%WDES%RSPIN
       IF (E_WF <= EOS_OCC_TOL) CYCLE
 
@@ -493,6 +697,19 @@ CONTAINS
 
     CALL EOS_INTEGERIZE(OS_RAW, TARGET_SUM, OS_INT)
 
+    ! Transport verdict (tier-1 min-cost flow): the EOSCAR/OUTCAR per-ion
+    ! tables keep the greedy columns unchanged (in-situ baseline) and
+    ! append OS(flow) at the end of each row. Deterministic, rank-local
+    ! (every rank computes the same result), MD-trajectory safe.
+    ALLOCATE(OS_FLOW(NIONS))
+    OS_FLOW = 0
+    LFLOW = .FALSE.
+    IF (EOS_FLOW) THEN
+      CALL EOS_SOLVE_FLOW(MLWF, W, T_INFO, LATT_CUR, P, DYN, NWS, NELECT_WANN, &
+     &                    OS_FLOW, FLOW_TARGET, FLOW_GHOST, FLOW_INFEAS, &
+     &                    FLOW_COST, FLOW_NSTRAY, LFLOW)
+    ENDIF
+
     ! Compute dOS statistics once for both OUTCAR and EOSCAR output.
     DOS_MAX = 0._q; DOS_SUM = 0._q; DOS_SQR = 0._q
     DO I = 1, NIONS
@@ -511,19 +728,36 @@ CONTAINS
       WRITE(IO%IU6,'(A,ES12.4)') '  |dNe| = ', NELECT_ERR
       WRITE(IO%IU6,'(A,ES12.4)') '  EOS_NELECT_WARN  = ', EOS_NELECT_WARN
       WRITE(IO%IU6,'(A,ES12.4)') '  EOS_NELECT_ABORT = ', EOS_NELECT_ABORT
-      WRITE(IO%IU6,'(A)') '  ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)      dOS'
+      IF (LFLOW) THEN
+        WRITE(IO%IU6,'(A)') '  ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)      dOS  OS(flow)'
+      ELSE
+        WRITE(IO%IU6,'(A)') '  ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)      dOS'
+      ENDIF
       WRITE(IO%IU6,'(A)') '  ---------------------------------------------------------------'
       DO I = 1, NIONS
         NT = T_INFO%ITYP(I)
-        WRITE(IO%IU6,'(I5,2X,A2,1X,F6.2,2X,F12.6,2X,F8.3,2X,I6,2X,F8.3)') &
-          I, P(NT)%ELEMENT, P(NT)%ZVALF, NE_ASSIGNED(I), OS_RAW(I), OS_INT(I), &
-          OS_RAW(I) - REAL(OS_INT(I), q)
+        IF (LFLOW) THEN
+          WRITE(IO%IU6,'(I5,2X,A2,1X,F6.2,2X,F12.6,2X,F8.3,2X,I6,2X,F8.3,2X,I6)') &
+            I, P(NT)%ELEMENT, P(NT)%ZVALF, NE_ASSIGNED(I), OS_RAW(I), OS_INT(I), &
+            OS_RAW(I) - REAL(OS_INT(I), q), OS_FLOW(I)
+        ELSE
+          WRITE(IO%IU6,'(I5,2X,A2,1X,F6.2,2X,F12.6,2X,F8.3,2X,I6,2X,F8.3)') &
+            I, P(NT)%ELEMENT, P(NT)%ZVALF, NE_ASSIGNED(I), OS_RAW(I), OS_INT(I), &
+            OS_RAW(I) - REAL(OS_INT(I), q)
+        ENDIF
       ENDDO
       WRITE(IO%IU6,'(A,I0)') '  Sum OS(int) = ', SUM(OS_INT)
       WRITE(IO%IU6,'(A,I0)') '  Target sum  = ', TARGET_SUM
       WRITE(IO%IU6,'(A,F8.3)') '  |dOS|_max  = ', DOS_MAX
       WRITE(IO%IU6,'(A,F8.3)') '  |dOS|_mean = ', DOS_SUM / REAL(NIONS, q)
       WRITE(IO%IU6,'(A,F8.3)') '  |dOS|_rms  = ', SQRT(DOS_SQR / REAL(NIONS, q))
+      IF (LFLOW) THEN
+        WRITE(IO%IU6,'(A,I0)') '  Sum OS(flow) = ', SUM(OS_FLOW)
+        WRITE(IO%IU6,'(A,I0,A,I0,A,I0,A,I0)') '  Flow: target = ', FLOW_TARGET, &
+     &    '  ghost = ', FLOW_GHOST, '  infeasible = ', FLOW_INFEAS, &
+     &    '  stray WF = ', FLOW_NSTRAY
+        WRITE(IO%IU6,'(A,F14.6)') '  Flow transport cost = ', FLOW_COST
+      ENDIF
     ENDIF
 
     IF (IO%IU6 >= 0) THEN
@@ -544,16 +778,54 @@ CONTAINS
       WRITE(IU,'(A,ES12.4)') '# |dNe| = ', NELECT_ERR
       WRITE(IU,'(A,I0)') '# N_LOST_STATES = ', NLOST
       WRITE(IU,'(A,F14.6)') '# N_LOST_E = ', LOST_NE
+      WRITE(IU,'(A,I0)') '# N_LOST_STATES_DIFFUSE = ', NLOSTD
+      WRITE(IU,'(A,F14.6)') '# N_LOST_E_DIFFUSE = ', LOST_NED
       WRITE(IU,'(A,ES12.4)') '# EOS_NELECT_WARN = ', EOS_NELECT_WARN
       WRITE(IU,'(A,ES12.4)') '# EOS_NELECT_ABORT = ', EOS_NELECT_ABORT
-      WRITE(IU,'(A)') '# ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)      dOS'
+      IF (NLOST > 0) THEN
+        WRITE(IU,'(A)') '#NL spin     k  band     occ   (occupied states outside the frozen window)'
+        DO I = 1, MIN(NLOST, SIZE(LOST_OCC))
+          WRITE(IU,'(A,I3,1X,I5,1X,I5,1X,F7.4)') '#NL', LOST_REC(1,I), &
+     &      LOST_REC(2,I), LOST_REC(3,I), LOST_OCC(I)
+        ENDDO
+        IF (NLOST > SIZE(LOST_OCC)) WRITE(IU,'(A,I0,A)') '# N_LOST_SHOWN = ', &
+     &    SIZE(LOST_OCC), ' (first records only)'
+      ENDIF
+      IF (NLOSTD > 0) THEN
+        WRITE(IU,'(A)') '#NLD spin     k  band   lost_e   (incomplete Wannier projection; largest records)'
+        DO I = 1, MIN(NLOSTD, SIZE(LOST_VALD))
+          WRITE(IU,'(A,I3,1X,I5,1X,I5,1X,F8.4)') '#NLD', LOST_RECD(1,I), &
+     &      LOST_RECD(2,I), LOST_RECD(3,I), LOST_VALD(I)
+        ENDDO
+        IF (NLOSTD > SIZE(LOST_VALD)) WRITE(IU,'(A,I0,A)') '# N_LOSTD_SHOWN = ', &
+     &    SIZE(LOST_VALD), ' (largest records only)'
+      ENDIF
+      IF (LFLOW) THEN
+        WRITE(IU,'(A,F6.2,A)') '# FLOW_MODE = tier1 min-cost flow (geometry + Allen, beta = ', &
+     &    EOS_FLOW_BETA, ')'
+        WRITE(IU,'(A,I0)') '# FLOW_TARGET = ', FLOW_TARGET
+        WRITE(IU,'(A,I0)') '# FLOW_GHOST = ', FLOW_GHOST
+        WRITE(IU,'(A,I0)') '# FLOW_INFEASIBLE = ', FLOW_INFEAS
+        WRITE(IU,'(A,I0)') '# FLOW_N_STRAY = ', FLOW_NSTRAY
+        WRITE(IU,'(A,F14.6)') '# FLOW_COST = ', FLOW_COST
+        WRITE(IU,'(A)') '# ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)      dOS  OS(flow)'
+      ELSE
+        WRITE(IU,'(A)') '# ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)      dOS'
+      ENDIF
       DO I = 1, NIONS
         NT = T_INFO%ITYP(I)
-        WRITE(IU,'(I5,2X,A2,1X,F6.2,2X,F12.6,2X,F8.3,2X,I6,2X,F8.3)') &
-          I, P(NT)%ELEMENT, P(NT)%ZVALF, NE_ASSIGNED(I), OS_RAW(I), OS_INT(I), &
-          OS_RAW(I) - REAL(OS_INT(I), q)
+        IF (LFLOW) THEN
+          WRITE(IU,'(I5,2X,A2,1X,F6.2,2X,F12.6,2X,F8.3,2X,I6,2X,F8.3,2X,I6)') &
+            I, P(NT)%ELEMENT, P(NT)%ZVALF, NE_ASSIGNED(I), OS_RAW(I), OS_INT(I), &
+            OS_RAW(I) - REAL(OS_INT(I), q), OS_FLOW(I)
+        ELSE
+          WRITE(IU,'(I5,2X,A2,1X,F6.2,2X,F12.6,2X,F8.3,2X,I6,2X,F8.3)') &
+            I, P(NT)%ELEMENT, P(NT)%ZVALF, NE_ASSIGNED(I), OS_RAW(I), OS_INT(I), &
+            OS_RAW(I) - REAL(OS_INT(I), q)
+        ENDIF
       ENDDO
       WRITE(IU,'(A,I0)') '# Sum OS(int) = ', SUM(OS_INT)
+      IF (LFLOW) WRITE(IU,'(A,I0)') '# Sum OS(flow) = ', SUM(OS_FLOW)
       WRITE(IU,'(A,I0)') '# Target sum  = ', TARGET_SUM
       WRITE(IU,'(A,F8.3)') '# |dOS|_max  = ', DOS_MAX
       WRITE(IU,'(A,F8.3)') '# |dOS|_mean = ', DOS_SUM / REAL(NIONS, q)
@@ -561,7 +833,7 @@ CONTAINS
       IF (EOS_WF_DETAIL) THEN
         WRITE(IU,'(A)') '#WF spin    wf    occ(e)      centre_x      centre_y      centre_z    spread   at1      e1   at2      e2'
         DO ISP = 1, MLWF%ISPIN
-          DO IW = 1, MLWF%NUM_WANN
+          DO IW = 1, NWS(ISP)
             WRITE(IU,'(A,I3,1X,I5,1X,F9.6,3(1X,F13.6),1X,F9.4,2(1X,I5,1X,F7.4))') &
      &        '#WF', ISP, IW, WF_OCC(IW,ISP)*W%WDES%RSPIN, &
      &        MLWF%wann_centres(1,IW,ISP), MLWF%wann_centres(2,IW,ISP), &
@@ -572,7 +844,7 @@ CONTAINS
         IF (EOS_PROJ_WEIGHT .AND. ALLOCATED(PW)) THEN
           WRITE(IU,'(A)') '#WP spin    wf   [atom  weight] x4  weight_sum  (QION-weighted WF composition)'
           DO ISP = 1, MLWF%ISPIN
-            DO IW = 1, MLWF%NUM_WANN
+            DO IW = 1, NWS(ISP)
               TOPA = 0; TOPW = -1._q
               PSUM = 0._q
               DO I = 1, NIONS
@@ -602,16 +874,19 @@ CONTAINS
       IF (ALLOCATED(EOS_GUIDE_CENTRES)) THEN
         IF (SIZE(EOS_GUIDE_CENTRES, 2) /= MLWF%NUM_WANN) DEALLOCATE(EOS_GUIDE_CENTRES)
       ENDIF
-      IF (.NOT. ALLOCATED(EOS_GUIDE_CENTRES)) ALLOCATE(EOS_GUIDE_CENTRES(3, MLWF%NUM_WANN, 2))
+      IF (.NOT. ALLOCATED(EOS_GUIDE_CENTRES)) THEN
+        ALLOCATE(EOS_GUIDE_CENTRES(3, MLWF%NUM_WANN, 2))
+        EOS_GUIDE_CENTRES = 0._q
+      ENDIF
       DO ISP = 1, MLWF%ISPIN
-        EOS_GUIDE_CENTRES(:, 1:MLWF%NUM_WANN, ISP) = MLWF%wann_centres(:, 1:MLWF%NUM_WANN, ISP)
+        EOS_GUIDE_CENTRES(:, 1:NWS(ISP), ISP) = MLWF%wann_centres(:, 1:NWS(ISP), ISP)
       ENDDO
       IF (MLWF%ISPIN == 1) EOS_GUIDE_CENTRES(:, :, 2) = EOS_GUIDE_CENTRES(:, :, 1)
       LEOS_GUIDE = .TRUE.
     ENDIF
 
     IF (ALLOCATED(PW)) DEALLOCATE(PW)
-    DEALLOCATE(NE_ASSIGNED, OS_RAW, OS_INT, WF_OCC, WF_I1, WF_I2, WF_E1, WF_E2)
+    DEALLOCATE(NE_ASSIGNED, OS_RAW, OS_INT, WF_OCC, WF_I1, WF_I2, WF_E1, WF_E2, OS_FLOW)
   END SUBROUTINE EOS_ANALYZE
 
   SUBROUTINE EOS_INTEGERIZE(OS_RAW, TARGET_SUM, OS_INT)
@@ -783,5 +1058,482 @@ CONTAINS
                          (NSTEP >= NSW .OR. LSTOP)
     ENDIF
   END FUNCTION EOS_DO_THIS_STEP
+
+  !> pyleos capacity.eneg(element, "allen"): 0.0 for missing data.
+  PURE REAL(q) FUNCTION EOS_FLOW_ENEG_OF(Z)
+    INTEGER, INTENT(IN) :: Z
+    IF (Z < 1 .OR. Z > SIZE(EOS_FLOW_ENEG)) THEN
+      EOS_FLOW_ENEG_OF = 0._q
+    ELSE
+      EOS_FLOW_ENEG_OF = EOS_FLOW_ENEG(Z)
+    ENDIF
+  END FUNCTION EOS_FLOW_ENEG_OF
+
+  !> pyleos capacity.capacity_bounds(element, zval):
+  !>   n_min = max(0, round(zval) - OS_MAX),  n_max = round(zval) - OS_MIN
+  PURE SUBROUTINE EOS_FLOW_CAPACITY(Z, ZVAL, NMIN, NMAX)
+    INTEGER, INTENT(IN)  :: Z
+    REAL(q), INTENT(IN)  :: ZVAL
+    INTEGER, INTENT(OUT) :: NMIN, NMAX
+    INTEGER :: OSMIN, OSMAX, ZR
+    IF (Z >= 1 .AND. Z <= SIZE(EOS_FLOW_OSMIN)) THEN
+      OSMIN = EOS_FLOW_OSMIN(Z)
+      OSMAX = EOS_FLOW_OSMAX(Z)
+    ELSE
+      OSMIN = -4                       ! pyleos DEFAULT_BOUNDS
+      OSMAX = 8
+    ENDIF
+    ZR = NINT(ZVAL)
+    NMIN = MAX(0, ZR - OSMAX)
+    NMAX = ZR - OSMIN
+  END SUBROUTINE EOS_FLOW_CAPACITY
+
+  !> Min-cost k-flow via successive shortest paths with potentials;
+  !> Bellman-Ford bootstrap so that the single layer of negative-cost
+  !> n_min reward arcs is admissible. Transcription of pyleos
+  !> transport.MinCostFlow.solve (including tolerances and tie-breaking:
+  !> the heap key is the pair (dist, node), matching python's (d, v)
+  !> tuple order in heapq).
+  !>
+  !> Arcs come in creation pairs: forward arc 2k-1, reverse arc 2k
+  !> (cap 0, cost -c). ACAP is the residual capacity and is returned so
+  !> the caller can read off shipped units per arc.
+  SUBROUTINE EOS_MCF_SOLVE(NNODE, NARC, AFROM, ATO, ACAP, ACST, S, T, &
+ &                         MAXFLOW, SHIPPED, TOTCOST)
+    INTEGER, INTENT(IN)    :: NNODE, NARC
+    INTEGER, INTENT(IN)    :: AFROM(NARC), ATO(NARC)
+    INTEGER, INTENT(INOUT) :: ACAP(NARC)
+    REAL(q), INTENT(IN)    :: ACST(NARC)
+    INTEGER, INTENT(IN)    :: S, T, MAXFLOW
+    INTEGER, INTENT(OUT)   :: SHIPPED
+    REAL(q), INTENT(OUT)   :: TOTCOST
+
+    INTEGER, ALLOCATABLE :: GPTR(:), GNEXT(:), GARC(:), PREVA(:)
+    REAL(q), ALLOCATABLE :: POT(:), DIST(:)
+    REAL(q), ALLOCATABLE :: HD(:)
+    INTEGER, ALLOCATABLE :: HV(:)
+    INTEGER :: NH
+    INTEGER :: U, VN, K, KP, IDX, SWEEP, ROUNDS, MAXROUNDS, SUPPLY, F
+    REAL(q) :: D, ND, DMAX
+    LOGICAL :: CHANGED
+    CHARACTER(LEN=200) :: ERRMSG
+    REAL(q), PARAMETER :: DINF = HUGE(1._q)
+
+    ! CSR adjacency in global arc-creation order. This reproduces the
+    ! per-node append order of the python adjacency lists; the iteration
+    ! order determines tie-breaking among equal-cost paths and must
+    ! match pyleos exactly for per-atom parity on degenerate geometries.
+    ALLOCATE(GPTR(NNODE+1), GNEXT(NNODE), GARC(NARC), PREVA(NNODE))
+    ALLOCATE(POT(NNODE), DIST(NNODE))
+    GPTR = 0
+    DO K = 1, NARC
+      GPTR(AFROM(K)+1) = GPTR(AFROM(K)+1) + 1
+    ENDDO
+    GPTR(1) = 1
+    DO U = 2, NNODE+1
+      GPTR(U) = GPTR(U) + GPTR(U-1)
+    ENDDO
+    GNEXT(1:NNODE) = GPTR(1:NNODE)
+    DO K = 1, NARC
+      GARC(GNEXT(AFROM(K))) = K
+      GNEXT(AFROM(K)) = GNEXT(AFROM(K)) + 1
+    ENDDO
+
+    ! Bellman-Ford bootstrap of the potentials (MinCostFlow._bellman_ford):
+    ! plain Dijkstra cannot start from zero potentials because the n_min
+    ! reward arcs are negative.
+    DIST = DINF
+    DIST(S) = 0._q
+    DO SWEEP = 1, NNODE
+      CHANGED = .FALSE.
+      DO U = 1, NNODE
+        IF (DIST(U) >= DINF) CYCLE
+        DO IDX = GPTR(U), GPTR(U+1)-1
+          K = GARC(IDX)
+          VN = ATO(K)
+          IF (ACAP(K) > 0 .AND. DIST(U) + ACST(K) < DIST(VN) - EOS_FLOW_TOL) THEN
+            DIST(VN) = DIST(U) + ACST(K)
+            CHANGED = .TRUE.
+          ENDIF
+        ENDDO
+      ENDDO
+      IF (.NOT. CHANGED) EXIT
+    ENDDO
+    DO U = 1, NNODE
+      IF (DIST(U) < DINF) THEN
+        POT(U) = DIST(U)
+      ELSE
+        POT(U) = 0._q
+      ENDIF
+    ENDDO
+
+    TOTCOST = 0._q
+    SHIPPED = 0
+    SUPPLY = 0
+    DO IDX = GPTR(S), GPTR(S+1)-1
+      SUPPLY = SUPPLY + ACAP(GARC(IDX))
+    ENDDO
+    ! 坑 3（RESULTS 4.3 原文照录）：加了迭代次数保险丝：再有类似问题会
+    ! 抛出明确错误而不是无声挂死。
+    ! (Pitfall 3: iteration fuse - every augmentation ships >= 1 unit,
+    ! so exceeding 2*supply+100 rounds is a solver bug, not data; abort
+    ! loudly via vtutor instead of hanging an MD run.)
+    MAXROUNDS = 2*SUPPLY + 100
+    ROUNDS = 0
+    ALLOCATE(HD(1024), HV(1024))
+
+    DO WHILE (SHIPPED < MAXFLOW)
+      ROUNDS = ROUNDS + 1
+      IF (ROUNDS > MAXROUNDS) THEN
+        WRITE(ERRMSG,'(A,I0,A,I0,A)') &
+ &        'LEOS flow: min-cost-flow failed to terminate within ', MAXROUNDS, &
+ &        ' augmentations (supply ', SUPPLY, ') - solver bug, not data.'
+        CALL vtutor%error(TRIM(ERRMSG))
+      ENDIF
+
+      ! Dijkstra on reduced costs with lazy-deletion heap.
+      DIST = DINF
+      DIST(S) = 0._q
+      PREVA = 0
+      NH = 0
+      CALL HPUSH(0._q, S)
+      DO WHILE (NH > 0)
+        CALL HPOP(D, U)
+        IF (D > DIST(U) + EOS_FLOW_TOL) CYCLE
+        DO IDX = GPTR(U), GPTR(U+1)-1
+          K = GARC(IDX)
+          IF (ACAP(K) <= 0) CYCLE
+          VN = ATO(K)
+          ND = D + ACST(K) + POT(U) - POT(VN)
+          IF (ND < DIST(VN) - EOS_FLOW_TOL) THEN
+            DIST(VN) = ND
+            PREVA(VN) = K
+            CALL HPUSH(ND, VN)
+          ENDIF
+        ENDDO
+      ENDDO
+      IF (PREVA(T) == 0) EXIT
+
+      ! 坑 1（RESULTS 4.3 原文照录）：最短路的"势"更新必须覆盖没被访问到
+      ! 的节点，否则会产生负的约化代价，算法退化到指数时间（曾导致一次
+      ! 6 小时的假死）。
+      ! (Pitfall 1: the potential update must also lift unreached nodes -
+      ! standard Johnson/SSP treatment. Reusing a stale potential when a
+      ! node becomes reachable again creates negative reduced costs and
+      ! degrades Dijkstra to exponential behaviour.)
+      DMAX = -DINF
+      DO U = 1, NNODE
+        IF (DIST(U) < DINF .AND. DIST(U) > DMAX) DMAX = DIST(U)
+      ENDDO
+      DO U = 1, NNODE
+        IF (DIST(U) < DINF) THEN
+          POT(U) = POT(U) + DIST(U)
+        ELSE
+          POT(U) = POT(U) + DMAX
+        ENDIF
+      ENDDO
+
+      ! Bottleneck along the augmenting path, then apply the flow.
+      F = MAXFLOW - SHIPPED
+      VN = T
+      DO WHILE (VN /= S)
+        K = PREVA(VN)
+        IF (ACAP(K) < F) F = ACAP(K)
+        VN = AFROM(K)
+      ENDDO
+      SHIPPED = SHIPPED + F
+      VN = T
+      DO WHILE (VN /= S)
+        K = PREVA(VN)
+        KP = K - 1 + 2*MOD(K, 2)     ! paired reverse arc (2k-1 <-> 2k)
+        ACAP(K)  = ACAP(K)  - F
+        ACAP(KP) = ACAP(KP) + F
+        TOTCOST = TOTCOST + REAL(F, q)*ACST(K)
+        VN = AFROM(K)
+      ENDDO
+    ENDDO
+
+    DEALLOCATE(GPTR, GNEXT, GARC, PREVA, POT, DIST, HD, HV)
+
+  CONTAINS
+
+    SUBROUTINE HPUSH(DVAL, VVAL)
+      REAL(q), INTENT(IN) :: DVAL
+      INTEGER, INTENT(IN) :: VVAL
+      INTEGER :: IP, IPAR
+      IF (NH >= SIZE(HD)) CALL HGROW()
+      NH = NH + 1
+      HD(NH) = DVAL
+      HV(NH) = VVAL
+      IP = NH
+      DO WHILE (IP > 1)
+        IPAR = IP/2
+        IF (HLESS(HD(IP), HV(IP), HD(IPAR), HV(IPAR))) THEN
+          CALL HSWAP(IP, IPAR)
+          IP = IPAR
+        ELSE
+          EXIT
+        ENDIF
+      ENDDO
+    END SUBROUTINE HPUSH
+
+    SUBROUTINE HPOP(DVAL, VVAL)
+      REAL(q), INTENT(OUT) :: DVAL
+      INTEGER, INTENT(OUT) :: VVAL
+      INTEGER :: IP, ICH
+      DVAL = HD(1)
+      VVAL = HV(1)
+      HD(1) = HD(NH)
+      HV(1) = HV(NH)
+      NH = NH - 1
+      IP = 1
+      DO
+        ICH = 2*IP
+        IF (ICH > NH) EXIT
+        IF (ICH < NH) THEN
+          IF (HLESS(HD(ICH+1), HV(ICH+1), HD(ICH), HV(ICH))) ICH = ICH + 1
+        ENDIF
+        IF (HLESS(HD(ICH), HV(ICH), HD(IP), HV(IP))) THEN
+          CALL HSWAP(IP, ICH)
+          IP = ICH
+        ELSE
+          EXIT
+        ENDIF
+      ENDDO
+    END SUBROUTINE HPOP
+
+    PURE LOGICAL FUNCTION HLESS(D1, V1, D2, V2)
+      REAL(q), INTENT(IN) :: D1, D2
+      INTEGER, INTENT(IN) :: V1, V2
+      ! Exact float equality on purpose: replicates the python tuple
+      ! comparison (d, v) that heapq uses in pyleos, so equal-distance
+      ! entries pop in node order. Pop order is fully determined by this
+      ! key, independent of heap internals.
+      HLESS = (D1 < D2) .OR. (D1 == D2 .AND. V1 < V2)
+    END FUNCTION HLESS
+
+    SUBROUTINE HSWAP(I1, I2)
+      INTEGER, INTENT(IN) :: I1, I2
+      REAL(q) :: TD
+      INTEGER :: TV
+      TD = HD(I1); HD(I1) = HD(I2); HD(I2) = TD
+      TV = HV(I1); HV(I1) = HV(I2); HV(I2) = TV
+    END SUBROUTINE HSWAP
+
+    SUBROUTINE HGROW()
+      REAL(q), ALLOCATABLE :: TD(:)
+      INTEGER, ALLOCATABLE :: TV(:)
+      ALLOCATE(TD(2*SIZE(HD)), TV(2*SIZE(HV)))
+      TD(1:NH) = HD(1:NH)
+      TV(1:NH) = HV(1:NH)
+      CALL MOVE_ALLOC(TD, HD)
+      CALL MOVE_ALLOC(TV, HV)
+    END SUBROUTINE HGROW
+
+  END SUBROUTINE EOS_MCF_SOLVE
+
+  !> Tier-1 transport assignment (pyleos _build_costs tier-1 path +
+  !> _solve_flow + assign_case per-atom epilogue), driven entirely by
+  !> data already present in EOS_ANALYZE. Deterministic and rank-local
+  !> (every rank computes the same result; no communication), same as
+  !> the greedy pass.
+  !>
+  !> Node layout (1-based; python had S=0, wf w -> 1+w, atom a -> 1+nw+a,
+  !> T = nw+na+1):  S = 1, WF w -> 1+w (w = 1..NWTOT, spin-1 block first,
+  !> then spin-2, matching the #WF block order), atom i -> 1+NWTOT+i,
+  !> T = NWTOT+NIONS+2.
+  !>
+  !> Supply per WF is ESUP = NINT(RSPIN) electrons (2 for ISPIN=1, 1 per
+  !> spin channel for ISPIN=2) regardless of the actual WF occupation -
+  !> pyleos semantics; fractional/ghost occupation is handled globally
+  !> by the NELECT flow cap, not per WF.
+  SUBROUTINE EOS_SOLVE_FLOW(MLWF, W, T_INFO, LATT_CUR, P, DYN, NWS, &
+ &                          NELECT_WANN, OS_FLOW, FLOW_TARGET, FLOW_GHOST, &
+ &                          FLOW_INFEAS, FLOW_COST, FLOW_NSTRAY, LFLOW_DONE)
+    TYPE(MLWF_type),   INTENT(IN) :: MLWF
+    TYPE(wavespin),    INTENT(IN) :: W
+    TYPE(type_info),   INTENT(IN) :: T_INFO
+    TYPE(latt),        INTENT(IN) :: LATT_CUR
+    TYPE(potcar),      INTENT(IN) :: P(T_INFO%NTYP)
+    TYPE(dynamics),    INTENT(IN) :: DYN
+    INTEGER,           INTENT(IN) :: NWS(2)
+    REAL(q),           INTENT(IN) :: NELECT_WANN
+    INTEGER,           INTENT(OUT) :: OS_FLOW(T_INFO%NIONS)
+    INTEGER,           INTENT(OUT) :: FLOW_TARGET, FLOW_GHOST, FLOW_INFEAS
+    REAL(q),           INTENT(OUT) :: FLOW_COST
+    INTEGER,           INTENT(OUT) :: FLOW_NSTRAY
+    LOGICAL,           INTENT(OUT) :: LFLOW_DONE
+
+    INTEGER :: NIONS, NWTOT, ESUP, ISP, IW, IWG, I, NT
+    INTEGER :: N0, N1, N2
+    INTEGER :: KTARGET, SHIPPED, SENT
+    INTEGER :: NP, NPAIR, NARC, NNODE, S, T, K
+    REAL(q) :: V(3,1), CDIR(3), DF(3), FR(3)
+    REAL(q) :: CX, CY, CZ, D2, BEST, D2MIN, CHIMAX, CHI, TOTCOST
+    REAL(q), ALLOCATABLE :: COST(:,:), ETERM(:)
+    INTEGER, ALLOCATABLE :: NMIN(:), NMAX(:), NE(:), ZION(:)
+    INTEGER, ALLOCATABLE :: AFROM(:), ATO(:), ACAP(:)
+    REAL(q), ALLOCATABLE :: ACST(:)
+    REAL(q), PARAMETER :: DINF = HUGE(1._q)
+
+    NIONS = T_INFO%NIONS
+    OS_FLOW = 0
+    FLOW_TARGET = 0; FLOW_GHOST = 0; FLOW_INFEAS = 0; FLOW_NSTRAY = 0
+    FLOW_COST = 0._q
+    LFLOW_DONE = .FALSE.
+
+    NWTOT = 0
+    DO ISP = 1, MLWF%ISPIN
+      NWTOT = NWTOT + NWS(ISP)
+    ENDDO
+    IF (NWTOT <= 0 .OR. NIONS <= 0) RETURN
+
+    ! Electrons carried per WF: pyleos "supply = 2 if ispin == 1 else 1".
+    ! NINT(RSPIN) is identical for every collinear case (2/1). TODO
+    ! (bounded): noncollinear ISPIN=1 has RSPIN=1 where pyleos would say
+    ! 2; LEOS+wannier90 noncollinear is unvalidated upstream anyway.
+    ESUP = NINT(W%WDES%RSPIN)
+
+    ! chi_max over element types present (pyleos: max over set(elements),
+    ! "or 1.0" when no element has Allen data).
+    CHIMAX = 0._q
+    DO NT = 1, T_INFO%NTYP
+      CHI = EOS_FLOW_ENEG_OF(NINT(P(NT)%ZCORE + P(NT)%ZVALF))
+      IF (CHI > CHIMAX) CHIMAX = CHI
+    ENDDO
+    IF (CHIMAX <= 0._q) CHIMAX = 1._q
+
+    ALLOCATE(COST(NWTOT, NIONS), ETERM(NIONS), NMIN(NIONS), NMAX(NIONS), &
+ &           NE(NIONS), ZION(NIONS))
+    DO I = 1, NIONS
+      NT = T_INFO%ITYP(I)
+      ZION(I) = NINT(P(NT)%ZCORE + P(NT)%ZVALF)
+      ! Same evaluation order as python: d2 + beta*(1 - chi/chi_max);
+      ! the additive electronegativity term is per-ion constant.
+      ETERM(I) = EOS_FLOW_BETA * (1._q - EOS_FLOW_ENEG_OF(ZION(I))/CHIMAX)
+      CALL EOS_FLOW_CAPACITY(ZION(I), P(NT)%ZVALF, NMIN(I), NMAX(I))
+    ENDDO
+
+    ! Geometry: minimum-image squared distance, pyleos _min_image_d2 -
+    ! reduce the fractional difference with ANINT (python round; they
+    ! differ only on exact-.5 components, absorbed by the +-1 cell scan),
+    ! then scan the 27 neighbour cells keeping the strict minimum.
+    ! Unlike the greedy pass the centre is NOT wrapped to [0,1): pyleos
+    ! reduces via df - round(df) only (equivalent modulo the same
+    ! exact-.5 boundary).
+    FLOW_NSTRAY = 0
+    IWG = 0
+    DO ISP = 1, MLWF%ISPIN
+      DO IW = 1, NWS(ISP)
+        IWG = IWG + 1
+        V(:,1) = MLWF%wann_centres(:, IW, ISP)
+        CALL KARDIR(1, V, LATT_CUR%B)
+        CDIR = V(:,1)
+        D2MIN = DINF
+        DO I = 1, NIONS
+          DF = CDIR - DYN%POSION(:, I)
+          DF(1) = DF(1) - ANINT(DF(1))
+          DF(2) = DF(2) - ANINT(DF(2))
+          DF(3) = DF(3) - ANINT(DF(3))
+          BEST = DINF
+          DO N0 = -1, 1
+          DO N1 = -1, 1
+          DO N2 = -1, 1
+            FR(1) = DF(1) + REAL(N0, q)
+            FR(2) = DF(2) + REAL(N1, q)
+            FR(3) = DF(3) + REAL(N2, q)
+            CX = FR(1)*LATT_CUR%A(1,1) + FR(2)*LATT_CUR%A(1,2) + FR(3)*LATT_CUR%A(1,3)
+            CY = FR(1)*LATT_CUR%A(2,1) + FR(2)*LATT_CUR%A(2,2) + FR(3)*LATT_CUR%A(2,3)
+            CZ = FR(1)*LATT_CUR%A(3,1) + FR(2)*LATT_CUR%A(3,2) + FR(3)*LATT_CUR%A(3,3)
+            D2 = CX*CX + CY*CY + CZ*CZ
+            IF (D2 < BEST) BEST = D2
+          ENDDO
+          ENDDO
+          ENDDO
+          COST(IWG, I) = BEST + ETERM(I)
+          IF (BEST < D2MIN) D2MIN = BEST
+        ENDDO
+        ! Stray diagnostics (pyleos STRAY_* thresholds, strict >): the
+        ! WF still carries supply; count is reported in the header.
+        IF (MLWF%wann_spreads(IW, ISP) > EOS_FLOW_STRAY_SPREAD .OR. &
+ &          SQRT(D2MIN) > EOS_FLOW_STRAY_DIST) FLOW_NSTRAY = FLOW_NSTRAY + 1
+      ENDDO
+    ENDDO
+
+    ! Flow target: cap the shipped electrons at NELECT(Wannier) -
+    ! min-cost k-flow. Ghost supply beyond the cap is never routed
+    ! (pyleos: target = min(round(nelect_wann), supply_total)).
+    KTARGET = MIN(NINT(NELECT_WANN), ESUP*NWTOT)
+
+    ! Graph construction, exact pyleos _solve_flow order:
+    !   per WF: source arc, then one arc per atom (atom order);
+    !   per atom: n_min reward arc (cost -BIG_NEG), then the free
+    !   remainder up to n_max (cost 0).
+    NPAIR = NWTOT*(NIONS + 1)
+    DO I = 1, NIONS
+      IF (NMIN(I) > 0) NPAIR = NPAIR + 1
+      IF (NMAX(I) > NMIN(I)) NPAIR = NPAIR + 1
+    ENDDO
+    NARC = 2*NPAIR
+    NNODE = NWTOT + NIONS + 2
+    S = 1
+    T = NNODE
+    ALLOCATE(AFROM(NARC), ATO(NARC), ACAP(NARC), ACST(NARC))
+    NP = 0
+    DO IWG = 1, NWTOT
+      CALL FLOW_ADD(S, 1+IWG, ESUP, 0._q)
+      DO I = 1, NIONS
+        CALL FLOW_ADD(1+IWG, 1+NWTOT+I, ESUP, COST(IWG, I))
+      ENDDO
+    ENDDO
+    DO I = 1, NIONS
+      IF (NMIN(I) > 0) CALL FLOW_ADD(1+NWTOT+I, T, NMIN(I), -EOS_FLOW_BIGNEG)
+      IF (NMAX(I) > NMIN(I)) CALL FLOW_ADD(1+NWTOT+I, T, NMAX(I)-NMIN(I), 0._q)
+    ENDDO
+
+    CALL EOS_MCF_SOLVE(NNODE, NARC, AFROM, ATO, ACAP, ACST, S, T, KTARGET, &
+ &                     SHIPPED, TOTCOST)
+
+    ! Electrons received per atom: initial cap minus residual cap of the
+    ! forward WF->atom arcs. Pair index of arc (w, i) is
+    ! (w-1)*(NIONS+1) + 1 + i (one source pair, then NIONS atom pairs
+    ! per WF); forward arc id = 2*pair - 1.
+    NE = 0
+    DO IWG = 1, NWTOT
+      DO I = 1, NIONS
+        K = 2*((IWG-1)*(NIONS+1) + 1 + I) - 1
+        SENT = ESUP - ACAP(K)
+        IF (SENT > 0) NE(I) = NE(I) + SENT
+      ENDDO
+    ENDDO
+
+    DO I = 1, NIONS
+      NT = T_INFO%ITYP(I)
+      OS_FLOW(I) = NINT(P(NT)%ZVALF) - NE(I)
+    ENDDO
+
+    FLOW_TARGET = KTARGET
+    FLOW_GHOST  = ESUP*NWTOT - KTARGET
+    FLOW_INFEAS = KTARGET - SHIPPED
+    FLOW_COST   = TOTCOST
+    LFLOW_DONE  = .TRUE.
+
+    DEALLOCATE(COST, ETERM, NMIN, NMAX, NE, ZION, AFROM, ATO, ACAP, ACST)
+
+  CONTAINS
+
+    !> python MinCostFlow.add(u, v, cap, cost): forward arc + reverse
+    !> arc (cap 0, cost -c) as the creation pair (2k-1, 2k).
+    SUBROUTINE FLOW_ADD(U, VN, CAP, CST)
+      INTEGER, INTENT(IN) :: U, VN, CAP
+      REAL(q), INTENT(IN) :: CST
+      INTEGER :: KA
+      NP = NP + 1
+      KA = 2*NP - 1
+      AFROM(KA)   = U;  ATO(KA)   = VN; ACAP(KA)   = CAP; ACST(KA)   = CST
+      AFROM(KA+1) = VN; ATO(KA+1) = U;  ACAP(KA+1) = 0;   ACST(KA+1) = -CST
+    END SUBROUTINE FLOW_ADD
+
+  END SUBROUTINE EOS_SOLVE_FLOW
 
 END MODULE eos

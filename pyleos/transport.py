@@ -179,11 +179,16 @@ def supply_total_of(wfs: List["WfInfo"]) -> int:
     return sum(w.supply for w in wfs)
 
 
-# Cost-gap below which tier-2 composition may arbitrate. Chosen as the widest
-# zero-damage point on the 38-case #WP bench: tau=1.0 fixes hi3 + the Rh
-# complex and breaks nothing; 1.5 starts overriding clear geometry (tmao).
+# Cost-gap below which tier-2 composition may arbitrate, and the composition
+# lead required to overturn the geometry. Values sit in the interior of the
+# safe plateau mapped by the 2026-07-10 sensitivity scan (script/
+# arbiter_scan.py, data/v3/arbiter_scan_20260710.tsv, RESULTS 3.8): tau=1.0
+# fixes hi3 + the Rh complex and breaks nothing (1.5 starts overriding clear
+# geometry, e.g. tmao); pmargin in [0.10, 0.30] blocks the H-1s projector
+# artefact that at 0.05 flipped 37 legacy C-H/N-H hydrogens (vircef, mumnox),
+# while 0.20 additionally leaves every non-H verdict untouched.
 ARBITER_TAU = 1.0
-ARBITER_PMARGIN = 0.05  # composition lead required to overturn the geometry
+ARBITER_PMARGIN = 0.20
 
 
 def _build_costs(case: CaseData, beta: float, eneg_scale: str,

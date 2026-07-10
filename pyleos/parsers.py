@@ -1,6 +1,7 @@
 """Parsers for VASP/Wannier90/LEOS output files. Stdlib only."""
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -64,6 +65,8 @@ class EoscarData:
     wf_detail: List[WfDetail] = field(default_factory=list)   # v2 #WF block
     wp_detail: Dict[Tuple[int, int], List[Tuple[int, float]]] = field(
         default_factory=dict)   # v3 #WP block: (spin, wf) -> [(atom, weight)]
+    flow_os: Optional[List[int]] = None       # v3.1 OS(flow) column (in-situ
+                                              # tier-1 min-cost flow verdict)
 
 
 @dataclass
@@ -141,13 +144,27 @@ def parse_eoscar(path: Path) -> EoscarData:
     elements: List[str] = []
     ne: List[float] = []
     osi: List[int] = []
+    flow: List[int] = []
     nelect_wann = dne = None
     n_lost_states = n_lost_e = None
     wf_detail: List[WfDetail] = []
     wp_detail: Dict[Tuple[int, int], List[Tuple[int, float]]] = {}
+    aborted_steps = 0
+    in_abort = False
     for line in path.read_text().splitlines():
         s = line.strip()
         if s.startswith("#"):
+            if s.startswith("# STEP"):
+                in_abort = False
+            if s.startswith("# LEOS_ABORTED"):
+                # Diagnostics-only frame (VASP skipped the analysis). Do not
+                # let its header fields overwrite those of healthy frames in
+                # a trajectory EOSCAR; whether the whole file is unusable is
+                # decided after parsing (no atom rows at all).
+                aborted_steps += 1
+                in_abort = True
+            if in_abort:
+                continue
             if "NELECT(Wannier)" in s:
                 nelect_wann = float(s.split("=")[1])
             elif "|dNe|" in s:
@@ -179,10 +196,31 @@ def parse_eoscar(path: Path) -> EoscarData:
             zval[el] = float(parts[2])
             ne.append(float(parts[3]))
             osi.append(int(parts[5]))
+            if len(parts) >= 8:
+                # v3.1 appends OS(flow) after dOS; older files stop at 7
+                # columns and parts[5]=OS(int) stays where it always was.
+                try:
+                    flow.append(int(parts[7]))
+                except ValueError:
+                    pass
     if not elements:
+        if aborted_steps:
+            raise ValueError(
+                f"{path}: diagnostics-only EOSCAR - VASP skipped the "
+                "oxidation-state analysis (NELECT mismatch above "
+                "EOS_NELECT_ABORT). The #NL records in the file localise "
+                "the lost electrons per (spin, k, band); fix the "
+                "Wannierisation (frozen window / AUTO_WINDOW) and rerun.")
         raise ValueError(f"{path}: no atom rows parsed")
+    if aborted_steps:
+        warnings.warn(
+            f"{path}: {aborted_steps} trajectory step(s) were aborted by "
+            "VASP (NELECT mismatch) and carry diagnostics only; their #NL "
+            "records localise the lost electrons. Parsed data covers the "
+            "healthy steps.", stacklevel=2)
     return EoscarData(zval, ne, osi, elements, nelect_wann, dne,
-                      n_lost_states, n_lost_e, wf_detail, wp_detail)
+                      n_lost_states, n_lost_e, wf_detail, wp_detail,
+                      flow if len(flow) == len(elements) else None)
 
 
 def load_case(case_dir: Path) -> CaseData:
