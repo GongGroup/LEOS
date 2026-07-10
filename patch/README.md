@@ -31,6 +31,22 @@ make DEPS=1 -j8 std
    EOSCAR 整数氧化态精确相等、数值字段 1e-6 内一致（残差为编译产物间
    的浮点末位抖动），#WP/#WF 数据块齐全。
 
+### v3.1 验证记录（2026-07-10，sai-pod）
+
+1. **改动**：六项——abort 先写诊断版 EOSCAR（`# LEOS_ABORTED` +
+   窗口型 `#NL` + 弥散型 `#NLD` 丢失定位）；per-spin num_wann 幽灵
+   修复（含 per-spin 自动冻结窗口与 win 改写回退的硬不变量）；
+   SCDM 免双缓冲；M/A 矩阵生命周期收紧。敌对评审两轮
+   （docs/reports/20260710_fortran_review.md，2 BLOCKER 修复后过）。
+2. **编译**：干净原版树 + 本补丁三轮全过（作业 612186/612454/612747，
+   各约 5-11 分钟）。
+3. **回归**：CO2 整数 OS 精确相等、数值字段 1e-14 级（判据沿用 v3
+   验证口径"整数相等 + 1e-6 内"；GPU 版存在跨节点运行间浮点末位
+   抖动，逐字节不可达）；VIRCEF spin2 幽灵 +2→0、Ce 恢复 +3；
+   mumnox 无窗口/错窗口两种复现各验证 `#NLD`/abort 行为。
+4. **内存**：Ce18O36Co4（63 原子 ISPIN=2）在 4 GPU + KPAR=1 +
+   NBANDS=308 下 VASP 总 RSS 41 GB（62.5 GB 配额的 66%）。
+
 ### 使用注意（实测积累）
 
 - **bvector 失败**（`kmesh_get_bvector: Not enough bvectors found`）：
@@ -42,7 +58,14 @@ make DEPS=1 -j8 std
   产生大面积 stray。
 - **NELECT mismatch too large**：根因几乎总是解纠缠缺冻结窗口。开
   `LWANNIER90_AUTO_WINDOW = .TRUE.`（配 LSCDM）即根治；不要手写
-  wannier90.win。
+  wannier90.win。v3.1 起 abort 也会写出诊断版 EOSCAR：`#NLD` 块
+  直接列出丢失最大的 (自旋, k, 能带)——丢失集中在占据流形顶、
+  弥散于全部 k 点，就是缺冻结窗口的指纹。
+- **KPAR 与内存（GPU 版铁律）**：KPAR 不切分 k 方向的波函数存储，
+  每 rank 注册量反而正比于 KPAR/Nranks——rank 数少时 KPAR>1 会
+  直接把主机内存顶爆（Ce 系 4 GPU + KPAR=2 启动即 OOM 的根因）。
+  4 GPU/62.5 GB 档必须 KPAR=1；8 GPU/125 GB 档 KPAR=2 可用。
+  磁性体系补全 MAGMOM 可避免 NBANDS 被默认规则抬高（332→308）。
 
 ### 合并时的审计发现
 
