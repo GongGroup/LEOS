@@ -1,0 +1,22 @@
+name: regression
+
+on: [push, pull_request]
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: unit tests
+        run: python3 -m unittest discover pyleos/tests -v
+
+      - name: full 74-case benchmark (no reliability, ~20 s)
+        run: python3 script/full_bench.py --no-reliability --out /tmp/ci_bench.tsv
+
+      - name: compare status/dev columns against the golden table
+        run: |
+          cut -f1-4 data/v3/reliability_74.tsv > /tmp/golden.tsv
+          cut -f1-4 /tmp/ci_bench.tsv > /tmp/fresh.tsv
+          diff -u /tmp/golden.tsv /tmp/fresh.tsv
