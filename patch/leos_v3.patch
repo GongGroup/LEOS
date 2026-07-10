@@ -1,5 +1,6 @@
---- a/vasp.6.4.3/src/.objects
-+++ b/vasp.6.4.3/src/.objects
+diff -urN a/vasp.6.4.3/src/.objects b/vasp.6.4.3/src/.objects
+--- a/vasp.6.4.3/src/.objects	2024-03-19 17:18:07
++++ b/vasp.6.4.3/src/.objects	2026-07-11 01:37:28
 @@ -220,6 +220,7 @@
  	minimax.o \
  	umco.o \
@@ -8,569 +9,10 @@
  	ratpol.o \
  	pade_fit.o \
  	screened_2e.o \
---- a/vasp.6.4.3/src/main.F
-+++ b/vasp.6.4.3/src/main.F
-@@ -167,6 +167,7 @@
-       USE dvvtrajectory
- 
-       USE mlwf
-+      USE eos
-       USE umco
-       USE dmft
-       USE crpa
-@@ -911,7 +912,9 @@
-       CALL RHFATM_READER(IO)
-       CALL CHGFIT_READER(IO,T_INFO%NTYP)
-       CALL STOCKHOLDER_READER(IO)
-+      CALL EOS_READER(INFO, T_INFO, P, IO)
-       CALL MLWF_READER(INFO,IO%IU5,IO%IU6,IO%IU0)
-+      IF (LEOS) LSCDM = .TRUE.
-       CALL WAVE_INTERPOLATOR_READER(IO%IU0,IO%IU5,IO%IU6)
-       CALL LPRJ_READER(T_INFO,P,WDES%LNONCOLLINEAR,IO)
-       CALL PEAD_READER(IO%IU5, IO%IU6, IO%IU0)
-@@ -3332,17 +3335,26 @@
-          ENDIF
-       ENDIF
- 
--      IF ((.NOT.L2E4W) .AND. MLWFRUN()) THEN
--         IF (IO%LORBIT==14) THEN
--            CALL SPHPRO_OPTPROJ(P,T_INFO,W,WDES,LDIMP,LMDIMP,-1,KPOINTS%EMIN,KPOINTS%EMAX)
--         ENDIF
-+      IF ((.NOT.L2E4W) .AND. (MLWFRUN() .OR. LEOS)) THEN
-+	         IF (IO%LORBIT==14) THEN
-+	            CALL SPHPRO_OPTPROJ(P,T_INFO,W,WDES,LDIMP,LMDIMP,-1,KPOINTS%EMIN,KPOINTS%EMAX)
-+	         ENDIF
- 
--         CALL MLWF_FREE(MLWF_GLOBAL)
--         IF (NSTEP == 1) CALL MLWF_MAIN(WDES,W,P,KPOINTS,CQIJ,T_INFO,LATT_CUR,INFO,IO,MLWF_GLOBAL)
--         IF (LWANNIERINTERPOL.OR.LCRPAPLOT) THEN
--            BLOCK
--            TYPE (wannier_interpolator) :: WANN_INTERP
--            CALL WANNIER_INTERPOL_SETUP_KPOINTS(WANN_INTERP,KPOINTS,LATT_CUR,SYMM,W)
-+	         IF (NSTEP == 1) CALL EOS_PREPARE_MLWF(W, INFO, IO)
-+	         ! LEOS trajectory mode: (re)wannierise and analyse on every step
-+	         ! selected by EOS_EVERY_N; plain LWANNIER90 users keep the old
-+	         ! first-step-only behaviour.
-+	         IF ((MLWFRUN() .AND. NSTEP == 1) .OR. EOS_DO_THIS_STEP(NSTEP, DYN%NSW, INFO%LSTOP)) THEN
-+	            CALL MLWF_FREE(MLWF_GLOBAL)
-+	            CALL MLWF_MAIN(WDES,W,P,KPOINTS,CQIJ,T_INFO,LATT_CUR,INFO,IO,MLWF_GLOBAL)
-+	         ENDIF
-+	         IF (EOS_DO_THIS_STEP(NSTEP, DYN%NSW, INFO%LSTOP)) THEN
-+	            CALL EOS_ANALYZE(MLWF_GLOBAL, W, T_INFO, LATT_CUR, INFO, P, IO, DYN)
-+	         ENDIF
-+	         IF (LWANNIERINTERPOL.OR.LCRPAPLOT) THEN
-+	            BLOCK
-+	            TYPE (wannier_interpolator) :: WANN_INTERP
-+	            CALL WANNIER_INTERPOL_SETUP_KPOINTS(WANN_INTERP,KPOINTS,LATT_CUR,SYMM,W)
-             CALL WANNIER_INTERPOL_FROM_MLWF(WANN_INTERP,MLWF_GLOBAL,IO)
-             CALL WANNIER_INTERPOL_SETUP_HAM(WANN_INTERP,W,IO)
-             CALL WANNIER_INTERPOL_SETUP_CDER(WANN_INTERP,W,KPOINTS,GRID,GRIDC,GRIDUS,C_TO_US,IRDMAX,LMDIM,T_INFO,&
---- a/vasp.6.4.3/src/mlwf.F
-+++ b/vasp.6.4.3/src/mlwf.F
-@@ -30,6 +30,14 @@
-       INTEGER :: NRSPINORS !< NUmber of spinor components
-       INTEGER :: NB_TOT    !< Total number of bands
-       INTEGER :: NUM_WANN  !< Number of desired wannier functions
-+      !> Per-spin effective number of WFs (LEOS ghost fix): arrays stay sized
-+      !> by NUM_WANN = max over spins, but wannier90 runs with the per-spin
-+      !> value so the minority channel produces no ghost WFs. 0 = use NUM_WANN.
-+      INTEGER :: NUM_WANN_SPIN(2) = 0
-+      !> Per-spin dis_froz_max companion to NUM_WANN_SPIN: the shared frozen
-+      !> window can freeze more states than the trimmed minority channel
-+      !> requests (wannier90 would abort). HUGE = not computed.
-+      REAL(q) :: DIS_FROZ_MAX_SPIN(2) = HUGE(1._q)
-       INTEGER :: NKPTS     !< Number of k-points for which the projections will be computed
-       INTEGER :: NEXCLB    !< Number of bands to exclude
-       CHARACTER(LEN=40) :: SZNAM1 !< Label read from the INCAR file
-@@ -104,6 +112,13 @@
-    !> select which wannier functions to write as a XSF file
-    INTEGER, ALLOCATABLE :: WRITE_WANNIER_XSF_IW(:)
- 
-+   !> LEOS hooks (set by the eos module; mlwf cannot USE eos - circular).
-+   !> SCDM-only skips the wannier90 minimisation; guide centres implement
-+   !> the trajectory warm start via wannier90 guiding_centres.
-+   LOGICAL, PUBLIC, SAVE :: LEOS_SCDM_ONLY = .FALSE.
-+   LOGICAL, PUBLIC, SAVE :: LEOS_GUIDE = .FALSE.
-+   REAL(q), ALLOCATABLE, PUBLIC, SAVE :: EOS_GUIDE_CENTRES(:,:,:)
-+
-    !> Write the LOCPROJ functions as a wavecar file
-    LOGICAL, PUBLIC, SAVE :: LWAVE_LOCPROJ = .FALSE.
-    !> write the locproj functions as XSF file
-@@ -123,6 +138,9 @@
- 
-    !> Number of Wannier orbitals
-    INTEGER, SAVE :: NUM_WANN = 0
-+   !> Per-spin occupied-manifold requirement set by LEOS (EOS_PREPARE_MLWF);
-+   !> 0 means "same as NUM_WANN" (non-LEOS runs, explicit INCAR NUM_WANN).
-+   INTEGER, SAVE :: NUM_WANN_SPIN(2) = 0
- 
-    !> prepare the input for wannier90
-    LOGICAL, SAVE :: LWANNIER90=.FALSE.
-@@ -527,6 +545,14 @@
-             P_MLWF%NUM_WANN = NUM_WANN
-          ENDIF
-    END SELECT
-+   ! Per-spin effective counts (LEOS ghost fix): only meaningful when LEOS
-+   ! prepared them (module NUM_WANN_SPIN > 0) and they stay within NUM_WANN;
-+   ! everywhere else fall back to the spin-independent value.
-+   P_MLWF%NUM_WANN_SPIN = P_MLWF%NUM_WANN
-+   IF (ALL(NUM_WANN_SPIN(1:WDES%ISPIN) > 0) .AND. &
-+  &    MAXVAL(NUM_WANN_SPIN(1:WDES%ISPIN)) <= P_MLWF%NUM_WANN) THEN
-+      P_MLWF%NUM_WANN_SPIN(1:WDES%ISPIN) = NUM_WANN_SPIN(1:WDES%ISPIN)
-+   ENDIF
-    ! Call Wannier90 setup
-    CALL MLWF_WANNIER90_SETUP(P_MLWF,WDES,W,KPOINTS,P,CQIJ,T_INFO,LATT_CUR,INFO,IO)
-    ! At this point the projection mode must be known
-@@ -887,8 +913,10 @@
-    TYPE(mlwf_type),INTENT(INOUT) :: MLWF
-    TYPE(wavespin),INTENT(IN) :: W
- 
--   INTEGER :: IK,IS,IB
-+   INTEGER :: IK,IS,IB,NW_S
-    REAL(q) :: ELIM(2,MLWF%NB_TOT)
-+   REAL(q) :: E_OCC_MAX, E_NEXT_MIN, GAP
-+   REAL(q), PARAMETER :: GAP_TOL = 5.E-2_q
- 
-    ! set froz_max
-    MLWF%DIS_FROZ_MAX = CUTOFF_DES%MU(1)
-@@ -904,8 +932,54 @@
-          END DO
-       END DO
-    END DO
--   MLWF%DIS_FROZ_MAX = ELIM(1,MLWF%NUM_WANN)-1e-5
- 
-+   ! Try to freeze the occupied manifold for gapped systems:
-+   ! pick dis_froz_max in the gap between band num_wann and num_wann+1.
-+   IF (MLWF%NUM_WANN >= MLWF%NB_TOT) THEN
-+      MLWF%DIS_FROZ_MAX = HUGE(MLWF%DIS_FROZ_MAX)
-+   ELSE
-+      E_OCC_MAX = ELIM(2,MLWF%NUM_WANN)
-+      E_NEXT_MIN = ELIM(1,MLWF%NUM_WANN+1)
-+      GAP = E_NEXT_MIN - E_OCC_MAX
-+      IF (GAP > GAP_TOL) THEN
-+         MLWF%DIS_FROZ_MAX = 0.5_q * (E_OCC_MAX + E_NEXT_MIN)
-+      ELSE
-+         MLWF%DIS_FROZ_MAX = ELIM(1,MLWF%NUM_WANN) - 1.E-5_q
-+      ENDIF
-+   ENDIF
-+
-+   ! LEOS ghost fix companion: with per-spin num_wann the SHARED window can
-+   ! freeze more states than the trimmed minority channel requests, which
-+   ! makes wannier90 abort in disentanglement. Recompute the same gap
-+   ! heuristic per spin, each channel using its own spectrum and its own
-+   ! effective num_wann; the value is substituted into the per-spin .win.
-+   MLWF%DIS_FROZ_MAX_SPIN = MLWF%DIS_FROZ_MAX
-+   IF (ALL(MLWF%NUM_WANN_SPIN(1:MLWF%ISPIN) > 0)) THEN
-+      DO IS=1,MLWF%ISPIN
-+         NW_S = MLWF%NUM_WANN_SPIN(IS)
-+         IF (NW_S >= MLWF%NB_TOT) THEN
-+            MLWF%DIS_FROZ_MAX_SPIN(IS) = HUGE(MLWF%DIS_FROZ_MAX)
-+            CYCLE
-+         ENDIF
-+         ELIM(1,:) =  HUGE(1_q)
-+         ELIM(2,:) = -HUGE(1_q)
-+         DO IK=1,W%WDES%NKPTS
-+            DO IB=1,W%WDES%NB_TOT
-+               ELIM(1,IB) = MIN(ELIM(1,IB),REAL(W%CELTOT(IB,IK,IS),KIND=q))
-+               ELIM(2,IB) = MAX(ELIM(2,IB),REAL(W%CELTOT(IB,IK,IS),KIND=q))
-+            END DO
-+         END DO
-+         E_OCC_MAX = ELIM(2,NW_S)
-+         E_NEXT_MIN = ELIM(1,NW_S+1)
-+         GAP = E_NEXT_MIN - E_OCC_MAX
-+         IF (GAP > GAP_TOL) THEN
-+            MLWF%DIS_FROZ_MAX_SPIN(IS) = 0.5_q * (E_OCC_MAX + E_NEXT_MIN)
-+         ELSE
-+            MLWF%DIS_FROZ_MAX_SPIN(IS) = ELIM(1,NW_S) - 1.E-5_q
-+         ENDIF
-+      ENDDO
-+   ENDIF
-+
-  END SUBROUTINE ESTIMATE_AUTO_WINDOW
- 
- !> @brief Call Wannier90 to read projections
-@@ -1271,6 +1345,14 @@
-    DEALLOCATE(S)
-    CALLMPI( M_sum_z8( WDES%COMM_KINTER, MLWF%M_matrix, SIZE(MLWF%M_matrix, KIND=qi8)))
- 
-+   ! Beyond this point M is only consumed on the masternode (the .mmn writer
-+   ! and the wannier90 library call are both IU6-guarded): drop the full-size
-+   ! replica on every other rank right away instead of carrying ~1 GB/rank
-+   ! (Ce18O36Co4: 0.90 GB) to the end of the run.
-+   IF (IO%IU6<0) THEN
-+      IF (ALLOCATED(MLWF%M_matrix)) DEALLOCATE(MLWF%M_matrix)
-+   ENDIF
-+
-    PROFILING_STOP( 'mlwf_wannier90_mmn' )
-  END SUBROUTINE MLWF_WANNIER90_MMN
- 
-@@ -1822,6 +1904,30 @@
-        WRITE(99,'(A,F14.7)') 'dis_froz_max =', MLWF%DIS_FROZ_MAX
-     ENDIF
- 
-+    ! LEOS: SCDM-only fast mode - skip disentanglement and localisation
-+    IF (LEOS_SCDM_ONLY) THEN
-+       WRITE(99,'(A)') 'num_iter = 0'
-+       WRITE(99,'(A)') 'dis_num_iter = 0'
-+    ENDIF
-+
-+    ! LEOS trajectory warm start: guide this step with the previous step
-+    ! centres. The projections block only steers the guiding centres; the
-+    ! initial U matrix still comes from the VASP-side amn (SCDM).
-+    IF (LEOS_GUIDE .AND. ALLOCATED(EOS_GUIDE_CENTRES)) THEN
-+       NI = 1
-+       IF (INDEX(MLWF%SEED_NAME, '.2') > 0) NI = 2
-+       IF (SIZE(EOS_GUIDE_CENTRES, 2) >= MLWF%NUM_WANN) THEN
-+          WRITE(99,'(A)') 'guiding_centres = .true.'
-+          WRITE(99,'(A)') 'begin projections'
-+          DO NK = 1, MLWF%NUM_WANN
-+             WRITE(99,'(A,F12.6,A,F12.6,A,F12.6,A)') 'c=', &
-+                EOS_GUIDE_CENTRES(1,NK,NI), ',', EOS_GUIDE_CENTRES(2,NK,NI), &
-+                ',', EOS_GUIDE_CENTRES(3,NK,NI), ':s'
-+          ENDDO
-+          WRITE(99,'(A)') 'end projections'
-+       ENDIF
-+    ENDIF
-+
-     ! write unit cell
-     WRITE(99,'(A)') 'begin unit_cell_cart'
-     WRITE(99,'(3F14.7)') MLWF%real_lattice(1,:)
-@@ -1849,6 +1955,83 @@
- 
- !***********************************************************************
- !> @brief Call to Wannier90 interface
-+!> @brief Rewrite the num_wann (and, if present, dis_froz_max) lines of an
-+!> existing .win file in place (LEOS per-spin ghost fix: the spin copy
-+!> inherits the shared max value and must be lowered to that channel's
-+!> occupied manifold, with a matching per-spin frozen window). The rewrite
-+!> is all-or-nothing and reports success via OK: wannier90's library mode
-+!> takes num_wann from the .win file, so ".win num_wann == library argument"
-+!> is a hard invariant - whenever the file cannot be rewritten faithfully
-+!> (warm-start projections block whose guiding-centre count is tied to the
-+!> shared value; a dis_froz_max line but no valid per-spin window, e.g. a
-+!> hand-written window; oversized file; I/O error) the caller must fall back
-+!> to the shared num_wann and keep the ghosts for this run.
-+ SUBROUTINE MLWF_WIN_SET_NUM_WANN(FNAME,NW,FROZ_MAX,IO,OK)
-+    USE base
-+    CHARACTER(LEN=*),INTENT(IN) :: FNAME
-+    INTEGER,INTENT(IN) :: NW
-+    REAL(q),INTENT(IN) :: FROZ_MAX
-+    TYPE(in_struct),INTENT(IN) :: IO
-+    LOGICAL,INTENT(OUT) :: OK
-+    INTEGER,PARAMETER :: MAXLINES=20000, LINELEN=255
-+    CHARACTER(LEN=LINELEN), ALLOCATABLE :: LINES(:)
-+    CHARACTER(LEN=LINELEN) :: BUF
-+    INTEGER :: N, I, IOS
-+    LOGICAL :: OVERFLOW, HAS_FROZ
-+
-+    ! the .win files only exist in the master's working directory; other
-+    ! ranks never consume OK (the wannier_run call is IU6-guarded).
-+    OK = .TRUE.
-+    IF (IO%IU6<0) RETURN
-+    OK = .FALSE.
-+    ALLOCATE(LINES(MAXLINES))
-+    N=0; OVERFLOW=.FALSE.; HAS_FROZ=.FALSE.
-+    OPEN(UNIT=99,FILE=FNAME,STATUS='OLD',ACTION='READ',IOSTAT=IOS)
-+    IF (IOS/=0) RETURN
-+    DO
-+       READ(99,'(A)',IOSTAT=IOS) BUF
-+       IF (IOS/=0) EXIT
-+       IF (N>=MAXLINES) THEN
-+          OVERFLOW=.TRUE.; EXIT
-+       ENDIF
-+       N=N+1; LINES(N)=BUF
-+    ENDDO
-+    CLOSE(99)
-+    IF (OVERFLOW) THEN
-+       IF (IO%IU6>=0) WRITE(IO%IU6,'(A)') ' LEOS: '//TRIM(FNAME)// &
-+      &   ' exceeds the rewrite buffer - keeping shared num_wann'
-+       RETURN
-+    ENDIF
-+    DO I=1,N
-+       IF (INDEX(LINES(I),'begin projections')>0) THEN
-+          IF (IO%IU6>=0) WRITE(IO%IU6,'(A)') ' LEOS: warm-start projections present - '// &
-+         &   'keeping shared num_wann for '//TRIM(FNAME)
-+          RETURN
-+       ENDIF
-+       IF (INDEX(ADJUSTL(LINES(I)),'dis_froz_max') == 1) HAS_FROZ=.TRUE.
-+    ENDDO
-+    IF (HAS_FROZ .AND. FROZ_MAX==HUGE(FROZ_MAX)) THEN
-+       ! a frozen window exists (e.g. hand-written) but no per-spin value is
-+       ! available to keep it consistent with the trimmed num_wann
-+       IF (IO%IU6>=0) WRITE(IO%IU6,'(A)') ' LEOS: dis_froz_max present without a '// &
-+      &   'per-spin window - keeping shared num_wann for '//TRIM(FNAME)
-+       RETURN
-+    ENDIF
-+    OPEN(UNIT=99,FILE=FNAME,STATUS='REPLACE',ACTION='WRITE')
-+    DO I=1,N
-+       IF (INDEX(ADJUSTL(LINES(I)),'num_wann') == 1) THEN
-+          WRITE(99,'(A,I0)') 'num_wann = ', NW
-+       ELSEIF (INDEX(ADJUSTL(LINES(I)),'dis_froz_max') == 1 .AND. &
-+      &        FROZ_MAX/=HUGE(FROZ_MAX)) THEN
-+          WRITE(99,'(A,F14.7)') 'dis_froz_max =', FROZ_MAX
-+       ELSE
-+          WRITE(99,'(A)') TRIM(LINES(I))
-+       ENDIF
-+    ENDDO
-+    CLOSE(99)
-+    OK = .TRUE.
-+ END SUBROUTINE MLWF_WIN_SET_NUM_WANN
-+
- !***********************************************************************
-  SUBROUTINE MLWF_WANNIER90_RUN(MLWF,IO)
-     USE base
-@@ -1858,7 +2041,8 @@
-     TYPE(in_struct) :: IO
- 
-     ! local variables
--    INTEGER :: ISP
-+    INTEGER :: ISP, NW
-+    LOGICAL :: WIN_OK
- 
-     ALLOCATE(MLWF%U_matrix(MLWF%NUM_WANN,MLWF%NUM_WANN,MLWF%NKPTS,MLWF%ISPIN))
-     ALLOCATE(MLWF%U_matrix_opt(MLWF%NB_TOT-MLWF%NEXCLB,MLWF%NUM_WANN,MLWF%NKPTS,MLWF%ISPIN))
-@@ -1888,17 +2072,43 @@
-           IF (ISP==1) WRITE(*,*) 'Running wannier90 in library mode for spin up   (check wannier90.wout)'
-           IF (ISP==2) WRITE(*,*) 'Running wannier90 in library mode for spin down (check wannier90.wout)'
- 
-+          ! Per-spin effective WF count (LEOS ghost fix): each channel asks
-+          ! wannier90 for exactly its own occupied manifold; the arrays keep
-+          ! the shared max size and the unused tail stays zero-initialised.
-+          NW = MLWF%NUM_WANN
-+          IF (MLWF%NUM_WANN_SPIN(ISP) > 0 .AND. MLWF%NUM_WANN_SPIN(ISP) <= MLWF%NUM_WANN) &
-+         &   NW = MLWF%NUM_WANN_SPIN(ISP)
-+
-           ! copy wannier90.win to wannier90.(up/dn).win
-           CALL COPYFILE(MLWF%seed_name//'.win',MLWF%seed_name//'.'//str(ISP)//'.win')
-+          IF (NW /= MLWF%NUM_WANN) THEN
-+             ! wannier90 library mode takes num_wann from the .win file, so
-+             ! the file rewrite and the library argument must agree. If the
-+             ! rewrite cannot be done faithfully, fall back to the shared
-+             ! value (ghosts kept, old behaviour) and tell the analysis side
-+             ! by resetting the per-spin count.
-+             CALL MLWF_WIN_SET_NUM_WANN(MLWF%seed_name//'.'//str(ISP)//'.win',NW, &
-+            &                           MLWF%DIS_FROZ_MAX_SPIN(ISP),IO,WIN_OK)
-+             IF (WIN_OK) THEN
-+                IF (IO%IU6>=0) WRITE(IO%IU6,'(A,I0,A,I0)') &
-+               &   ' LEOS: spin channel ',ISP,' runs wannier90 with num_wann = ',NW
-+             ELSE
-+                NW = MLWF%NUM_WANN
-+                MLWF%NUM_WANN_SPIN(ISP) = MLWF%NUM_WANN
-+                IF (IO%IU6>=0) WRITE(IO%IU6,'(A,I0,A)') &
-+               &   ' LEOS: per-spin trim skipped for spin channel ',ISP, &
-+               &   ' (win rewrite constraint); ghosts kept this run'
-+             ENDIF
-+          ENDIF
- 
-           ! run wannier90 for spin component ISP
-           CALL wannier_run(MLWF%seed_name//'.'//str(ISP), &
-          &                 MLWF%mp_grid,MLWF%NKPTS,MLWF%real_lattice,MLWF%recip_lattice, &
--         &                 MLWF%kpt_latt,MLWF%NB_TOT-MLWF%NEXCLB,MLWF%NUM_WANN,MLWF%nntot,MLWF%num_atoms,MLWF%atom_symbols, &
-+         &                 MLWF%kpt_latt,MLWF%NB_TOT-MLWF%NEXCLB,NW,MLWF%nntot,MLWF%num_atoms,MLWF%atom_symbols, &
-          &                 MLWF%atoms_cart,MLWF%gamma_only,&
--         &                 MLWF%M_matrix(:,:,:,:,ISP),MLWF%A_matrix(:,:,:,ISP),MLWF%eigenvalues(:,:,ISP), &
--         &                 MLWF%U_matrix(:,:,:,ISP),MLWF%U_matrix_opt(:,:,:,ISP),MLWF%lwindow(:,:,ISP), &
--         &                 MLWF%wann_centres(:,:,ISP),MLWF%wann_spreads(:,ISP),MLWF%spread(:,ISP))
-+         &                 MLWF%M_matrix(:,:,:,:,ISP),MLWF%A_matrix(:,1:NW,:,ISP),MLWF%eigenvalues(:,:,ISP), &
-+         &                 MLWF%U_matrix(1:NW,1:NW,:,ISP),MLWF%U_matrix_opt(:,1:NW,:,ISP),MLWF%lwindow(:,:,ISP), &
-+         &                 MLWF%wann_centres(:,1:NW,ISP),MLWF%wann_spreads(1:NW,ISP),MLWF%spread(:,ISP))
-           ENDDO
-        ENDIF
-     ENDIF
-@@ -1911,6 +2121,17 @@
-     CALLMPI( M_sum_d(MLWF%COMM,MLWF%wann_centres,3*MLWF%NUM_WANN*MLWF%ISPIN) )
-     CALLMPI( M_sum_d(MLWF%COMM,MLWF%wann_spreads,MLWF%NUM_WANN*MLWF%ISPIN) )
-     CALLMPI( M_sum_d(MLWF%COMM,MLWF%spread,3*MLWF%ISPIN) )
-+
-+    ! M and A have served their purpose (wannier90 consumed them on the
-+    ! masternode; every rank now holds U/U_opt/centres/spreads, which is all
-+    ! the downstream LEOS analysis needs): drop the large replicas instead of
-+    ! keeping them resident until the end of the run. The trajectory mode
-+    ! (EOS_EVERY_N) reallocates both on the next analysis step. A is only
-+    ! dropped on the SCDM path - the LOCPROJ modes feed A to consumers after
-+    ! this point (e.g. elphon), M has none.
-+    IF (ALLOCATED(MLWF%M_matrix)) DEALLOCATE(MLWF%M_matrix)
-+    IF (MLWF%PROJ_MODE==PROJ_SCDM .AND. ALLOCATED(MLWF%A_matrix)) &
-+   &   DEALLOCATE(MLWF%A_matrix)
- 
-     ! Set trafo method in mlwf structure
-     MLWF%TRAFO_MODE = TRAFO_WANNIER90_MODE
-@@ -3070,7 +3291,8 @@
- !  UNK files needed by wannier90 to plot the Wannier functions.
- !  Can write directly to file or return the WFs as an WVFN_BANDS(NGX*NGY*NGZ,NB_TOT) array
- !***********************************************************************
-- SUBROUTINE GET_WAVE_FUNCTIONS(W,K,ISP,P,LATT_CUR,IU,WVFN_BANDS,CELEN,EXCLUDE_BAND)
-+ SUBROUTINE GET_WAVE_FUNCTIONS(W,K,ISP,P,LATT_CUR,IU,WVFN_BANDS,CELEN,EXCLUDE_BAND, &
-+                               WVFN_BANDS_T,PIVOT_IDX,WVFN_PIVOT,BAND_NORMS)
-     USE pseudo
-     USE lattice
-     USE wave_high
-@@ -3088,6 +3310,16 @@
-     GDEF,OPTIONAL,INTENT(OUT) :: WVFN_BANDS(:,:)
-     !> Optionally return the eigenvalues of this array
-     COMPLEX(q),OPTIONAL,INTENT(OUT) :: CELEN(:)
-+    !> Optionally return the orbitals transposed, one row per band (bands, grid).
-+    !> Lets SCDM build its QRCP input directly instead of holding the (grid,
-+    !> bands) array AND a transposed copy at the same time (LEOS memory fix).
-+    GDEF,OPTIONAL,INTENT(OUT) :: WVFN_BANDS_T(:,:)
-+    !> Optionally: real-space grid indices to sample per band (SCDM pivots)
-+    INTEGER,OPTIONAL,INTENT(IN) :: PIVOT_IDX(:)
-+    !> Optionally return WVFN sampled at PIVOT_IDX for every band (bands, pivots)
-+    GDEF,OPTIONAL,INTENT(OUT) :: WVFN_PIVOT(:,:)
-+    !> Optionally return the per-band real-space norm^2 (spinor-wise sums)
-+    REAL(q),OPTIONAL,INTENT(OUT) :: BAND_NORMS(:)
-     ! local variables
-     TYPE(wavespin) WP
-     TYPE(wavefuna) WK
-@@ -3192,6 +3424,17 @@
-           ! return bands on a big array
-           NWRITTEN=NWRITTEN+1
-           IF (PRESENT(WVFN_BANDS)) WVFN_BANDS(:,NWRITTEN) = WVFN
-+          IF (PRESENT(WVFN_BANDS_T)) WVFN_BANDS_T(NWRITTEN,:) = WVFN
-+          IF (PRESENT(BAND_NORMS)) THEN
-+             BAND_NORMS(NWRITTEN) = REAL(DOT_PRODUCT(WVFN(:NPW),WVFN(:NPW)),KIND=q)
-+             IF (W%WDES%NRSPINORS==2) BAND_NORMS(NWRITTEN) = BAND_NORMS(NWRITTEN) + &
-+                REAL(DOT_PRODUCT(WVFN(NPW+1:),WVFN(NPW+1:)),KIND=q)
-+          ENDIF
-+          IF (PRESENT(WVFN_PIVOT)) THEN
-+             DO I=1,SIZE(PIVOT_IDX)
-+                WVFN_PIVOT(NWRITTEN,I) = WVFN(PIVOT_IDX(I))
-+             ENDDO
-+          ENDIF
-        ENDDO
-     ENDDO
- 
-@@ -3814,15 +4057,15 @@
-     REAL(q),                   INTENT(IN)  :: VKPT(3, NKPTS)
-     TYPE(in_struct),           INTENT(IN)  :: IO
- 
--    GDEF, ALLOCATABLE    :: PSI(:, :)
-     GDEF, ALLOCATABLE    :: PSI_D_SCDM(:, :)
-+    GDEF, ALLOCATABLE    :: PIV_VALS(:, :)
-     GDEF, ALLOCATABLE    :: WVFN_PHASE(:)
-+    REAL(q), ALLOCATABLE :: BNORM(:)
-     INTEGER              :: ISP
-     INTEGER              :: K_IDX
-     INTEGER              :: IB, IW
-     INTEGER              :: ANCHOR_IDX, J
-     INTEGER, ALLOCATABLE :: PIVOT_UP(:),PIVOT_DW(:)
--    REAL(q)              :: NORM
-     LOGICAL              :: DO_WORK
- 
-     INTEGER              :: IDX_UP, IDX_DW, CURRENT_PIVOT, NP
-@@ -3863,15 +4106,18 @@
-     ENDIF
- 
-     IF (.NOT. DO_WORK) THEN
--      ! Only perform minimal amount of work on other nodes
-+      ! Only perform minimal amount of work on other nodes. The call sequence
-+      ! must mirror the work node exactly (collective communication): the
-+      ! anchor point is visited TWICE per spin - once for the transposed
-+      ! build feeding the QRCP, once to re-extract the pivot values.
-       DO ISP = 1, W%WDES%ISPIN
--         ! Calculate real-spave wave function (to communicate to node 1)
-          CALL GET_WAVE_FUNCTIONS(W, VKPT(:, ANCHOR_IDX), ISP, P, LATT_CUR, -1)
-+         CALL GET_WAVE_FUNCTIONS(W, VKPT(:, ANCHOR_IDX), ISP, P, LATT_CUR, -1)
-          DO K_IDX = 1, NKPTS
-             ! Skip the anchor point as it was already computed
-             IF (ANCHOR_IDX==K_IDX) CYCLE
-             ! Calculate real-spave wave function (to communicate to node 1)
--            CALL GET_WAVE_FUNCTIONS(W,VKPT(:,K_IDX),ISP,P,LATT_CUR,-1,PSI,CELEN)
-+            CALL GET_WAVE_FUNCTIONS(W,VKPT(:,K_IDX),ISP,P,LATT_CUR,-1)
-          ENDDO
-       ENDDO
-       ! Get the matrix from node 1
-@@ -3880,9 +4126,10 @@
-     ENDIF
- 
-     NP = W%WDES%GRID%RL%NP
--    ALLOCATE(PSI(NP*W%WDES%NRSPINORS,W%WDES%NB_TOT))
-     ALLOCATE(CELEN(W%WDES%NB_TOT))
-     ALLOCATE(WVFN_PHASE(NP*W%WDES%NRSPINORS))
-+    ALLOCATE(BNORM(W%WDES%NB_TOT))
-+    ALLOCATE(PIV_VALS(W%WDES%NB_TOT, NUM_WANN))
- 
-     CALL RANK_REVEAL_QR%INIT(W%WDES%NB_TOT, NP * W%WDES%NRSPINORS, INFO)
-     IF (INFO /= 0) CALL vtutor%error( &
-@@ -3898,19 +4145,19 @@
-        ! |   Work on anchor point first   |
-        ! |________________________________|
- 
--       ! Calculate real-spave wave function
--       CALL GET_WAVE_FUNCTIONS(W,VKPT(:,ANCHOR_IDX),ISP,P,LATT_CUR,-1,PSI,CELEN)
--       DO IB=1, W%WDES%NB_TOT
--          NORM = REAL(DOT_PRODUCT(PSI(:, IB), PSI(:, IB)), KIND=q)
--          PSI(:, IB) = PSI(:, IB) / SQRT(NORM)
--       ENDDO
--
--       ! Calculate SCDM matrix
-+       ! Build the QRCP input directly in the transposed (bands, grid) layout,
-+       ! band by band. The old code materialised the (grid, bands) array AND
-+       ! this transposed copy at the same time - two full-grid matrices
-+       ! (2 x ~5 GB for the Ce18O36Co4 system) alive at the peak. Pivot values
-+       ! are re-extracted after the QRCP instead (one extra anchor pass).
-        IF (ALLOCATED(PSI_D_SCDM)) DEALLOCATE(PSI_D_SCDM)
-        ALLOCATE(PSI_D_SCDM(W%WDES%NB_TOT,NP*W%WDES%NRSPINORS))
-+       CALL GET_WAVE_FUNCTIONS(W,VKPT(:,ANCHOR_IDX),ISP,P,LATT_CUR,-1,CELEN=CELEN, &
-+            WVFN_BANDS_T=PSI_D_SCDM,BAND_NORMS=BNORM)
-        CUTOFF_FACTOR = CUTOFF_DES_GET_CUTOFF(CUTOFF_DES,ISP,CELEN)
-        DO IB=1,W%WDES%NB_TOT
--          PSI_D_SCDM(IB,:) = GCONJG(PSI(:,IB))*CUTOFF_FACTOR(IB)
-+          PSI_D_SCDM(IB,:) = PSI_D_SCDM(IB,:) / SQRT(BNORM(IB))
-+          PSI_D_SCDM(IB,:) = GCONJG(PSI_D_SCDM(IB,:))*CUTOFF_FACTOR(IB)
-        ENDDO
- 
-        ! Use rank-revealing QR decomposition to find a localized representation
-@@ -3945,13 +4192,17 @@
-        ENDIF
-        !WRITE(*,*) PIVOT(:NUM_WANN) < NP
- 
--       ! Calculate SCDM matrix at anchor point
-+       ! Calculate SCDM matrix at anchor point. The QRCP overwrote the
-+       ! transposed array, so revisit the anchor point once and sample the
-+       ! orbitals at the NUM_WANN pivot grid points only.
-        DEALLOCATE(PSI_D_SCDM)
-        ALLOCATE(PSI_D_SCDM(W%WDES%NB_TOT,NUM_WANN))
-+       CALL GET_WAVE_FUNCTIONS(W,VKPT(:,ANCHOR_IDX),ISP,P,LATT_CUR,-1,CELEN=CELEN, &
-+            PIVOT_IDX=RANK_REVEAL_QR%PIVOT(1:NUM_WANN),WVFN_PIVOT=PIV_VALS,BAND_NORMS=BNORM)
-        CUTOFF_FACTOR = CUTOFF_DES_GET_CUTOFF(CUTOFF_DES,ISP,CELEN)
-        DO IB=1,W%WDES%NB_TOT
-           DO IW=1,NUM_WANN
--             PSI_D_SCDM(IB,IW) = GCONJG(PSI(RANK_REVEAL_QR%PIVOT(IW),IB))*CUTOFF_FACTOR(IB)
-+             PSI_D_SCDM(IB,IW) = GCONJG(PIV_VALS(IB,IW)/SQRT(BNORM(IB)))*CUTOFF_FACTOR(IB)
-           ENDDO
-        ENDDO
- 
-@@ -3972,13 +4223,10 @@
-           ! Skip the anchor point as it was already computed
-           IF (ANCHOR_IDX==K_IDX) CYCLE
- 
--          ! Calculate real-spave wave function
--          CALL GET_WAVE_FUNCTIONS(W,VKPT(:,K_IDX),ISP,P,LATT_CUR,-1,PSI,CELEN)
--          DO IB=1,W%WDES%NB_TOT
--             NORM = REAL(DOT_PRODUCT(PSI(:NP,IB), PSI(:NP,IB)),KIND=q)
--             IF (W%WDES%NRSPINORS==2) NORM = NORM + REAL(DOT_PRODUCT(PSI(NP+1:,IB), PSI(NP+1:,IB)),KIND=q)
--             PSI(:,IB) = PSI(:,IB) / SQRT(NORM)
--          ENDDO
-+          ! Only the pivot values and per-band norms are needed here - sample
-+          ! them band by band instead of materialising the full-grid array.
-+          CALL GET_WAVE_FUNCTIONS(W,VKPT(:,K_IDX),ISP,P,LATT_CUR,-1,CELEN=CELEN, &
-+               PIVOT_IDX=RANK_REVEAL_QR%PIVOT(1:NUM_WANN),WVFN_PIVOT=PIV_VALS,BAND_NORMS=BNORM)
- 
-           CALL GET_WAVE_FUNCTIONS_PHASE(W,VKPT(:,K_IDX),WVFN_PHASE)
- 
-@@ -3987,7 +4235,7 @@
-           DO IB=1,W%WDES%NB_TOT
-              DO IW=1,NUM_WANN
-                 J=RANK_REVEAL_QR%PIVOT(IW); IF ( J > NP) J = J-NP
--                PSI_D_SCDM(IB,IW) = GCONJG(PSI(RANK_REVEAL_QR%PIVOT(IW),IB))*WVFN_PHASE(J)*CUTOFF_FACTOR(IB)
-+                PSI_D_SCDM(IB,IW) = GCONJG(PIV_VALS(IB,IW)/SQRT(BNORM(IB)))*WVFN_PHASE(J)*CUTOFF_FACTOR(IB)
-              ENDDO
-           ENDDO
- 
---- a/vasp.6.4.3/src/eos.F
-+++ b/vasp.6.4.3/src/eos.F
-@@ -0,0 +1,1539 @@
+diff -urN a/vasp.6.4.3/src/eos.F b/vasp.6.4.3/src/eos.F
+--- a/vasp.6.4.3/src/eos.F	1970-01-01 07:30:00
++++ b/vasp.6.4.3/src/eos.F	2026-07-11 01:37:28
+@@ -0,0 +1,1550 @@
 +#include "symbol.inc"
 +!> @brief Effective oxidation states from Wannier centres (LEOS)
 +!> Assignment: nearest-two-atom greedy + IUPAC electronegativity rule
@@ -1569,6 +1011,17 @@
 +          ENDDO
 +        ENDDO
 +
++        ! Merge the band-group partial sums BEFORE taking |.|^2: the
++        ! fingerprint is |sum over ALL bands|^2, and squaring per-group
++        ! partial sums drops the cross terms - under NB_PAR>1 the #WP
++        ! block degrades into platform-dependent garbage (adjudicated on
++        ! CO2, serial vs 4-rank). After the merge every band-group rank
++        ! holds the full CW; the duplicate PW accumulation across the
++        ! group is compensated by the 1/NCPU factor below, which keeps
++        ! NCORE>1 ion partitioning and the final COMM-wide reduction
++        ! semantics intact (NCPU=1 in serial: bitwise-identical to old).
++        CALLMPI( M_sum_z8(W%WDES%COMM_INTER, CW(1,1), SIZE(CW, KIND=qi8)) )
++
 +        ! per-atom QION-weighted norms; SPHPRO-style local-ion bookkeeping
 +        NIS = 1
 +        NPROO = 0
@@ -1598,7 +1051,7 @@
 +                    ACC = ACC + REAL(CONJG(CW(LMIND, IW)) * CW(LMIND, IW), q)
 +                  ENDDO
 +                ENDDO
-+                PW(IW, NI, ISP) = PW(IW, NI, ISP) + WTK * ACC
++                PW(IW, NI, ISP) = PW(IW, NI, ISP) + WTK * ACC / REAL(W%WDES%COMM_INTER%NCPU, q)
 +              ENDDO
 +              LMBASE = LMBASE + (LHI - LOW + 1) * MMAX
 +              LOW = LHI + 1
@@ -2110,3 +1563,565 @@
 +  END SUBROUTINE EOS_SOLVE_FLOW
 +
 +END MODULE eos
+diff -urN a/vasp.6.4.3/src/main.F b/vasp.6.4.3/src/main.F
+--- a/vasp.6.4.3/src/main.F	2024-03-19 17:18:08
++++ b/vasp.6.4.3/src/main.F	2026-07-11 01:37:28
+@@ -167,6 +167,7 @@
+       USE dvvtrajectory
+ 
+       USE mlwf
++      USE eos
+       USE umco
+       USE dmft
+       USE crpa
+@@ -908,7 +909,9 @@
+       CALL RHFATM_READER(IO)
+       CALL CHGFIT_READER(IO,T_INFO%NTYP)
+       CALL STOCKHOLDER_READER(IO)
++      CALL EOS_READER(INFO, T_INFO, P, IO)
+       CALL MLWF_READER(INFO,IO%IU5,IO%IU6,IO%IU0)
++      IF (LEOS) LSCDM = .TRUE.
+       CALL WAVE_INTERPOLATOR_READER(IO%IU0,IO%IU5,IO%IU6)
+       CALL LPRJ_READER(T_INFO,P,WDES%LNONCOLLINEAR,IO)
+       CALL PEAD_READER(IO%IU5, IO%IU6, IO%IU0)
+@@ -3329,17 +3332,26 @@
+          ENDIF
+       ENDIF
+ 
+-      IF ((.NOT.L2E4W) .AND. MLWFRUN()) THEN
+-         IF (IO%LORBIT==14) THEN
+-            CALL SPHPRO_OPTPROJ(P,T_INFO,W,WDES,LDIMP,LMDIMP,-1,KPOINTS%EMIN,KPOINTS%EMAX)
+-         ENDIF
++      IF ((.NOT.L2E4W) .AND. (MLWFRUN() .OR. LEOS)) THEN
++	         IF (IO%LORBIT==14) THEN
++	            CALL SPHPRO_OPTPROJ(P,T_INFO,W,WDES,LDIMP,LMDIMP,-1,KPOINTS%EMIN,KPOINTS%EMAX)
++	         ENDIF
+ 
+-         CALL MLWF_FREE(MLWF_GLOBAL)
+-         IF (NSTEP == 1) CALL MLWF_MAIN(WDES,W,P,KPOINTS,CQIJ,T_INFO,LATT_CUR,INFO,IO,MLWF_GLOBAL)
+-         IF (LWANNIERINTERPOL.OR.LCRPAPLOT) THEN
+-            BLOCK
+-            TYPE (wannier_interpolator) :: WANN_INTERP
+-            CALL WANNIER_INTERPOL_SETUP_KPOINTS(WANN_INTERP,KPOINTS,LATT_CUR,SYMM,W)
++	         IF (NSTEP == 1) CALL EOS_PREPARE_MLWF(W, INFO, IO)
++	         ! LEOS trajectory mode: (re)wannierise and analyse on every step
++	         ! selected by EOS_EVERY_N; plain LWANNIER90 users keep the old
++	         ! first-step-only behaviour.
++	         IF ((MLWFRUN() .AND. NSTEP == 1) .OR. EOS_DO_THIS_STEP(NSTEP, DYN%NSW, INFO%LSTOP)) THEN
++	            CALL MLWF_FREE(MLWF_GLOBAL)
++	            CALL MLWF_MAIN(WDES,W,P,KPOINTS,CQIJ,T_INFO,LATT_CUR,INFO,IO,MLWF_GLOBAL)
++	         ENDIF
++	         IF (EOS_DO_THIS_STEP(NSTEP, DYN%NSW, INFO%LSTOP)) THEN
++	            CALL EOS_ANALYZE(MLWF_GLOBAL, W, T_INFO, LATT_CUR, INFO, P, IO, DYN)
++	         ENDIF
++	         IF (LWANNIERINTERPOL.OR.LCRPAPLOT) THEN
++	            BLOCK
++	            TYPE (wannier_interpolator) :: WANN_INTERP
++	            CALL WANNIER_INTERPOL_SETUP_KPOINTS(WANN_INTERP,KPOINTS,LATT_CUR,SYMM,W)
+             CALL WANNIER_INTERPOL_FROM_MLWF(WANN_INTERP,MLWF_GLOBAL,IO)
+             CALL WANNIER_INTERPOL_SETUP_HAM(WANN_INTERP,W,IO)
+             CALL WANNIER_INTERPOL_SETUP_CDER(WANN_INTERP,W,KPOINTS,GRID,GRIDC,GRIDUS,C_TO_US,IRDMAX,LMDIM,T_INFO,&
+diff -urN a/vasp.6.4.3/src/mlwf.F b/vasp.6.4.3/src/mlwf.F
+--- a/vasp.6.4.3/src/mlwf.F	2024-03-19 17:18:09
++++ b/vasp.6.4.3/src/mlwf.F	2026-07-11 01:37:28
+@@ -30,6 +30,14 @@
+       INTEGER :: NRSPINORS !< NUmber of spinor components
+       INTEGER :: NB_TOT    !< Total number of bands
+       INTEGER :: NUM_WANN  !< Number of desired wannier functions
++      !> Per-spin effective number of WFs (LEOS ghost fix): arrays stay sized
++      !> by NUM_WANN = max over spins, but wannier90 runs with the per-spin
++      !> value so the minority channel produces no ghost WFs. 0 = use NUM_WANN.
++      INTEGER :: NUM_WANN_SPIN(2) = 0
++      !> Per-spin dis_froz_max companion to NUM_WANN_SPIN: the shared frozen
++      !> window can freeze more states than the trimmed minority channel
++      !> requests (wannier90 would abort). HUGE = not computed.
++      REAL(q) :: DIS_FROZ_MAX_SPIN(2) = HUGE(1._q)
+       INTEGER :: NKPTS     !< Number of k-points for which the projections will be computed
+       INTEGER :: NEXCLB    !< Number of bands to exclude
+       CHARACTER(LEN=40) :: SZNAM1 !< Label read from the INCAR file
+@@ -104,6 +112,13 @@
+    !> select which wannier functions to write as a XSF file
+    INTEGER, ALLOCATABLE :: WRITE_WANNIER_XSF_IW(:)
+ 
++   !> LEOS hooks (set by the eos module; mlwf cannot USE eos - circular).
++   !> SCDM-only skips the wannier90 minimisation; guide centres implement
++   !> the trajectory warm start via wannier90 guiding_centres.
++   LOGICAL, PUBLIC, SAVE :: LEOS_SCDM_ONLY = .FALSE.
++   LOGICAL, PUBLIC, SAVE :: LEOS_GUIDE = .FALSE.
++   REAL(q), ALLOCATABLE, PUBLIC, SAVE :: EOS_GUIDE_CENTRES(:,:,:)
++
+    !> Write the LOCPROJ functions as a wavecar file
+    LOGICAL, PUBLIC, SAVE :: LWAVE_LOCPROJ = .FALSE.
+    !> write the locproj functions as XSF file
+@@ -123,6 +138,9 @@
+ 
+    !> Number of Wannier orbitals
+    INTEGER, SAVE :: NUM_WANN = 0
++   !> Per-spin occupied-manifold requirement set by LEOS (EOS_PREPARE_MLWF);
++   !> 0 means "same as NUM_WANN" (non-LEOS runs, explicit INCAR NUM_WANN).
++   INTEGER, SAVE :: NUM_WANN_SPIN(2) = 0
+ 
+    !> prepare the input for wannier90
+    LOGICAL, SAVE :: LWANNIER90=.FALSE.
+@@ -527,6 +545,14 @@
+             P_MLWF%NUM_WANN = NUM_WANN
+          ENDIF
+    END SELECT
++   ! Per-spin effective counts (LEOS ghost fix): only meaningful when LEOS
++   ! prepared them (module NUM_WANN_SPIN > 0) and they stay within NUM_WANN;
++   ! everywhere else fall back to the spin-independent value.
++   P_MLWF%NUM_WANN_SPIN = P_MLWF%NUM_WANN
++   IF (ALL(NUM_WANN_SPIN(1:WDES%ISPIN) > 0) .AND. &
++  &    MAXVAL(NUM_WANN_SPIN(1:WDES%ISPIN)) <= P_MLWF%NUM_WANN) THEN
++      P_MLWF%NUM_WANN_SPIN(1:WDES%ISPIN) = NUM_WANN_SPIN(1:WDES%ISPIN)
++   ENDIF
+    ! Call Wannier90 setup
+    CALL MLWF_WANNIER90_SETUP(P_MLWF,WDES,W,KPOINTS,P,CQIJ,T_INFO,LATT_CUR,INFO,IO)
+    ! At this point the projection mode must be known
+@@ -887,8 +913,10 @@
+    TYPE(mlwf_type),INTENT(INOUT) :: MLWF
+    TYPE(wavespin),INTENT(IN) :: W
+ 
+-   INTEGER :: IK,IS,IB
++   INTEGER :: IK,IS,IB,NW_S
+    REAL(q) :: ELIM(2,MLWF%NB_TOT)
++   REAL(q) :: E_OCC_MAX, E_NEXT_MIN, GAP
++   REAL(q), PARAMETER :: GAP_TOL = 5.E-2_q
+ 
+    ! set froz_max
+    MLWF%DIS_FROZ_MAX = CUTOFF_DES%MU(1)
+@@ -904,8 +932,54 @@
+          END DO
+       END DO
+    END DO
+-   MLWF%DIS_FROZ_MAX = ELIM(1,MLWF%NUM_WANN)-1e-5
+ 
++   ! Try to freeze the occupied manifold for gapped systems:
++   ! pick dis_froz_max in the gap between band num_wann and num_wann+1.
++   IF (MLWF%NUM_WANN >= MLWF%NB_TOT) THEN
++      MLWF%DIS_FROZ_MAX = HUGE(MLWF%DIS_FROZ_MAX)
++   ELSE
++      E_OCC_MAX = ELIM(2,MLWF%NUM_WANN)
++      E_NEXT_MIN = ELIM(1,MLWF%NUM_WANN+1)
++      GAP = E_NEXT_MIN - E_OCC_MAX
++      IF (GAP > GAP_TOL) THEN
++         MLWF%DIS_FROZ_MAX = 0.5_q * (E_OCC_MAX + E_NEXT_MIN)
++      ELSE
++         MLWF%DIS_FROZ_MAX = ELIM(1,MLWF%NUM_WANN) - 1.E-5_q
++      ENDIF
++   ENDIF
++
++   ! LEOS ghost fix companion: with per-spin num_wann the SHARED window can
++   ! freeze more states than the trimmed minority channel requests, which
++   ! makes wannier90 abort in disentanglement. Recompute the same gap
++   ! heuristic per spin, each channel using its own spectrum and its own
++   ! effective num_wann; the value is substituted into the per-spin .win.
++   MLWF%DIS_FROZ_MAX_SPIN = MLWF%DIS_FROZ_MAX
++   IF (ALL(MLWF%NUM_WANN_SPIN(1:MLWF%ISPIN) > 0)) THEN
++      DO IS=1,MLWF%ISPIN
++         NW_S = MLWF%NUM_WANN_SPIN(IS)
++         IF (NW_S >= MLWF%NB_TOT) THEN
++            MLWF%DIS_FROZ_MAX_SPIN(IS) = HUGE(MLWF%DIS_FROZ_MAX)
++            CYCLE
++         ENDIF
++         ELIM(1,:) =  HUGE(1_q)
++         ELIM(2,:) = -HUGE(1_q)
++         DO IK=1,W%WDES%NKPTS
++            DO IB=1,W%WDES%NB_TOT
++               ELIM(1,IB) = MIN(ELIM(1,IB),REAL(W%CELTOT(IB,IK,IS),KIND=q))
++               ELIM(2,IB) = MAX(ELIM(2,IB),REAL(W%CELTOT(IB,IK,IS),KIND=q))
++            END DO
++         END DO
++         E_OCC_MAX = ELIM(2,NW_S)
++         E_NEXT_MIN = ELIM(1,NW_S+1)
++         GAP = E_NEXT_MIN - E_OCC_MAX
++         IF (GAP > GAP_TOL) THEN
++            MLWF%DIS_FROZ_MAX_SPIN(IS) = 0.5_q * (E_OCC_MAX + E_NEXT_MIN)
++         ELSE
++            MLWF%DIS_FROZ_MAX_SPIN(IS) = ELIM(1,NW_S) - 1.E-5_q
++         ENDIF
++      ENDDO
++   ENDIF
++
+  END SUBROUTINE ESTIMATE_AUTO_WINDOW
+ 
+ !> @brief Call Wannier90 to read projections
+@@ -1271,6 +1345,14 @@
+    DEALLOCATE(S)
+    CALLMPI( M_sum_z8( WDES%COMM_KINTER, MLWF%M_matrix, SIZE(MLWF%M_matrix, KIND=qi8)))
+ 
++   ! Beyond this point M is only consumed on the masternode (the .mmn writer
++   ! and the wannier90 library call are both IU6-guarded): drop the full-size
++   ! replica on every other rank right away instead of carrying ~1 GB/rank
++   ! (Ce18O36Co4: 0.90 GB) to the end of the run.
++   IF (IO%IU6<0) THEN
++      IF (ALLOCATED(MLWF%M_matrix)) DEALLOCATE(MLWF%M_matrix)
++   ENDIF
++
+    PROFILING_STOP( 'mlwf_wannier90_mmn' )
+  END SUBROUTINE MLWF_WANNIER90_MMN
+ 
+@@ -1822,6 +1904,30 @@
+        WRITE(99,'(A,F14.7)') 'dis_froz_max =', MLWF%DIS_FROZ_MAX
+     ENDIF
+ 
++    ! LEOS: SCDM-only fast mode - skip disentanglement and localisation
++    IF (LEOS_SCDM_ONLY) THEN
++       WRITE(99,'(A)') 'num_iter = 0'
++       WRITE(99,'(A)') 'dis_num_iter = 0'
++    ENDIF
++
++    ! LEOS trajectory warm start: guide this step with the previous step
++    ! centres. The projections block only steers the guiding centres; the
++    ! initial U matrix still comes from the VASP-side amn (SCDM).
++    IF (LEOS_GUIDE .AND. ALLOCATED(EOS_GUIDE_CENTRES)) THEN
++       NI = 1
++       IF (INDEX(MLWF%SEED_NAME, '.2') > 0) NI = 2
++       IF (SIZE(EOS_GUIDE_CENTRES, 2) >= MLWF%NUM_WANN) THEN
++          WRITE(99,'(A)') 'guiding_centres = .true.'
++          WRITE(99,'(A)') 'begin projections'
++          DO NK = 1, MLWF%NUM_WANN
++             WRITE(99,'(A,F12.6,A,F12.6,A,F12.6,A)') 'c=', &
++                EOS_GUIDE_CENTRES(1,NK,NI), ',', EOS_GUIDE_CENTRES(2,NK,NI), &
++                ',', EOS_GUIDE_CENTRES(3,NK,NI), ':s'
++          ENDDO
++          WRITE(99,'(A)') 'end projections'
++       ENDIF
++    ENDIF
++
+     ! write unit cell
+     WRITE(99,'(A)') 'begin unit_cell_cart'
+     WRITE(99,'(3F14.7)') MLWF%real_lattice(1,:)
+@@ -1849,6 +1955,83 @@
+ 
+ !***********************************************************************
+ !> @brief Call to Wannier90 interface
++!> @brief Rewrite the num_wann (and, if present, dis_froz_max) lines of an
++!> existing .win file in place (LEOS per-spin ghost fix: the spin copy
++!> inherits the shared max value and must be lowered to that channel's
++!> occupied manifold, with a matching per-spin frozen window). The rewrite
++!> is all-or-nothing and reports success via OK: wannier90's library mode
++!> takes num_wann from the .win file, so ".win num_wann == library argument"
++!> is a hard invariant - whenever the file cannot be rewritten faithfully
++!> (warm-start projections block whose guiding-centre count is tied to the
++!> shared value; a dis_froz_max line but no valid per-spin window, e.g. a
++!> hand-written window; oversized file; I/O error) the caller must fall back
++!> to the shared num_wann and keep the ghosts for this run.
++ SUBROUTINE MLWF_WIN_SET_NUM_WANN(FNAME,NW,FROZ_MAX,IO,OK)
++    USE base
++    CHARACTER(LEN=*),INTENT(IN) :: FNAME
++    INTEGER,INTENT(IN) :: NW
++    REAL(q),INTENT(IN) :: FROZ_MAX
++    TYPE(in_struct),INTENT(IN) :: IO
++    LOGICAL,INTENT(OUT) :: OK
++    INTEGER,PARAMETER :: MAXLINES=20000, LINELEN=255
++    CHARACTER(LEN=LINELEN), ALLOCATABLE :: LINES(:)
++    CHARACTER(LEN=LINELEN) :: BUF
++    INTEGER :: N, I, IOS
++    LOGICAL :: OVERFLOW, HAS_FROZ
++
++    ! the .win files only exist in the master's working directory; other
++    ! ranks never consume OK (the wannier_run call is IU6-guarded).
++    OK = .TRUE.
++    IF (IO%IU6<0) RETURN
++    OK = .FALSE.
++    ALLOCATE(LINES(MAXLINES))
++    N=0; OVERFLOW=.FALSE.; HAS_FROZ=.FALSE.
++    OPEN(UNIT=99,FILE=FNAME,STATUS='OLD',ACTION='READ',IOSTAT=IOS)
++    IF (IOS/=0) RETURN
++    DO
++       READ(99,'(A)',IOSTAT=IOS) BUF
++       IF (IOS/=0) EXIT
++       IF (N>=MAXLINES) THEN
++          OVERFLOW=.TRUE.; EXIT
++       ENDIF
++       N=N+1; LINES(N)=BUF
++    ENDDO
++    CLOSE(99)
++    IF (OVERFLOW) THEN
++       IF (IO%IU6>=0) WRITE(IO%IU6,'(A)') ' LEOS: '//TRIM(FNAME)// &
++      &   ' exceeds the rewrite buffer - keeping shared num_wann'
++       RETURN
++    ENDIF
++    DO I=1,N
++       IF (INDEX(LINES(I),'begin projections')>0) THEN
++          IF (IO%IU6>=0) WRITE(IO%IU6,'(A)') ' LEOS: warm-start projections present - '// &
++         &   'keeping shared num_wann for '//TRIM(FNAME)
++          RETURN
++       ENDIF
++       IF (INDEX(ADJUSTL(LINES(I)),'dis_froz_max') == 1) HAS_FROZ=.TRUE.
++    ENDDO
++    IF (HAS_FROZ .AND. FROZ_MAX==HUGE(FROZ_MAX)) THEN
++       ! a frozen window exists (e.g. hand-written) but no per-spin value is
++       ! available to keep it consistent with the trimmed num_wann
++       IF (IO%IU6>=0) WRITE(IO%IU6,'(A)') ' LEOS: dis_froz_max present without a '// &
++      &   'per-spin window - keeping shared num_wann for '//TRIM(FNAME)
++       RETURN
++    ENDIF
++    OPEN(UNIT=99,FILE=FNAME,STATUS='REPLACE',ACTION='WRITE')
++    DO I=1,N
++       IF (INDEX(ADJUSTL(LINES(I)),'num_wann') == 1) THEN
++          WRITE(99,'(A,I0)') 'num_wann = ', NW
++       ELSEIF (INDEX(ADJUSTL(LINES(I)),'dis_froz_max') == 1 .AND. &
++      &        FROZ_MAX/=HUGE(FROZ_MAX)) THEN
++          WRITE(99,'(A,F14.7)') 'dis_froz_max =', FROZ_MAX
++       ELSE
++          WRITE(99,'(A)') TRIM(LINES(I))
++       ENDIF
++    ENDDO
++    CLOSE(99)
++    OK = .TRUE.
++ END SUBROUTINE MLWF_WIN_SET_NUM_WANN
++
+ !***********************************************************************
+  SUBROUTINE MLWF_WANNIER90_RUN(MLWF,IO)
+     USE base
+@@ -1858,7 +2041,8 @@
+     TYPE(in_struct) :: IO
+ 
+     ! local variables
+-    INTEGER :: ISP
++    INTEGER :: ISP, NW
++    LOGICAL :: WIN_OK
+ 
+     ALLOCATE(MLWF%U_matrix(MLWF%NUM_WANN,MLWF%NUM_WANN,MLWF%NKPTS,MLWF%ISPIN))
+     ALLOCATE(MLWF%U_matrix_opt(MLWF%NB_TOT-MLWF%NEXCLB,MLWF%NUM_WANN,MLWF%NKPTS,MLWF%ISPIN))
+@@ -1888,17 +2072,43 @@
+           IF (ISP==1) WRITE(*,*) 'Running wannier90 in library mode for spin up   (check wannier90.wout)'
+           IF (ISP==2) WRITE(*,*) 'Running wannier90 in library mode for spin down (check wannier90.wout)'
+ 
++          ! Per-spin effective WF count (LEOS ghost fix): each channel asks
++          ! wannier90 for exactly its own occupied manifold; the arrays keep
++          ! the shared max size and the unused tail stays zero-initialised.
++          NW = MLWF%NUM_WANN
++          IF (MLWF%NUM_WANN_SPIN(ISP) > 0 .AND. MLWF%NUM_WANN_SPIN(ISP) <= MLWF%NUM_WANN) &
++         &   NW = MLWF%NUM_WANN_SPIN(ISP)
++
+           ! copy wannier90.win to wannier90.(up/dn).win
+           CALL COPYFILE(MLWF%seed_name//'.win',MLWF%seed_name//'.'//str(ISP)//'.win')
++          IF (NW /= MLWF%NUM_WANN) THEN
++             ! wannier90 library mode takes num_wann from the .win file, so
++             ! the file rewrite and the library argument must agree. If the
++             ! rewrite cannot be done faithfully, fall back to the shared
++             ! value (ghosts kept, old behaviour) and tell the analysis side
++             ! by resetting the per-spin count.
++             CALL MLWF_WIN_SET_NUM_WANN(MLWF%seed_name//'.'//str(ISP)//'.win',NW, &
++            &                           MLWF%DIS_FROZ_MAX_SPIN(ISP),IO,WIN_OK)
++             IF (WIN_OK) THEN
++                IF (IO%IU6>=0) WRITE(IO%IU6,'(A,I0,A,I0)') &
++               &   ' LEOS: spin channel ',ISP,' runs wannier90 with num_wann = ',NW
++             ELSE
++                NW = MLWF%NUM_WANN
++                MLWF%NUM_WANN_SPIN(ISP) = MLWF%NUM_WANN
++                IF (IO%IU6>=0) WRITE(IO%IU6,'(A,I0,A)') &
++               &   ' LEOS: per-spin trim skipped for spin channel ',ISP, &
++               &   ' (win rewrite constraint); ghosts kept this run'
++             ENDIF
++          ENDIF
+ 
+           ! run wannier90 for spin component ISP
+           CALL wannier_run(MLWF%seed_name//'.'//str(ISP), &
+          &                 MLWF%mp_grid,MLWF%NKPTS,MLWF%real_lattice,MLWF%recip_lattice, &
+-         &                 MLWF%kpt_latt,MLWF%NB_TOT-MLWF%NEXCLB,MLWF%NUM_WANN,MLWF%nntot,MLWF%num_atoms,MLWF%atom_symbols, &
++         &                 MLWF%kpt_latt,MLWF%NB_TOT-MLWF%NEXCLB,NW,MLWF%nntot,MLWF%num_atoms,MLWF%atom_symbols, &
+          &                 MLWF%atoms_cart,MLWF%gamma_only,&
+-         &                 MLWF%M_matrix(:,:,:,:,ISP),MLWF%A_matrix(:,:,:,ISP),MLWF%eigenvalues(:,:,ISP), &
+-         &                 MLWF%U_matrix(:,:,:,ISP),MLWF%U_matrix_opt(:,:,:,ISP),MLWF%lwindow(:,:,ISP), &
+-         &                 MLWF%wann_centres(:,:,ISP),MLWF%wann_spreads(:,ISP),MLWF%spread(:,ISP))
++         &                 MLWF%M_matrix(:,:,:,:,ISP),MLWF%A_matrix(:,1:NW,:,ISP),MLWF%eigenvalues(:,:,ISP), &
++         &                 MLWF%U_matrix(1:NW,1:NW,:,ISP),MLWF%U_matrix_opt(:,1:NW,:,ISP),MLWF%lwindow(:,:,ISP), &
++         &                 MLWF%wann_centres(:,1:NW,ISP),MLWF%wann_spreads(1:NW,ISP),MLWF%spread(:,ISP))
+           ENDDO
+        ENDIF
+     ENDIF
+@@ -1912,6 +2122,17 @@
+     CALLMPI( M_sum_d(MLWF%COMM,MLWF%wann_spreads,MLWF%NUM_WANN*MLWF%ISPIN) )
+     CALLMPI( M_sum_d(MLWF%COMM,MLWF%spread,3*MLWF%ISPIN) )
+ 
++    ! M and A have served their purpose (wannier90 consumed them on the
++    ! masternode; every rank now holds U/U_opt/centres/spreads, which is all
++    ! the downstream LEOS analysis needs): drop the large replicas instead of
++    ! keeping them resident until the end of the run. The trajectory mode
++    ! (EOS_EVERY_N) reallocates both on the next analysis step. A is only
++    ! dropped on the SCDM path - the LOCPROJ modes feed A to consumers after
++    ! this point (e.g. elphon), M has none.
++    IF (ALLOCATED(MLWF%M_matrix)) DEALLOCATE(MLWF%M_matrix)
++    IF (MLWF%PROJ_MODE==PROJ_SCDM .AND. ALLOCATED(MLWF%A_matrix)) &
++   &   DEALLOCATE(MLWF%A_matrix)
++
+     ! Set trafo method in mlwf structure
+     MLWF%TRAFO_MODE = TRAFO_WANNIER90_MODE
+ 
+@@ -3070,7 +3291,8 @@
+ !  UNK files needed by wannier90 to plot the Wannier functions.
+ !  Can write directly to file or return the WFs as an WVFN_BANDS(NGX*NGY*NGZ,NB_TOT) array
+ !***********************************************************************
+- SUBROUTINE GET_WAVE_FUNCTIONS(W,K,ISP,P,LATT_CUR,IU,WVFN_BANDS,CELEN,EXCLUDE_BAND)
++ SUBROUTINE GET_WAVE_FUNCTIONS(W,K,ISP,P,LATT_CUR,IU,WVFN_BANDS,CELEN,EXCLUDE_BAND, &
++                               WVFN_BANDS_T,PIVOT_IDX,WVFN_PIVOT,BAND_NORMS)
+     USE pseudo
+     USE lattice
+     USE wave_high
+@@ -3088,6 +3310,16 @@
+     GDEF,OPTIONAL,INTENT(OUT) :: WVFN_BANDS(:,:)
+     !> Optionally return the eigenvalues of this array
+     COMPLEX(q),OPTIONAL,INTENT(OUT) :: CELEN(:)
++    !> Optionally return the orbitals transposed, one row per band (bands, grid).
++    !> Lets SCDM build its QRCP input directly instead of holding the (grid,
++    !> bands) array AND a transposed copy at the same time (LEOS memory fix).
++    GDEF,OPTIONAL,INTENT(OUT) :: WVFN_BANDS_T(:,:)
++    !> Optionally: real-space grid indices to sample per band (SCDM pivots)
++    INTEGER,OPTIONAL,INTENT(IN) :: PIVOT_IDX(:)
++    !> Optionally return WVFN sampled at PIVOT_IDX for every band (bands, pivots)
++    GDEF,OPTIONAL,INTENT(OUT) :: WVFN_PIVOT(:,:)
++    !> Optionally return the per-band real-space norm^2 (spinor-wise sums)
++    REAL(q),OPTIONAL,INTENT(OUT) :: BAND_NORMS(:)
+     ! local variables
+     TYPE(wavespin) WP
+     TYPE(wavefuna) WK
+@@ -3192,6 +3424,17 @@
+           ! return bands on a big array
+           NWRITTEN=NWRITTEN+1
+           IF (PRESENT(WVFN_BANDS)) WVFN_BANDS(:,NWRITTEN) = WVFN
++          IF (PRESENT(WVFN_BANDS_T)) WVFN_BANDS_T(NWRITTEN,:) = WVFN
++          IF (PRESENT(BAND_NORMS)) THEN
++             BAND_NORMS(NWRITTEN) = REAL(DOT_PRODUCT(WVFN(:NPW),WVFN(:NPW)),KIND=q)
++             IF (W%WDES%NRSPINORS==2) BAND_NORMS(NWRITTEN) = BAND_NORMS(NWRITTEN) + &
++                REAL(DOT_PRODUCT(WVFN(NPW+1:),WVFN(NPW+1:)),KIND=q)
++          ENDIF
++          IF (PRESENT(WVFN_PIVOT)) THEN
++             DO I=1,SIZE(PIVOT_IDX)
++                WVFN_PIVOT(NWRITTEN,I) = WVFN(PIVOT_IDX(I))
++             ENDDO
++          ENDIF
+        ENDDO
+     ENDDO
+ 
+@@ -3814,15 +4057,15 @@
+     REAL(q),                   INTENT(IN)  :: VKPT(3, NKPTS)
+     TYPE(in_struct),           INTENT(IN)  :: IO
+ 
+-    GDEF, ALLOCATABLE    :: PSI(:, :)
+     GDEF, ALLOCATABLE    :: PSI_D_SCDM(:, :)
++    GDEF, ALLOCATABLE    :: PIV_VALS(:, :)
+     GDEF, ALLOCATABLE    :: WVFN_PHASE(:)
++    REAL(q), ALLOCATABLE :: BNORM(:)
+     INTEGER              :: ISP
+     INTEGER              :: K_IDX
+     INTEGER              :: IB, IW
+     INTEGER              :: ANCHOR_IDX, J
+     INTEGER, ALLOCATABLE :: PIVOT_UP(:),PIVOT_DW(:)
+-    REAL(q)              :: NORM
+     LOGICAL              :: DO_WORK
+ 
+     INTEGER              :: IDX_UP, IDX_DW, CURRENT_PIVOT, NP
+@@ -3863,15 +4106,18 @@
+     ENDIF
+ 
+     IF (.NOT. DO_WORK) THEN
+-      ! Only perform minimal amount of work on other nodes
++      ! Only perform minimal amount of work on other nodes. The call sequence
++      ! must mirror the work node exactly (collective communication): the
++      ! anchor point is visited TWICE per spin - once for the transposed
++      ! build feeding the QRCP, once to re-extract the pivot values.
+       DO ISP = 1, W%WDES%ISPIN
+-         ! Calculate real-spave wave function (to communicate to node 1)
+          CALL GET_WAVE_FUNCTIONS(W, VKPT(:, ANCHOR_IDX), ISP, P, LATT_CUR, -1)
++         CALL GET_WAVE_FUNCTIONS(W, VKPT(:, ANCHOR_IDX), ISP, P, LATT_CUR, -1)
+          DO K_IDX = 1, NKPTS
+             ! Skip the anchor point as it was already computed
+             IF (ANCHOR_IDX==K_IDX) CYCLE
+             ! Calculate real-spave wave function (to communicate to node 1)
+-            CALL GET_WAVE_FUNCTIONS(W,VKPT(:,K_IDX),ISP,P,LATT_CUR,-1,PSI,CELEN)
++            CALL GET_WAVE_FUNCTIONS(W,VKPT(:,K_IDX),ISP,P,LATT_CUR,-1)
+          ENDDO
+       ENDDO
+       ! Get the matrix from node 1
+@@ -3880,9 +4126,10 @@
+     ENDIF
+ 
+     NP = W%WDES%GRID%RL%NP
+-    ALLOCATE(PSI(NP*W%WDES%NRSPINORS,W%WDES%NB_TOT))
+     ALLOCATE(CELEN(W%WDES%NB_TOT))
+     ALLOCATE(WVFN_PHASE(NP*W%WDES%NRSPINORS))
++    ALLOCATE(BNORM(W%WDES%NB_TOT))
++    ALLOCATE(PIV_VALS(W%WDES%NB_TOT, NUM_WANN))
+ 
+     CALL RANK_REVEAL_QR%INIT(W%WDES%NB_TOT, NP * W%WDES%NRSPINORS, INFO)
+     IF (INFO /= 0) CALL vtutor%error( &
+@@ -3898,19 +4145,19 @@
+        ! |   Work on anchor point first   |
+        ! |________________________________|
+ 
+-       ! Calculate real-spave wave function
+-       CALL GET_WAVE_FUNCTIONS(W,VKPT(:,ANCHOR_IDX),ISP,P,LATT_CUR,-1,PSI,CELEN)
+-       DO IB=1, W%WDES%NB_TOT
+-          NORM = REAL(DOT_PRODUCT(PSI(:, IB), PSI(:, IB)), KIND=q)
+-          PSI(:, IB) = PSI(:, IB) / SQRT(NORM)
+-       ENDDO
+-
+-       ! Calculate SCDM matrix
++       ! Build the QRCP input directly in the transposed (bands, grid) layout,
++       ! band by band. The old code materialised the (grid, bands) array AND
++       ! this transposed copy at the same time - two full-grid matrices
++       ! (2 x ~5 GB for the Ce18O36Co4 system) alive at the peak. Pivot values
++       ! are re-extracted after the QRCP instead (one extra anchor pass).
+        IF (ALLOCATED(PSI_D_SCDM)) DEALLOCATE(PSI_D_SCDM)
+        ALLOCATE(PSI_D_SCDM(W%WDES%NB_TOT,NP*W%WDES%NRSPINORS))
++       CALL GET_WAVE_FUNCTIONS(W,VKPT(:,ANCHOR_IDX),ISP,P,LATT_CUR,-1,CELEN=CELEN, &
++            WVFN_BANDS_T=PSI_D_SCDM,BAND_NORMS=BNORM)
+        CUTOFF_FACTOR = CUTOFF_DES_GET_CUTOFF(CUTOFF_DES,ISP,CELEN)
+        DO IB=1,W%WDES%NB_TOT
+-          PSI_D_SCDM(IB,:) = GCONJG(PSI(:,IB))*CUTOFF_FACTOR(IB)
++          PSI_D_SCDM(IB,:) = PSI_D_SCDM(IB,:) / SQRT(BNORM(IB))
++          PSI_D_SCDM(IB,:) = GCONJG(PSI_D_SCDM(IB,:))*CUTOFF_FACTOR(IB)
+        ENDDO
+ 
+        ! Use rank-revealing QR decomposition to find a localized representation
+@@ -3945,13 +4192,17 @@
+        ENDIF
+        !WRITE(*,*) PIVOT(:NUM_WANN) < NP
+ 
+-       ! Calculate SCDM matrix at anchor point
++       ! Calculate SCDM matrix at anchor point. The QRCP overwrote the
++       ! transposed array, so revisit the anchor point once and sample the
++       ! orbitals at the NUM_WANN pivot grid points only.
+        DEALLOCATE(PSI_D_SCDM)
+        ALLOCATE(PSI_D_SCDM(W%WDES%NB_TOT,NUM_WANN))
++       CALL GET_WAVE_FUNCTIONS(W,VKPT(:,ANCHOR_IDX),ISP,P,LATT_CUR,-1,CELEN=CELEN, &
++            PIVOT_IDX=RANK_REVEAL_QR%PIVOT(1:NUM_WANN),WVFN_PIVOT=PIV_VALS,BAND_NORMS=BNORM)
+        CUTOFF_FACTOR = CUTOFF_DES_GET_CUTOFF(CUTOFF_DES,ISP,CELEN)
+        DO IB=1,W%WDES%NB_TOT
+           DO IW=1,NUM_WANN
+-             PSI_D_SCDM(IB,IW) = GCONJG(PSI(RANK_REVEAL_QR%PIVOT(IW),IB))*CUTOFF_FACTOR(IB)
++             PSI_D_SCDM(IB,IW) = GCONJG(PIV_VALS(IB,IW)/SQRT(BNORM(IB)))*CUTOFF_FACTOR(IB)
+           ENDDO
+        ENDDO
+ 
+@@ -3972,13 +4223,10 @@
+           ! Skip the anchor point as it was already computed
+           IF (ANCHOR_IDX==K_IDX) CYCLE
+ 
+-          ! Calculate real-spave wave function
+-          CALL GET_WAVE_FUNCTIONS(W,VKPT(:,K_IDX),ISP,P,LATT_CUR,-1,PSI,CELEN)
+-          DO IB=1,W%WDES%NB_TOT
+-             NORM = REAL(DOT_PRODUCT(PSI(:NP,IB), PSI(:NP,IB)),KIND=q)
+-             IF (W%WDES%NRSPINORS==2) NORM = NORM + REAL(DOT_PRODUCT(PSI(NP+1:,IB), PSI(NP+1:,IB)),KIND=q)
+-             PSI(:,IB) = PSI(:,IB) / SQRT(NORM)
+-          ENDDO
++          ! Only the pivot values and per-band norms are needed here - sample
++          ! them band by band instead of materialising the full-grid array.
++          CALL GET_WAVE_FUNCTIONS(W,VKPT(:,K_IDX),ISP,P,LATT_CUR,-1,CELEN=CELEN, &
++               PIVOT_IDX=RANK_REVEAL_QR%PIVOT(1:NUM_WANN),WVFN_PIVOT=PIV_VALS,BAND_NORMS=BNORM)
+ 
+           CALL GET_WAVE_FUNCTIONS_PHASE(W,VKPT(:,K_IDX),WVFN_PHASE)
+ 
+@@ -3987,7 +4235,7 @@
+           DO IB=1,W%WDES%NB_TOT
+              DO IW=1,NUM_WANN
+                 J=RANK_REVEAL_QR%PIVOT(IW); IF ( J > NP) J = J-NP
+-                PSI_D_SCDM(IB,IW) = GCONJG(PSI(RANK_REVEAL_QR%PIVOT(IW),IB))*WVFN_PHASE(J)*CUTOFF_FACTOR(IB)
++                PSI_D_SCDM(IB,IW) = GCONJG(PIV_VALS(IB,IW)/SQRT(BNORM(IB)))*WVFN_PHASE(J)*CUTOFF_FACTOR(IB)
+              ENDDO
+           ENDDO
+ 
