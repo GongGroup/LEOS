@@ -1,0 +1,7 @@
+image	init_guess	E0_eV	mag_converged	verdict
+ce_is	mag6	-489.45771	6.0	ground state mag=6 (both guesses converge here)
+ce_is	mag10	-489.45758	6.0	same solution
+ce_ts	mag6	-489.55351	4.0	ground state mag=4 (both guesses converge here)
+ce_ts	mag10	-489.55350	4.0	same solution
+ce_fs	mag10_8gpu	-490.23423	6.0	mag=10 NOT reproducible; ground state mag=6
+ce_fs	mag6_4gpu	-490.23423	6.0	bitwise-same E0; doubles as 4-GPU recipe validation
