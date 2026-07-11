@@ -77,8 +77,8 @@ def _centres(M, bvec, wb, nk):
     return centres, Mnn, lnim
 
 
-def spread_decomposition(M, bvec, wb, nk):
-    """Omega decomposition and per-WF spread, matching wannier90's report.
+def _spread_terms(M, bvec, wb, nk):
+    """Tensor-valued Omega decomposition (no device->host sync; hot-loop safe).
 
     Omega_I  = (1/N) sum_kb w_b (nw - sum_n |M_nn|^2)          (gauge invariant)
     Omega_OD = (1/N) sum_kb w_b sum_{m!=n} |M_mn|^2
@@ -104,7 +104,16 @@ def spread_decomposition(M, bvec, wb, nk):
     # per-WF: <r^2>_n = (1/N) sum_kb w_b [ (1-|Mnn|^2) + (Im ln Mnn)^2 ]
     r2 = (1.0 / nk) * torch.einsum("kb,kbn->n", wb, (1.0 - absMnn2) + lnim**2)
     spread_n = r2 - (centres**2).sum(-1)
+    return centres, spread_n, omega_I, omega_OD, omega_D
 
+
+def spread_decomposition(M, bvec, wb, nk):
+    """Omega decomposition and per-WF spread, matching wannier90's report.
+
+    Convenience wrapper around _spread_terms that materialises python floats
+    (one device sync) -- fine for initial/final reporting, NOT for the hot loop.
+    """
+    centres, spread_n, omega_I, omega_OD, omega_D = _spread_terms(M, bvec, wb, nk)
     omega = {
         "I": float(omega_I),
         "OD": float(omega_OD),
@@ -183,22 +192,44 @@ def wannierise(
     device="cpu",
     dtype=torch.complex128,
     verbose=False,
+    check_every=1,
 ):
     """Batched MV steepest-descent wannierisation.
 
     Parameters
     ----------
-    M0      : [nk, nnb, nw, nw] complex  ab-initio overlaps (isolated case nb == nw)
-    U0      : [nk, nw, nw]      complex  initial gauge (Loewdin-orthonormalised .amn)
+    M0      : [nk, nnb, nw, nw] complex  overlaps (isolated bands, or M0_reduced
+                                         from disentangle() for entangled bands)
+    U0      : [nk, nw, nw]      complex  initial gauge (Loewdin-orthonormalised .amn,
+                                         or disentangle()'s U0)
     bvec    : [nk, nnb, 3]      real     Cartesian b-vectors (Ang^-1)
     wb      : [nk, nnb]         real     shell weights
     kb_idx  : [nk, nnb]         long     neighbour k index
     step    : SD step scale alpha (effective step = alpha / (4 w_tot))
     conv_tol, conv_window : stop when |dOmega| < conv_tol for `conv_window` iters
                             (matches wannier90 conv_tol / conv_window semantics)
+    check_every : poll the device-side convergence flag every N iterations.  The
+                  counter itself lives on the device, so the hot loop performs a
+                  single scalar device->host read per poll (vs. 5 float() syncs
+                  per iteration before this refactor).  With N>1 the run may
+                  overshoot convergence by up to N-1 (harmless) extra steps.
 
     Returns WannieriseResult.
     """
+    if M0.shape[-1] != M0.shape[-2] or U0.shape[-1] != U0.shape[-2]:
+        raise ValueError(
+            f"wannierise() needs square [nw, nw] blocks: got M0 {tuple(M0.shape)}, "
+            f"U0 {tuple(U0.shape)}. An entangled case (num_bands > num_wann) must "
+            "go through disentangle.disentangle() first -- its M0_reduced/U0 are "
+            "the valid inputs here. Feeding full-band M/A silently corrupts the "
+            "centres, hence this guard."
+        )
+    if M0.shape[-1] != U0.shape[-1] or M0.shape[0] != U0.shape[0]:
+        raise ValueError(
+            f"M0/U0 mismatch: M0 {tuple(M0.shape)} vs U0 {tuple(U0.shape)} "
+            "(need same nk and same nw)"
+        )
+
     rdtype = torch.float64 if dtype == torch.complex128 else torch.float32
     M0 = M0.to(device=device, dtype=dtype)
     U = U0.to(device=device, dtype=dtype).clone()
@@ -212,46 +243,62 @@ def wannierise(
     # gradient g = -(1/N) G_raw, that is dW = -(N/(4 w_tot)) * g.  step==alpha scales it.
     eff_step = step * nk / (4.0 * wbtot)
 
-    history = []
-    prev_omega = None
-    n_below = 0
+    # device-side convergence state: the |dOmega| < tol streak counter stays on
+    # the device; the loop only reads back one scalar flag per `check_every` iters.
+    n_below = torch.zeros((), device=device, dtype=torch.int64)
+    prev_omega = None                    # 0-dim device tensor
+    hist_omega = []                      # 0-dim device tensors, gathered at the end
+    hist_rms = []
     converged = False
     it = 0
 
+    # rotated overlaps for the current U; after each update the freshly rotated M is
+    # carried into the next iteration (it is exactly next iteration's starting M, so
+    # recomputing it -- as the first version did -- was pure duplicate work).
+    M = _rotate_M(M0, U, kb_idx)
+
     for it in range(1, num_iter + 1):
-        M = _rotate_M(M0, U, kb_idx)
         centres, Mnn, lnim = _centres(M, bvec, wb, nk)
         G = _gradient(M, bvec, wb, centres, Mnn, lnim)
 
         # anti-Hermitian gradient; RMS over all k,m,n for reporting/convergence
-        rms_grad = float(torch.sqrt((G.real**2 + G.imag**2).mean()))
+        rms_grad = torch.sqrt((G.real**2 + G.imag**2).mean())
 
         # steepest-descent step on the unitary manifold (minimise -> -G direction)
         dW = -(eff_step) * G
         U = U @ _expm_antihermitian(dW)
 
         # spread AFTER the update (matches wannier90's per-cycle report)
-        Mn = _rotate_M(M0, U, kb_idx)
-        _, _, omega = spread_decomposition(Mn, bvec, wb, nk)
-        omega_tot = omega["total"]
-        history.append((it, omega_tot, rms_grad))
-        if verbose and (it <= 3 or it % 50 == 0):
-            print(f"  iter {it:5d}  Omega={omega_tot:.10f}  rms_grad={rms_grad:.3e}")
+        M = _rotate_M(M0, U, kb_idx)
+        _, _, o_I, o_OD, o_D = _spread_terms(M, bvec, wb, nk)
+        omega_tot = o_I + o_OD + o_D
+        hist_omega.append(omega_tot)
+        hist_rms.append(rms_grad)
 
         if prev_omega is not None:
-            if abs(omega_tot - prev_omega) < conv_tol:
-                n_below += 1
-                if n_below >= conv_window:
-                    converged = True
-                    prev_omega = omega_tot
-                    break
-            else:
-                n_below = 0
+            below = (omega_tot - prev_omega).abs() < conv_tol
+            n_below = torch.where(below, n_below + 1,
+                                  torch.zeros_like(n_below))
         prev_omega = omega_tot
 
-    # final state from converged U
-    Mf = _rotate_M(M0, U, kb_idx)
-    centres, spread_n, omega = spread_decomposition(Mf, bvec, wb, nk)
+        if verbose and (it <= 3 or it % 50 == 0):
+            print(f"  iter {it:5d}  Omega={omega_tot.item():.10f}  "
+                  f"rms_grad={rms_grad.item():.3e}")
+
+        # single device->host scalar poll (the one unavoidable sync for loop control)
+        if it % check_every == 0 or it == num_iter:
+            if int(n_below) >= conv_window:
+                converged = True
+                break
+
+    # final state from converged U (M already holds the rotated overlaps for it)
+    centres, spread_n, omega = spread_decomposition(M, bvec, wb, nk)
+    if hist_omega:
+        h_o = torch.stack(hist_omega).cpu().numpy()
+        h_g = torch.stack(hist_rms).cpu().numpy()
+        history = [(i + 1, float(h_o[i]), float(h_g[i])) for i in range(len(h_o))]
+    else:
+        history = []
     return WannieriseResult(
         U=U,
         centres=centres.detach().cpu().numpy(),

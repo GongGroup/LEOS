@@ -39,5 +39,12 @@ POTCAR*
 UNK*
 # gpuw90 gold-standard test inputs are text-sized and must stay in git
 !gpuw90/testdata/**
+# ...except the entangled gold-set raw inputs (issue #14): 10-300 MB each.
+# Small .win/.eig/*_ref.wout stay tracked; refetch the big ones from sai-pod
+# via gpuw90/testdata/fetch_entangled.sh
+gpuw90/testdata/li2mno3/*.mmn
+gpuw90/testdata/li2mno3/*.amn
+gpuw90/testdata/vircef/*.mmn
+gpuw90/testdata/vircef/*.amn
 # MD trajectories
 *.extxyz

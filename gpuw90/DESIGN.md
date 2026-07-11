@@ -1,25 +1,27 @@
-# gpuw90 — GPU Wannier-化后处理工具 · 设计文档 (Phase 1)
+# gpuw90 — GPU Wannier-化后处理工具 · 设计文档 (Phase 1 + Phase 2)
 
-独立于 pyleos 的后处理工具。读 wannier90 标准格式(`.mmn`/`.amn`/`.win`,可选 `.nnkp`),
-用 PyTorch 批量实现 Marzari–Vanderbilt(MV)幺正最小化(wannierise),输出 Wannier 中心与
-spread 供 LEOS 氧化态管线消费。**不 fork wannier90、不改 VASP**;device 参数化,CPU/CUDA 同码。
+独立于 pyleos 的后处理工具。读 wannier90 标准格式(`.mmn`/`.amn`/`.eig`/`.win`,可选 `.nnkp`),
+用 PyTorch 批量实现 Souza–Marzari–Vanderbilt 解纠缠(disentangle)与 Marzari–Vanderbilt(MV)
+幺正最小化(wannierise),输出 Wannier 中心与 spread 供 LEOS 氧化态管线消费。
+**不 fork wannier90、不改 VASP**;device 参数化,CPU/CUDA 同码。
 
-本阶段(Phase 1)只做 **wannierise**(孤立带组,`num_bands == num_wann`,如绝缘体价带)。
-disentangle(解纠缠)在本文档中只预留接口,留待 Phase 2。
+Phase 1 = **wannierise**(孤立带组,`num_bands == num_wann`,已完成)。
+Phase 2 = **disentangle**(纠缠带组 `nb > nw`,本次完成;金标见 §5b,实现细节见 §7)。
 
 ---
 
 ## 1. 范围与阶段边界
 
-| | Phase 1(本阶段,已完成) | Phase 2(预留) |
+| | Phase 1(已完成) | Phase 2(本次完成) |
 |---|---|---|
 | 处理对象 | 孤立带组 `nb == nw` | 纠缠带组 `nb > nw`(金属/含导带) |
-| 核心运算 | 每 k:1 个 `nw×nw` 厄米特征分解 + ~20 个 `nw³` matmul | 追加每 k 一个 `≤nb` 维厄米特征分解(子空间选取) |
+| 核心运算 | 每 k:1 个 `nw×nw` 厄米特征分解 + ~20 个 `nw³` matmul | 追加每迭代每 k 一个 `nb` 维厄米特征分解(Z 矩阵子空间选取) |
 | 输入 | `.mmn`(`nb×nb` 重叠)+ `.amn`(`nb×nw` 初猜)+ `.win` | 追加 `.eig`(能带能量,定冻结/外窗) |
-| 优化器 | 最速下降(SD)+ 固定步长 | 追加共轭梯度(CG)+ 线搜索 |
+| 优化器 | 最速下降(SD)+ 固定步长 | dis 为 Z 矩阵不动点迭代(w90 同款 mixing);CG+线搜索仍留待 Phase 2+ |
 
-设计原则:Phase 2 的 disentangle 作为 wannierise 的**前处理**,产出降维后的 `M0_reduced [nnb,nw,nw]`
-与初始 `U0 [nw,nw]`,直接喂给本阶段已验证的 `wannierise()`,后者代码不改(见 §7)。
+设计原则(已兑现):disentangle 作为 wannierise 的**前处理**,产出降维后的 `M0_reduced [nk,nnb,nw,nw]`
+与初始 `U0 [nk,nw,nw]`,直接喂给已验证的 `wannierise()`,后者数学不改(本次仅加防错守卫
+与热循环去同步,金标数值逐位复现,见 §5)。
 
 ---
 
@@ -33,26 +35,38 @@ disentangle(解纠缠)在本文档中只预留接口,留待 Phase 2。
    ┌─────────────▼─────────────┐                          │
    │ io_w90.py                 │                          │
    │  read_mmn / read_amn      │                          │
+   │  read_eig(纠缠时必需)      │                          │
    │  read_win / read_nnkp     │                          │
    │  compute_bvectors         │  b 向量 (Å⁻¹)             │
    │  compute_shell_weights    │  w_b (B1 完备关系)         │
-   │  → W90Case                │                          │
+   │  → W90Case(nb>nw 需显式    │                          │
+   │    allow_entangled,否则拒载)│                          │
    └─────────────┬─────────────┘                          │
-                 │  M0, A, bvec, wb, kb_idx                │
-   ┌─────────────▼─────────────┐                          │
-   │ wannierise.py (torch)     │                          │
-   │  lowdin_orthonormalize    │  U0                       │
-   │  wannierise():            │                          │
-   │   循环: rotate M → 梯度 g   │                          │
-   │        → exp(dW) → 更新 U   │                          │
-   │  → centres[nw,3], spreads │                          │
-   └─────────────┬─────────────┘                          │
+                 │  nb>nw?── 是 ──┐                        │
+                 │ 否             │  M0_full, A_full, eig   │
+                 │   ┌────────────▼────────────┐           │
+                 │   │ disentangle.py (torch)  │           │
+                 │   │  窗口/冻结掩码 → 初猜投影  │           │
+                 │   │  Z 矩阵不动点迭代(batched │           │
+                 │   │  eigh + mixing,§7)      │           │
+                 │   │  → M0_reduced, U0        │           │
+                 │   └────────────┬────────────┘           │
+                 │                │                        │
+   ┌─────────────▼────────────────▼──────┐                 │
+   │ wannierise.py (torch)               │                 │
+   │  lowdin_orthonormalize → U0(孤立带)  │                 │
+   │  wannierise():                      │                 │
+   │   循环: rotate M → 梯度 g            │                 │
+   │        → exp(dW) → 更新 U            │                 │
+   │  → centres[nw,3], spreads           │                 │
+   └─────────────┬───────────────────────┘                 │
                  │                          ┌─────────────▼──────────────┐
-                 │                          │ io_w90.parse_wout_final_… │
+                 │                          │ io_w90.parse_wout_final_…  │
+                 │                          │ io_w90.parse_wout_dis_info │
                  │                          └─────────────┬──────────────┘
    ┌─────────────▼──────────────────────────────────────▼─────────────┐
-   │ check_against_w90.py   最近邻(允许简并交换)+ 最小镜像距离对照        │
-   │   逐 WF 偏差表 · 最大中心偏差 · PASS/FAIL(阈值 1e-4 Å)              │
+   │ check_against_w90.py(孤立带)/ check_dis_against_w90.py(纠缠带)     │
+   │   最近邻(允许简并交换)+ 最小镜像距离对照 · PASS/FAIL(1e-4 Å)         │
    └───────────────────────────────────────────────────────────────────┘
 ```
 
@@ -132,6 +146,27 @@ disentangle(解纠缠)在本文档中只预留接口,留待 Phase 2。
    块内 `nb×nb` 数据以带序 m 为最快索引(Fortran 列主序),`reshape(order="F")` 得 `M[m,n]`。
    诊断办法:若误当行主序,中心的对称性会破而 B1 仍过——本工具用初态中心与金标比对可当场抓出。
 
+9. **(Phase 2)金标参考本身未收敛的坑**
+   站点 wout 的 wannierise 段是 CG、100 迭代封顶、无收敛判据;若拿参考"末态中心"当验收目标,
+   会把协议差(实测 ~0.3 Å)误判成实现错误。教训:**先读参考跑的参数回显再定金标口径**;
+   纠缠阶段的硬验收只用协议无关量(Ω_I + 解纠缠初态),见 §5b。
+
+10. **(Phase 2)双 Ω_I 的时序**
+   `Ω_I(i−1)` 的冻结贡献必须用**上一迭代**的邻居子空间(在更新任何 k 之前整体计算),
+   `Ω_I(i)` 才用全新子空间;`Z_out` 在迭代尾部、更新之后组装。次序错一处,delta 序列就偏离
+   w90,收敛迭代数对不上(对齐后四个金标通道迭代数逐一相同)。
+
+11. **(Phase 2)能级移位的幅度选择**
+   冻结/窗外方向的对角移位若取"大数"(如 1e6),eigh 的特征向量误差 ~eps·‖A‖/gap 会被放大进
+   自由子空间。取与谱同量级的 `±2·w_tot`(Z 谱有界 `[0, w_tot]`,因 `‖M‖≤1`)即可保证块间分离,
+   又不牺牲精度。同理初猜 QPQ(谱 `[0,1]`)用 ±2。
+
+12. **热循环的隐性 host↔device 同步(本次修复)**
+   旧 wannierise 每迭代 5 次 `float()`(rms_grad + 4 个 Ω 分量)各强制一次设备同步;GPU 上这是
+   每迭代的固定延迟税。现收敛计数(`n_below`)、Ω 历史全部留在设备端张量,每迭代只 poll 一个
+   标量收敛旗标(`check_every` 可再稀释);顺带复用更新后的旋转 M(上一版每迭代重复旋转一次,
+   数学恒等)。重构后 GaAs/Diamond 金标数字逐位不变。dis 循环同款设计。
+
 ---
 
 ## 5. 正确性验证(金标对照结果)
@@ -147,6 +182,54 @@ disentangle(解纠缠)在本文档中只预留接口,留待 Phase 2。
 初态(Löwdin 后未优化)中心与金标 "Initial State" 也吻合到 6e-7 / 3e-9 Å,单独验证了 io + 权重 + 中心公式。
 
 复现:`python check_against_w90.py testdata/gaas --seed gaas`(详见 README.md)。
+(Phase 2 的热循环去同步重构后复跑,两例数字逐位不变:8.31e-07 / 3.13e-09 Å。)
+
+### 5b. Phase 2 解纠缠金标(带冻结窗的真实两自旋体系)
+
+金标 = sai-pod 站点 wannier90.x 3.1 串行跑(`run_np1_s*/wannier90.*.wout`),与本工具读**同一套**
+VASP 导出 `.mmn/.amn/.eig/.win`(符号链接同源)。两套算例都带冻结窗(`dis_froz_max` 来自 .win),
+外窗为默认全范围;li2mno3 是 LEOS 生产尺度(288 WF)。
+
+| 算例(自旋) | nb/nw | nk/nnb | nf 范围 | dis 迭代 (本/金标) | **Ω_I (Ų): 两边打印值相同** | \|ΔΩ_I\| | 初态最大中心偏差 (Å) | 初态最大 spread 偏差 (Ų) |
+|---|---|---|---|---|---|---|---|---|
+| vircef s1 | 180/142 | 8/12 | 141 | 82 / 82(收敛) | 81.06033903 | 3.4e-09 | 7.9e-07 | 5.0e-09 |
+| vircef s2 | 180/142 | 8/12 | 140 | 188 / 188(收敛) | 80.32720233 | 4.6e-10 | 7.7e-07 | 4.9e-09 |
+| li2mno3 s1 | 356/288 | 8/8 | 284~286 | 38 / 38(收敛) | 154.86511542 | 4.4e-09 | 8.3e-07 | 5.0e-09 |
+| li2mno3 s2 | 356/288 | 8/8 | 240 | 200 / 200(**双双到 dis_num_iter 上限未收敛,协议对齐复现**) | 135.30457827 | 4.1e-09 | 8.2e-07 | 5.0e-09 |
+
+四通道全 **PASS**(门:\|ΔΩ_I\| ≤ 1e-4 Ų、初态中心 ≤ 1e-4 Å)。要点:
+
+- **验收量选择**:金标 wout 的 wannierise 是 CG、固定 100 迭代、**无收敛判据**(conv_window=−1),
+  四个参考末态全都未收敛(末端 ΔΩ 还在 1e-2~1e-1 Ų/迭代)——末态中心对比只反映协议差
+  (实测 ~0.3 Å,且我们收敛端 Ω_total 更低:vircef s1 94.2618 vs 参考 94.6541),不是正确性信号。
+  因此硬验收采用**协议无关量**:Ω_I(dis 的 gauge 不变输出)+ 解纠缠"Initial State" 中心/spread
+  (子空间 + Löwdin 投影初值,确定性,不经任何最小化)。这正是"以 Ω_I 和中心集合匹配为准"。
+- 初态中心偏差 ~8e-7 Å、spread 偏差 ~5e-9 Ų 是 **wout 打印精度地板**(中心 6 位小数、spread
+  8 位小数的舍入),与 Phase 1 GaAs 的 8.3e-7 同源——真实吻合度更高。
+- **迭代数逐一相同**(38/82/188/200)= mixing、双 Ω_I、收敛窗口语义全部对齐的强证据;
+  li2mno3 s2 在 200 迭代封顶的**未收敛轨迹**上仍复现到 4e-9 Ų,说明不动点映射的浮点漂移可忽略。
+- `Ω_I(初态) − Ω_I(dis)` 一致性(gauge 不变量,~1e-11)在脚本里作为内置 sanity 每次自查。
+
+复现:`python check_dis_against_w90.py testdata/vircef --seed wannier90.1`(四通道换 datadir/--seed;
+大输入不入库,先跑 `testdata/fetch_entangled.sh`)。
+
+### 5c. 生产尺度计时:本地 CPU 基线(2026-07-11 实测)
+
+环境:Apple M 系笔记本,torch 2.8.0 CPU 轮子,FP64 全程。对照 = sai-pod 站点串行 wannier90.x
+(`run_np1_s1` wout 的计时,Xeon/AMD 单进程)。
+
+| 段 | 体系 | 本工具 CPU (s/iter) | 站点 wannier90 串行 (s/iter) | 备注 |
+|---|---|---|---|---|
+| disentangle | li2mno3 288 WF | **0.24**(38 迭代 9.1 s) | 1.10(38 迭代 41.9 s) | 同迭代数,4.6× |
+| wannierise  | li2mno3 288 WF | **0.196** | ~0.92(CG,100 迭代 ~92 s) | 每迭代工作量同型 |
+| disentangle | vircef 142 WF | 0.07 | ~0.21(82 迭代 17.1 s) | |
+| wannierise  | vircef 142 WF | 0.051 | ~0.18 | |
+| `.mmn` 读入 | li2mno3(258 MB 文本) | 3.4 s | 4.7 s | 单次成本 |
+
+(本工具快的来源是多线程 BLAS 的 batched matmul;这也是可行性报告"GPU 化对比基线要抬高"的
+现身说法——GPU 加速比要对着这条 CPU torch 基线量,而不是站点串行 Fortran。)
+**CUDA 实测待集群空档**:`bench_gpu.py` + `run_bench_v100.sbatch` 就绪,先金标门后计时;
+V100 环境坑(cu128 轮子无 sm_70、16V100 分区 ≥4 GPU/作业)已写进模板注释与 §9.3。
 
 ---
 
@@ -165,31 +248,59 @@ disentangle(解纠缠)在本文档中只预留接口,留待 Phase 2。
 
 ---
 
-## 7. Phase 2 (disentangle) 接口预留
+## 7. Phase 2 (disentangle) — 已实现(disentangle.py)
 
-纠缠情形 `nb > nw`,在 wannierise 之前插入子空间选取,产出降维输入喂给本阶段已验证的 `wannierise()`:
+接口按预留设计落地(返回值升级为 dataclass,多带出诊断量):
 
 ```python
-def disentangle(M0_full, A_full, eig, bvec, wb, kb_idx,
-                dis_win_min, dis_win_max, froz_win_min, froz_win_max,
-                num_iter, device) -> (M0_reduced, U0):
-    """
-    M0_full : [nk, nnb, nb, nb]   全带重叠(直接来自 .mmn)
-    A_full  : [nk, nb, nw]        全带初猜(直接来自 .amn)
-    eig     : [nk, nb]            能带能量(来自 .eig),定外窗/冻结窗
-    返回:
-      M0_reduced : [nk, nnb, nw, nw]  V_k† M0_full V_{k+b}  → wannierise() 的 M0
-      U0         : [nk, nw, nw]        由 V_k† A_k 经 Löwdin  → wannierise() 的 U0
-    """
+res = disentangle(M0_full, A_full, eig, bvec, wb, kb_idx,
+                  dis_win_min=None, dis_win_max=None,        # 缺省 = 全能带范围(w90 默认)
+                  froz_win_min=None, froz_win_max=None,      # froz_min 缺省 = win_min(w90 默认)
+                  num_iter=200, mix_ratio=0.5,
+                  conv_tol=1e-10, conv_window=3, device="cpu")
+# res.M0_reduced [nk,nnb,nw,nw] / res.U0 [nk,nw,nw] → 原样喂 wannierise()
+# res.omega_I / res.history / res.converged / res.ndimwin / res.ndimfroz
+# 便捷入口:disentangle_case(case)——窗口/迭代参数自动取自 .win(w90 默认值兜底)
 ```
 
-内部(对应 wannier90 `disentangle.F90` 的 `dis_extract`):每迭代每 k 组装
-`Z_k = Σ_b w_b M^{k,b} P_{k+b} M^{k,b†}`(`nb×nb` 厄米),取前 `nw`(去掉冻结态占位)特征向量更新 `V_k`;
-迭代最小化 Ω_I,收敛后固定 `V_k`。**关键:`wannierise()` 签名不变**——它已按 `M0[nnb,nw,nw]`/`U0[nw,nw]`
-设计,disentangle 只是把 `nb` 压到 `nw`。需要新增 `io_w90.read_eig`(格式:`m k E` 三列)。
+与 wannier90 3.1 `disentangle.F90` 的逐步对齐(源码级核对,非仅论文公式):
 
-数值风险(可行性报告 §4/§8 已标注):冻结窗边缘近简并子空间选取是离散决策,对浮点顺序敏感 →
-下游中心可移动。兜底:同一套金标回归 + 近平局告警 A/B 对比。
+1. **窗口(dis_windows)**:外窗选 `ndimwin(k)` 条带(能量升序保证连续);冻结窗 `ndimfroz(k)` 条,
+   必须整条保留。`ndimwin < nw` / `ndimfroz > nw` 与 w90 同语义报错。
+2. **初猜(dis_project + dis_proj_froz)**:`V0 = polar(A_w)`(batched SVD 幺正因子 = Löwdin);
+   有冻结窗时非冻结部分取 `Q_f P_s Q_f` 的前 `nw−nf` 特征向量(SMV Eq. 27),冻结方向填单位向量。
+3. **dis_extract 主循环(Jacobi 式,全 k 同步更新 = w90 的 MPI k 分布语义)**:
+   `Z_in⁽¹⁾ = Z[V⁽⁰⁾]`;`Z_in⁽ⁱ⁾ = mix·Z_out⁽ⁱ⁻¹⁾ + (1−mix)·Z_in⁽ⁱ⁻¹⁾`;
+   `V⁽ⁱ⁾ =` 冻结态 ∪ `Z_in⁽ⁱ⁾` 前 `nw−nf` 特征向量;`Z_out⁽ⁱ⁾ = Z[V⁽ⁱ⁾]`,
+   其中 `Z[V](k) = Σ_b w_b M^{k,b} P_{k+b} M^{k,b†}`,`P = V V†`,再投影到 k 点非冻结补空间。
+   **mixing 混的是 Z 矩阵,不是投影子**;`Z_out` 在更新后、迭代尾部组装——两处都照抄 w90。
+4. **双 Ω_I 与收敛判据**:`Ω_I(i−1)`(SMV Eq. 18,邻居用上一迭代子空间 = 冻结贡献 + 选中特征值和)
+   与 `Ω_I(i)`(Eq. 12,全部用新子空间);`delta = Ω_I(i−1)/Ω_I(i) − 1`;
+   连续 `conv_window` 次 `|delta| < conv_tol` 收敛——四个金标通道的**迭代数与 w90 逐一相同**(§5b)。
+5. **U0(internal_find_u)**:`U0 = polar(V† A_w)`(SVD 幺正因子),即 w90 的 Löwdin 投影初值。
+
+### batched 化的关键技巧(不规则维度 → 单个 batched eigh)
+
+`ndimwin/ndimfroz` 逐 k 不同(li2mno3 实测 `nf = 284~286` 随 k 变),按 k 循环会碎掉 batch。
+处理:保留全 `nb` 维,对 Z 先零掉冻结/窗外行列,再打**对角能级移位**——冻结方向 `+2·w_tot`、
+窗外方向 `−2·w_tot`(Z 谱天然落在 `[0, w_tot]`,因 `‖M‖≤1`、`w_b>0`)。于是升序特征值排布为
+`[窗外 | 自由谱 | 冻结]`,**一次 `torch.linalg.eigh` 的末 nw 列就是新子空间**(冻结块是精确的
+`2w_tot·I`,其特征向量恰为冻结单位向量的幺正组合——子空间层面精确,列内 gauge 无物理效应);
+`Ω_I(i−1)` 的"选中特征值和"用逐 k 槽位掩码(`nb−nw ≤ pos < nb−nf(k)`)向量化。移位烘焙进
+`Z_in/Z_out`,mixing 线性保持移位,槽位选择全程有效。eigh 后按列类型掩码擦除 ~1e−15 的跨块
+浮点噪声(`_scrub_columns`),冻结态严格冻结。初猜的 `QPQ`(谱在 `[0,1]`,移位 ±2)同款处理,
+顺带**结构性复现了 w90 的 ortho-fix**(近零特征值时特征向量须与冻结态正交——我们的补空间块
+精确解耦,天然满足)。
+
+### 刻意偏离 w90 的一处(纯 gauge,零物理差)
+
+w90 在 dis 收敛后把 V 右乘子空间哈密顿量的特征向量(供能带插值用)。右旋 `V→VR` 在
+`M0_reduced = V†M0V'` 与 `U0 = polar(V†A)` 之间**严格相消**(`polar(R†B) = R†·polar(B)`),
+所有物理量(Ω_I、中心、spread、wannierise 轨迹)不变——本工具不做能带插值,故跳过。
+金标初态八位小数吻合(§5b)实证了这一点。
+
+数值风险提示不变(可行性报告 §4/§8):冻结窗边缘近简并子空间选取是离散决策,对浮点顺序敏感 →
+下游中心可移动。兜底 = 本金标回归 + LEOS 近平局告警 A/B 对比。
 
 ---
 
@@ -207,18 +318,22 @@ def disentangle(M0_full, A_full, eig, bvec, wb, kb_idx,
 
 ---
 
-## 9. Phase 2+ 待办清单
+## 9. 待办清单(Phase 2 后更新)
 
-1. **disentangle 阶段**(§7):`Z_k` 特征分解 + 冻结/外窗 + `read_eig`;金标用 lead/silicon(纠缠算例)。
-2. **CG 优化器** + 线搜索(Fletcher–Reeves / Polak–Ribière),替换固定步长 SD,对齐 wannier90 在硬体系上的迭代数
-   (SD 在近简并/大体系收敛慢;GaAs/Diamond 这类良态体系 SD 已 10~12 迭代收敛)。
-3. **CUDA 实测**:sai-pod V100 上跑通(数学同码),量加速比;补 batched-eigh 在 n≈250 的现实性能核实
-   (可行性报告 §4 的短板)。
+1. ~~**disentangle 阶段**~~ **已完成**(§7/§5b):`Z_k` 特征分解 + 冻结/外窗 + `read_eig`;
+   金标未用 lead/silicon,直接上了两套带冻结窗的真实两自旋体系(vircef + li2mno3 生产尺度)。
+2. **CG 优化器** + 线搜索(Fletcher–Reeves / Polak–Ribière),替换固定步长 SD。Phase 2 金标进一步
+   佐证必要性:这类近简并体系上 SD 2000 迭代仍未到 1e-10(站点 CG 100 迭代也没到),良态体系无碍。
+3. **CUDA 实测**:脚本与作业模板已就绪(`bench_gpu.py` + `run_bench_v100.sbatch`,含金标先行门),
+   等 sai-pod GPU 空档提交。已知坑:站点 mace 环境的 torch 2.9.1+cu128 **无 sm_70**,V100 需
+   cu124 系轮子(模板内有 assert 守卫);16V100 分区最少 4 GPU/作业(用 1 空 3,flood-gpu 4h)。
+   CPU 基线已录入 §5c。
 4. **EOSCAR/pyleos 输出适配器** + 一个 Ce 帧端到端集成测试。
-5. **更大金标集**:Ce / Li2MnO3 真实帧回归;大 `nw` 时把贪心中心匹配换 Hungarian。
+5. **更大金标集**:Ce 真实帧回归(li2mno3 已入金标);大 `nw` 时把贪心中心匹配换 Hungarian。
 6. **鲁棒性**:`.win` 无显式 kpoints 时的 MP 网格生成(需核实与 `.mmn` 一致的 k 排序)或强制走 `.nnkp`;
    `guiding_centres` 相位选项(棘手初猜时)。
-7. **性能**:若剖析显示值得,改增量式 M 更新(wannier90 风格)替代每迭代全量重算旋转。
+7. **性能**:热循环已消掉重复旋转与逐迭代同步(§4.12);若剖析仍显示值得,再上增量式 M 更新
+   (wannier90 风格)与 dis 大迭代的 `M0w` 常驻/分块策略。
 
 ---
 
@@ -226,13 +341,21 @@ def disentangle(M0_full, A_full, eig, bvec, wb, kb_idx,
 
 ```
 gpuw90/
-  io_w90.py             # .mmn/.amn/.win/.nnkp 解析 + b 向量/权重重建 + .wout 参考解析
-  wannierise.py         # torch 批量 MV 最小化(device 参数化)
-  check_against_w90.py  # 金标对照,逐 WF 偏差表 + PASS/FAIL
-  fd_check.py           # 梯度符号/前因子的有限差分自检
-  DESIGN.md             # 本文档
-  README.md             # 运行说明(本地 CPU torch 复现)
+  io_w90.py                # .mmn/.amn/.eig/.win/.nnkp 解析 + b 向量/权重重建 + .wout 参考解析
+                           #   nb>nw 需显式 allow_entangled(防静默错误结果守卫)
+  wannierise.py            # torch 批量 MV 最小化(device 参数化;非方阵输入守卫)
+  disentangle.py           # torch 批量 SMV 解纠缠(Phase 2,§7)
+  check_against_w90.py     # 孤立带金标对照(Phase 1)
+  check_dis_against_w90.py # 纠缠带金标对照:Ω_I + 解纠缠初态两道硬门(Phase 2,§5b)
+  test_guards.py           # 纠缠守卫单测(python test_guards.py / pytest)
+  bench_gpu.py             # 固定迭代数的 dis+wann 计时(CPU 基线 / CUDA 对比)
+  run_bench_v100.sbatch    # sai-pod 16V100 基准作业模板(金标先行,含环境坑注释)
+  fd_check.py              # 梯度符号/前因子的有限差分自检
+  DESIGN.md / README.md
   testdata/
-    gaas/     gaas.{win,mmn,amn} + gaas_ref.wout        (example01, 8 k)
-    diamond/  diamond.{win,mmn,amn} + diamond_ref.wout  (example05, 64 k)
+    gaas/     gaas.{win,mmn,amn} + gaas_ref.wout            (example01, 8 k)
+    diamond/  diamond.{win,mmn,amn} + diamond_ref.wout      (example05, 64 k)
+    vircef/   wannier90.{1,2}.{win,eig} + *_ref.wout        (纠缠金标;mmn/amn 不入库)
+    li2mno3/  wannier90.{1,2}.{win,eig} + *_ref.wout        (纠缠金标,生产尺度)
+    fetch_entangled.sh     # 从 sai-pod 重取两套纠缠算例的 .mmn/.amn(10~300 MB)
 ```
