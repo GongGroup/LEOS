@@ -102,6 +102,36 @@ def read_amn(path):
     return num_bands, num_wann, num_kpts, A
 
 
+def read_eig(path):
+    """Parse a wannier90 .eig file (band energies for disentanglement windows).
+
+    Format: one line per (band, k-point) pair, ``m  k  E`` with the band index m
+    as the fast index (same convention as wannier90/VASP LWRITE_MMN_AMN output).
+
+    Returns
+    -------
+    eig : float64 ndarray [num_kpts, num_bands]   energies in eV
+    """
+    data = np.loadtxt(path, dtype=np.float64)
+    if data.ndim == 1:
+        data = data[None, :]
+    m_idx = data[:, 0].astype(np.int64)
+    k_idx = data[:, 1].astype(np.int64)
+    nb = int(m_idx.max())
+    nk = int(k_idx.max())
+    if data.shape[0] != nb * nk:
+        raise ValueError(f".eig has {data.shape[0]} rows, expected nb*nk = {nb*nk}")
+    eig = np.full((nk, nb), np.nan)
+    eig[k_idx - 1, m_idx - 1] = data[:, 2]
+    if np.isnan(eig).any():
+        raise ValueError(".eig is missing (band, kpt) entries")
+    # wannier90 assumes eigenvalues sorted bottom-up per k (dis_windows relies on
+    # contiguity of the energy windows); enforce it here rather than mis-slice.
+    if np.any(np.diff(eig, axis=1) < -1e-8):
+        raise ValueError(".eig energies are not sorted ascending within a k-point")
+    return eig
+
+
 def read_nnkp(path):
     """Parse a wannier90 seedname.nnkp file (kpoints, lattices, neighbour list).
 
@@ -174,6 +204,12 @@ def read_win(path):
     lines = [_strip_comment(l) for l in raw]
 
     out = {"num_wann": None, "num_bands": None, "mp_grid": None}
+    # disentanglement keys (None = not present; defaults are wannier90's and are
+    # resolved inside disentangle(): win = full eigval range, froz_min = win_min,
+    # num_iter 200, mix 0.5, conv_tol 1e-10, conv_window 3)
+    for key in ("dis_win_min", "dis_win_max", "dis_froz_min", "dis_froz_max",
+                "dis_mix_ratio", "dis_conv_tol", "dis_num_iter", "dis_conv_window"):
+        out[key] = None
     cell = None
     cell_unit = "ang"
     kpts = None
@@ -199,6 +235,17 @@ def read_win(path):
         m = re.match(r"mp_grid\s*[=:]\s*(\d+)\s+(\d+)\s+(\d+)", low)
         if m:
             out["mp_grid"] = [int(m.group(1)), int(m.group(2)), int(m.group(3))]
+            i += 1
+            continue
+        m = re.match(r"(dis_win_min|dis_win_max|dis_froz_min|dis_froz_max|"
+                     r"dis_mix_ratio|dis_conv_tol)\s*[=:]\s*([-+0-9.ed]+)", low)
+        if m:
+            out[m.group(1)] = float(m.group(2).replace("d", "e"))
+            i += 1
+            continue
+        m = re.match(r"(dis_num_iter|dis_conv_window)\s*[=:]\s*(\d+)", low)
+        if m:
+            out[m.group(1)] = int(m.group(2))
             i += 1
             continue
 
@@ -344,15 +391,23 @@ class W90Case:
     real_lattice: np.ndarray   # [3,3] Ang
     recip_lattice: np.ndarray  # [3,3] Ang^-1
     kmesh_info: dict
+    win: dict = None       # parsed .win keys (incl. dis_* when present)
+    eig: np.ndarray = None  # [nk, nb] band energies (eV), only when eig_path given
 
 
-def load_case(win_path, mmn_path, amn_path, seedname="case", nnkp_path=None):
+def load_case(win_path, mmn_path, amn_path, seedname="case", nnkp_path=None,
+              eig_path=None, allow_entangled=False):
     """Read a full wannier90 case and reconstruct b-vectors + shell weights.
 
     b-vectors need kpoints (fractional) + recip_lattice.  Both are taken from the .win
     (self-contained, production LEOS path).  If the .win has no explicit `kpoints`
     block, pass `nnkp_path` to source them (and the reciprocal lattice) from a
     seedname.nnkp instead.
+
+    Entangled guard: if num_bands > num_wann the raw M/A must NOT be fed straight
+    into wannierise() (it would silently produce wrong centres).  Loading such a
+    case requires `allow_entangled=True` plus an `eig_path`, and the caller must
+    run disentangle.disentangle() first.
     """
     win = read_win(win_path)
     nb_m, nk_m, nnb, kb_idx, gvec, M = read_mmn(mmn_path)
@@ -360,6 +415,27 @@ def load_case(win_path, mmn_path, amn_path, seedname="case", nnkp_path=None):
 
     assert nb_m == nb_a, f"num_bands mismatch mmn/amn: {nb_m} vs {nb_a}"
     assert nk_m == nk_a, f"num_kpts mismatch mmn/amn: {nk_m} vs {nk_a}"
+
+    if nb_m > nw_a and not allow_entangled:
+        raise ValueError(
+            f"num_bands ({nb_m}) > num_wann ({nw_a}): entangled bands. "
+            "wannierise() alone would return silently wrong centres. "
+            "Load with allow_entangled=True (and eig_path=...) and run "
+            "disentangle.disentangle() first; feed its M0_reduced/U0 to wannierise()."
+        )
+    if nb_m > nw_a and eig_path is None:
+        raise ValueError(
+            "entangled case needs band energies to place the outer/frozen windows: "
+            "pass eig_path='seedname.eig'"
+        )
+
+    eig = None
+    if eig_path is not None:
+        eig = read_eig(eig_path)
+        if eig.shape != (nk_m, nb_m):
+            raise ValueError(
+                f".eig shape {eig.shape} does not match .mmn (nk={nk_m}, nb={nb_m})"
+            )
 
     kpoints = win["kpoints"]
     recip = win["recip_lattice"]
@@ -390,6 +466,8 @@ def load_case(win_path, mmn_path, amn_path, seedname="case", nnkp_path=None):
         real_lattice=real,
         recip_lattice=recip,
         kmesh_info=kmesh_info,
+        win=win,
+        eig=eig,
     )
 
 
@@ -444,6 +522,23 @@ def parse_wout_final_state(path):
     if len(init_c):
         out["initial"] = {"centres": init_c, "spreads": init_s}
     return out
+
+
+def parse_wout_dis_info(path):
+    """Extract disentanglement results from a reference .wout.
+
+    Returns dict: omega_I (the 'Final Omega_I' after dis_extract, Ang^2),
+    converged (bool), n_iter (number of DIS iterations run).
+    """
+    with open(path, "r") as fh:
+        text = fh.read()
+    m = re.search(r"Final Omega_I\s+([-\d.]+)", text)
+    omega_i = float(m.group(1)) if m else None
+    converged = "Disentanglement convergence criteria satisfied" in text
+    iters = re.findall(r"^\s+(\d+)\s+[-\d.]+\s+[-\d.]+\s+[-+\dEe.]+\s+[-\d.]+\s+<-- DIS",
+                       text, flags=re.M)
+    n_iter = int(iters[-1]) if iters else None
+    return {"omega_I": omega_i, "converged": converged, "n_iter": n_iter}
 
 
 if __name__ == "__main__":
