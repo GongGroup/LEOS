@@ -1,0 +1,10 @@
+# mixed CPU/GPU load pipeline rows (issue #11), li2mno3 x=0.00 frame: 96 atoms, 356 bands, 288 WF/spin (shared window), nk=8, ISPIN=2
+# rows B/C/D run offline wannier90 on a DSPRHBM Xeon Max node, TWO SPINS CONCURRENT, np=8 ranks per spin
+# GPU leg for B/C/D: export-only VASP job 307.1 s on 4x V100 (vs 816.9 s whole in-situ frame) -> GPU-hours -62%
+# row C job 658411 (clean node d9470n02); NT=4/64-core concurrent variant measured 72.2 s (job 658480, memory-bandwidth bound -> negative scaling)
+# row D trims spin2 to 240 WF (per-spin num_wann), i.e. a lighter spin-2 workload; stacks with row C in production
+row	config	w90_wall_s	gpu_leg_s	note
+A	in-situ w90 library mode inside the 4-GPU VASP job	506.5	816.9	whole frame on GPU; 4 cards held start to finish
+B	offload: GPU export + offline w90, serial math lib, 16 cores	70.0	307.1	job 654880
+C	row B + threaded MKL, NT=2 per rank, 32 cores	62.0	307.1	job 658411; compute leg ~40->~25 s, ~30 s .mmn/.amn read floor dilutes the gain
+D	row B + per-spin num_wann trim (spin2 288->240 WF)	48.1	307.1	job 654880

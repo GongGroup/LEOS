@@ -56,6 +56,17 @@ make DEPS=1 -j8 std
   四进程 100% CPU 空转无 .werr。换集群先验库:
   `nm libwannier.a | grep -ci mpi_`,非零即 MPI 版,须用站点源码
   `COMMS=`(空)自编串行版重链。
+- **离线 wannier90.x 用"MPI + 线程化 MKL"构建**(与上条不冲突:
+  串行限制只针对库模式;离线跑的独立 wannier90.x 可以吃满 CPU)。
+  make.inc 要点:`F90=ifort  COMMS=mpi  MPIF90=mpiifort`,LIBS 用
+  `-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5`——与
+  串行 MKL 版只差 threading layer 一行;运行时
+  `MKL_NUM_THREADS=<n> MKL_DYNAMIC=FALSE`。实测(288 函数帧,
+  data/v3/w90_threads_scan_20260712.tsv):参考版数学库对线程零
+  响应;MKL 版 8 进程 × 4 线程时解纠缠/局域化每迭代对单核参考版
+  约 16×/13×;两自旋并发的生产形态每 rank 2 线程即最优(再加线程
+  内存带宽打满反而变慢)。判定一致性:收敛通道与参考版逐位一致。
+  sai-pod 现成构建:`~/LEOS/w90_offline/build/wannier90-3.1.0-impi-thread/`。
 - **#WP 投影数据的两条铁律**(2026-07-11 定谳,提交 e0ad691):
   ① 修复前(v3.1 含)所有多进程运行的 #WP 块全部无效——带并行下先取
   模方后归约丢交叉项,输出是平台相关伪数据;修复后多进程=单进程,
@@ -86,6 +97,11 @@ make DEPS=1 -j8 std
   **提交时所在目录**解析，作业工作目录同理——从家目录重提别人的
   脚本，VASP 会在家目录里找 INCAR 秒死，真实报错还藏在 ~/print-out。
   重提一律先 cd 进案例目录，或脚本内用绝对路径 + 显式 cd。
+- **资源参数写进脚本，别放 sbatch 命令行**（sai-pod 实测）：站点
+  查杀钩子匹配的是提交命令行——命令行给 `--cpus-per-task` 的作业
+  连 CPU 分区也会在 2 秒内被 root 取消（输出文件都不生成）；同样
+  的值写进脚本 `#SBATCH` 行则放行（32/64 核对照实验双向验证）。
+  `--export=ALL,VAR=x` 传环境变量不受影响；资源类开关一律进脚本。
 - **重建二进制的空窗**：排队中（PENDING）的作业引用同一二进制
   路径时，`rm` 旧树到编译完成之间的窗口会让它们被调度进来秒死
   （运行中的作业不受影响，二进制已载入内存）。重建前查 squeue
