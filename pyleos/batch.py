@@ -29,6 +29,21 @@ Tiered screening (stage --mode tiered + escalate):
   the WCl4/5/6 + MoCl2 lesson), which start on full MLWF directly.
   After runs finish, `escalate` re-queues any SCDM-only case whose EOSCAR
   carries quality flags (stray WFs, |dNe| drift, ghost excess) as full MLWF.
+
+Offline-w90 pipeline (stage --offline-w90 + w90; issue 16):
+  The GPU job only exports (LWRITE_MMN_AMN=T, LWANNIER90_RUN=F); the w90
+  solve moves off the GPU onto the DSPRHBM CPU partition.  After `submit`,
+  repeated `w90` calls pump every offline case through:
+    SUBMITTED -> EXPORTED       export finished (OUTCAR complete + .mmn)
+    EXPORTED  -> W90_SUBMITTED  per-spin .win generated (offline_w90_prep;
+                                a trimmed spin also gets a column-sliced
+                                .amn), s1/s2 run dirs staged, one CPU job
+                                (both spins concurrent) submitted
+    W90_SUBMITTED -> OK         both .wout carry a Final State and are
+                                copied back into the case dir, which is then
+                                pyleos load_case-ready (wout channel)
+  Export-only runs write no usable EOSCAR (no #WF block): offline triage
+  keys on the export files and the .wout, never on EOSCAR.
 """
 from __future__ import annotations
 
@@ -43,6 +58,15 @@ import sys
 from pathlib import Path
 
 VASP_BIN = "/home/sjtu-gongxueqing/zhangxianyang/apps/vasp.6.4.3_leos_v2/bin/vasp_std"
+# The export switches need the v3.1 EOS_READER (respects an explicit
+# LWANNIER90_RUN=F): offline-w90 staging therefore uses the current
+# production binary, not the v2 one above.
+OFFLINE_VASP_BIN = ("/home/sjtu-gongxueqing/zhangxianyang/apps/leos_current/"
+                    "bin/vasp_std")
+W90_BIN = ("/home/sjtu-gongxueqing/zhangxianyang/LEOS/w90_offline/build/"
+           "wannier90-3.1.0-impi/wannier90.x")
+OFFLINE_INCAR_SWITCHES = {"LWRITE_MMN_AMN": ".TRUE.",
+                          "LWANNIER90_RUN": ".FALSE."}
 
 INCAR_TEMPLATE = {
     "SYSTEM": "LEOS batch case",
@@ -89,6 +113,44 @@ set -u
 mpirun -np ${{SLURM_NTASKS}} -map-by "${{MAP_OPT:-ppr:1:gpu}}" -mca coll_hcoll_enable 0 {vasp}
 echo LEOS_BATCH_DONE
 """
+
+# Offline wannier90 solve: one mpirun per spin, both spins concurrent, each
+# pinned to a disjoint slice of the actual cgroup CPU set (the job never owns
+# cores 0..N-1 on DSPRHBM).  Intel stack only: wannier90 built with
+# gnu+OpenMPI5 segfaults on any multi-rank run (w90_offline/README.md).
+W90_SBATCH_TEMPLATE = """#!/bin/bash
+#SBATCH --job-name=w90-{name}
+#SBATCH --partition={partition}
+#SBATCH --qos={qos}
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task={cpus}
+#SBATCH --time={walltime}
+#SBATCH --output=w90-out
+#SBATCH --error=w90-out
+
+set -uo pipefail
+set +u
+source /etc/profile.d/lmod.sh
+module purge
+module load intel/compiler-rt/2024.2.1 intel/tbb/2021.13 intel/ifort/2024.2.1 \\
+            intel/mpi/2021.13 intel/mkl/2024.2
+set -u
+export I_MPI_HYDRA_BOOTSTRAP=fork I_MPI_PIN=off
+AFF=($(python3 -c "import os;print(' '.join(map(str,sorted(os.sched_getaffinity(0)))))"))
+slice () {{ local out=("${{AFF[@]:$1:$2}}"); local IFS=,; echo "${{out[*]}}"; }}
+NP={np}; NT={threads}; SPAN=$((NP*NT))
+{run_block}
+wait
+echo W90_OFFLINE_DONE
+"""
+
+W90_RUN_SPIN = ('( cd s{s} && env OMP_NUM_THREADS=$NT MKL_NUM_THREADS=$NT '
+                'MKL_DYNAMIC=FALSE taskset -c "$(slice {off} $SPAN)" '
+                'mpirun -np $NP {w90} wannier90.{s} ) > s{s}/run.log 2>&1 &')
+W90_RUN_SINGLE = ('( env OMP_NUM_THREADS=$NT MKL_NUM_THREADS=$NT '
+                  'MKL_DYNAMIC=FALSE taskset -c "$(slice 0 $SPAN)" '
+                  'mpirun -np $NP {w90} wannier90 ) > w90_run.log 2>&1 &')
 
 
 # 4d/5d/f-block elements whose localised manifolds are sensitive to the SCDM
@@ -152,7 +214,7 @@ def save_state(dest: Path, state: dict) -> None:
 
 
 def stage(dest: Path, cases_file: Path, qos: str, walltime: str,
-          mode: str = "full") -> None:
+          mode: str = "full", offline_w90: bool = False) -> None:
     cases = json.loads(cases_file.read_text())
     dest.mkdir(parents=True, exist_ok=True)
     state = load_state(dest)
@@ -176,12 +238,19 @@ def stage(dest: Path, cases_file: Path, qos: str, walltime: str,
             overrides = dict(c.get("incar", {}))
             if tier == "scdm":
                 overrides.setdefault("EOS_SCDM_ONLY", ".TRUE.")
+            vasp = VASP_BIN
+            if offline_w90:
+                overrides.update(OFFLINE_INCAR_SWITCHES)
+                vasp = OFFLINE_VASP_BIN
             write_incar(d / "INCAR", overrides)
             (d / "run.sbatch").write_text(SBATCH_TEMPLATE.format(
-                name=name[:12], qos=qos, walltime=walltime, vasp=VASP_BIN))
-            state.setdefault(name, {"status": "STAGED", "jobid": None,
-                                    "retries": 0, "tier": tier})
-            print(f"[{name}] staged ({tier})")
+                name=name[:12], qos=qos, walltime=walltime, vasp=vasp))
+            rec = state.setdefault(name, {"status": "STAGED", "jobid": None,
+                                          "retries": 0, "tier": tier})
+            if offline_w90:
+                rec["w90"] = "offline"
+            print(f"[{name}] staged ({tier}"
+                  f"{', offline-w90' if offline_w90 else ''})")
     save_state(dest, state)
 
 
@@ -301,6 +370,18 @@ def triage(d: Path) -> str:
     return "FAIL_LEOS"
 
 
+def offline_export_triage(d: Path) -> str:
+    """Triage for an export-only run (no EOSCAR, no solve): did the DFT
+    finish and did it leave the mmn/amn export behind?"""
+    outcar = d / "OUTCAR"
+    if not (outcar.is_file()
+            and "General timing" in outcar.read_text(errors="replace")[-4000:]):
+        return "FAIL_DFT"
+    if not ((d / "wannier90.1.mmn").is_file() or (d / "wannier90.mmn").is_file()):
+        return "FAIL_EXPORT"
+    return "EXPORTED"
+
+
 def status(dest: Path) -> None:
     state = load_state(dest)
     in_queue = squeue_ids()
@@ -308,12 +389,16 @@ def status(dest: Path) -> None:
         print("queue query failed - showing stored statuses, re-triaging nothing")
     counts: dict = {}
     for name, rec in sorted(state.items()):
+        offline = rec.get("w90") == "offline"
         if in_queue is None:
             st = rec["status"]          # unknown queue: change no state
         elif rec.get("jobid") in in_queue:
             st = "QUEUED/RUNNING"
+        elif rec.get("w90_jobid") in in_queue:
+            st = "W90_QUEUED/RUNNING"
         elif rec["status"] in ("SUBMITTED", "DONE", "RETRY_DONE"):
-            st = triage(dest / name)
+            st = offline_export_triage(dest / name) if offline \
+                else triage(dest / name)
             rec["status"] = st
         else:
             st = rec["status"]
@@ -322,6 +407,130 @@ def status(dest: Path) -> None:
     if in_queue is not None:
         save_state(dest, state)
     print("\nsummary:", "  ".join(f"{k}:{v}" for k, v in sorted(counts.items())))
+
+
+def _load_prep():
+    """offline_w90_prep module: next to this file (cluster deploy) or in the
+    repo's script/ directory (local checkout)."""
+    try:
+        import offline_w90_prep
+        return offline_w90_prep
+    except ImportError:
+        pass
+    script_dir = Path(__file__).resolve().parent.parent / "script"
+    if (script_dir / "offline_w90_prep.py").is_file():
+        sys.path.insert(0, str(script_dir))
+        import offline_w90_prep
+        return offline_w90_prep
+    raise SystemExit("offline_w90_prep.py not found - deploy it next to "
+                     "batch.py or keep the repo script/ directory")
+
+
+def _wout_done(p: Path) -> bool:
+    return p.is_file() and "Final State" in p.read_text(errors="replace")
+
+
+def _stage_spin_dirs(d: Path, summary: dict) -> list:
+    """s<N>/ run dir per spin: symlinked mmn/eig, per-spin win copy, and the
+    trimmed amn for a narrowed spin (symlink to the shared one otherwise).
+    Returns the staged spin numbers."""
+    spins = []
+    for rec in summary["spins"]:
+        s = rec["spin"]
+        sd = d / f"s{s}"
+        sd.mkdir(exist_ok=True)
+        for ext in ("mmn", "eig"):
+            ln = sd / f"wannier90.{s}.{ext}"
+            ln.unlink(missing_ok=True)
+            ln.symlink_to(Path("..") / f"wannier90.{s}.{ext}")
+        amn = sd / f"wannier90.{s}.amn"
+        amn.unlink(missing_ok=True)
+        trimmed = rec.get("trimmed_amn")
+        if trimmed and not str(trimmed).startswith("SKIPPED"):
+            amn.symlink_to(Path("..") / Path(trimmed).name)
+        else:
+            amn.symlink_to(Path("..") / f"wannier90.{s}.amn")
+        shutil.copy2(rec["win"], sd / f"wannier90.{s}.win")
+        spins.append(s)
+    return spins
+
+
+def w90pump(dest: Path, np_: int, threads: int, w90_bin: str, qos: str,
+            partition: str, walltime: str, max_queue: int) -> None:
+    """Pump offline cases: EXPORTED -> solve submitted -> wouts back."""
+    state = load_state(dest)
+    in_queue = squeue_ids()
+    if in_queue is None:
+        print("queue query failed - pumping nothing (occupancy unknown)")
+        return
+    active = sum(1 for v in state.values() if v.get("w90_jobid") in in_queue)
+    prep = None
+    for name, rec in sorted(state.items()):
+        if rec.get("w90") != "offline":
+            continue
+        d = dest / name
+        # export job finished since the last look?
+        if rec["status"] == "SUBMITTED" and rec.get("jobid") not in in_queue:
+            rec["status"] = offline_export_triage(d)
+            print(f"[{name}] export job done -> {rec['status']}")
+        # solve finished since the last look?
+        if rec["status"] == "W90_SUBMITTED" and \
+                rec.get("w90_jobid") not in in_queue:
+            spins = rec.get("w90_spins") or [1, 2]
+            wouts = {s: d / f"s{s}" / f"wannier90.{s}.wout" for s in spins} \
+                if spins != [0] else {0: d / "wannier90.wout"}
+            if all(_wout_done(p) for p in wouts.values()):
+                for s, p in wouts.items():
+                    if s:                       # per-spin: copy back for pyleos
+                        shutil.copy2(p, d / p.name)
+                rec["status"] = "OK"
+                print(f"[{name}] w90 solve done - wout channel complete")
+            else:
+                rec["status"] = "FAIL_W90"
+                missing = [str(p) for p in wouts.values() if not _wout_done(p)]
+                rec["status_note"] = "no Final State: " + ", ".join(missing)
+                print(f"[{name}] FAIL_W90 ({rec['status_note']})")
+        # ready for a solve?
+        if rec["status"] != "EXPORTED":
+            continue
+        if active >= max_queue:
+            print(f"w90 queue cap {max_queue} reached; run w90 again later")
+            break
+        if prep is None:
+            prep = _load_prep()
+        try:
+            summary = prep.generate(d, out_dir=d, overwrite=True,
+                                    do_trim_amn=True, crosscheck=True)
+        except prep.PrepError as exc:
+            rec["status"] = "FAIL_PREP"
+            rec["status_note"] = str(exc)
+            print(f"[{name}] FAIL_PREP: {exc}")
+            continue
+        if summary["ispin"] == 2:
+            spins = _stage_spin_dirs(d, summary)
+            run_block = "\n".join(
+                W90_RUN_SPIN.format(s=s, off=(0 if s == 1 else "$SPAN"),
+                                    w90=w90_bin) for s in spins)
+            cpus = 2 * np_ * threads
+        else:                       # ISPIN=1: solve in place, shared seedname
+            spins = [0]
+            run_block = W90_RUN_SINGLE.format(w90=w90_bin)
+            cpus = np_ * threads
+        (d / "w90.sbatch").write_text(W90_SBATCH_TEMPLATE.format(
+            name=name[:12], partition=partition, qos=qos, cpus=cpus,
+            walltime=walltime, np=np_, threads=threads, run_block=run_block))
+        r = subprocess.run(["sbatch", "w90.sbatch"], cwd=d,
+                           capture_output=True, text=True)
+        if r.returncode == 0:
+            rec.update(status="W90_SUBMITTED",
+                       w90_jobid=r.stdout.strip().split()[-1],
+                       w90_spins=spins)
+            active += 1
+            print(f"[{name}] w90 solve submitted {rec['w90_jobid']} "
+                  f"(np={np_} x {threads} threads x {len(spins)} spin(s))")
+        else:
+            print(f"[{name}] w90 sbatch failed: {r.stderr.strip()[:80]}")
+    save_state(dest, state)
 
 
 RETRY_LADDER = {
@@ -431,8 +640,24 @@ def main() -> None:
     p.add_argument("--qos", default="rush-gpu")
     p.add_argument("--walltime", default="02:00:00")
     p.add_argument("--mode", default="full", choices=["full", "scdm", "tiered"])
+    p.add_argument("--offline-w90", action="store_true",
+                   help="GPU job exports only (LWRITE_MMN_AMN=T, "
+                        "LWANNIER90_RUN=F); solve later with the w90 command")
     p = sub.add_parser("escalate")
     p.add_argument("--dest", type=Path, required=True)
+    p = sub.add_parser("w90", help="pump offline cases: generate per-spin "
+                                   "wins, submit CPU solves, pull wouts back")
+    p.add_argument("--dest", type=Path, required=True)
+    p.add_argument("--np", type=int, default=8,
+                   help="MPI ranks per spin (k-point parallelism caps at nk)")
+    p.add_argument("--threads", type=int, default=1,
+                   help="MKL/OMP threads per rank (needs a threaded-MKL "
+                        "wannier90.x to matter)")
+    p.add_argument("--w90-bin", default=W90_BIN)
+    p.add_argument("--qos", default="rush-cpu")
+    p.add_argument("--partition", default="DSPRHBM")
+    p.add_argument("--walltime", default="02:00:00")
+    p.add_argument("--max-queue", type=int, default=8)
     p = sub.add_parser("submit")
     p.add_argument("--dest", type=Path, required=True)
     p.add_argument("--max-queue", type=int, default=8)
@@ -445,9 +670,13 @@ def main() -> None:
     p.add_argument("--out", type=Path, required=True)
     a = ap.parse_args()
     if a.cmd == "stage":
-        stage(a.dest.expanduser(), a.cases, a.qos, a.walltime, a.mode)
+        stage(a.dest.expanduser(), a.cases, a.qos, a.walltime, a.mode,
+              offline_w90=a.offline_w90)
     elif a.cmd == "escalate":
         escalate(a.dest.expanduser())
+    elif a.cmd == "w90":
+        w90pump(a.dest.expanduser(), a.np, a.threads, a.w90_bin, a.qos,
+                a.partition, a.walltime, a.max_queue)
     elif a.cmd == "submit":
         submit(a.dest.expanduser(), a.max_queue)
     elif a.cmd == "status":
