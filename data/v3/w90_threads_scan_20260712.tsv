@@ -1,0 +1,24 @@
+# wannier90 threaded-math-library scan (issue #15), sai-pod job 654879, DSPRHBM Xeon Max node (48-core cgroup)
+# workload: li2mno3 shared-288 export (96 atoms, 288 WF, 356 bands, nk=8, two spins run sequentially)
+# arm seq = reference serial BLAS/LAPACK build; arm thr = ifort+IntelMPI+threaded-MKL (mkl_intel_thread+iomp5, COMMS=mpi)
+# per-iteration seconds parsed from .wout; wall_s from job log per (config,spin); omega_i identical to all digits across all 18 runs
+# consistency vs seq_np1_t1: spin1 max|dr|=0.0 (bitwise); spin2 max|dr|<=5.7e-3 A (dis hits 200-iter cap on this shared-window input -> unconverged tail is FP-order sensitive; three orders below any assignment threshold)
+arm	np	nt	spin	dis_iter	dis_s_per_it	wan_iter	wan_s_per_it	omega_i	wall_s
+seq	1	1	1	38	0.997	100	0.935	154.86511542	158.5
+seq	1	1	2	200	1.031	100	0.932	135.30457827	329.1
+seq	1	4	1	38	0.993	100	0.922	154.86511542	153.2
+seq	1	4	2	200	1.025	100	0.921	135.30457827	323.1
+seq	1	8	1	38	0.991	100	0.918	154.86511542	153.5
+seq	1	8	2	200	1.024	100	0.918	135.30457827	320.7
+thr	1	1	1	38	1.005	100	0.937	154.86511542	159.0
+thr	1	1	2	200	1.031	100	0.932	135.30457827	324.5
+thr	1	4	1	38	0.325	100	0.447	154.86511542	81.0
+thr	1	4	2	200	0.395	100	0.447	135.30457827	146.7
+thr	1	8	1	38	0.213	100	0.356	154.86511542	68.9
+thr	1	8	2	200	0.293	100	0.356	135.30457827	116.6
+thr	8	1	1	38	0.132	100	0.125	154.86511542	39.4
+thr	8	1	2	200	0.136	100	0.125	135.30457827	61.9
+thr	8	2	1	38	0.075	100	0.085	154.86511542	35.8
+thr	8	2	2	200	0.083	100	0.085	135.30457827	48.2
+thr	8	4	1	38	0.055	100	0.074	154.86511542	34.8
+thr	8	4	2	200	0.065	100	0.074	135.30457827	42.7
