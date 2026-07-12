@@ -21,6 +21,9 @@ A point is SAFE when bench passes >= baseline AND it introduces no NEW
 legacy H errors (herr <= baseline herr).
 
 Usage: python3 script/arbiter_scan.py [--out data/v3/arbiter_scan_20260710.tsv]
+       [--root DIR]   # alternate data tree mirroring the repo layout
+                      # (data/v3/m4_wave*/..., data/v3/legacy_rerun/...);
+                      # default: the repo itself, byte-identical behaviour
 """
 from __future__ import annotations
 
@@ -66,11 +69,11 @@ def load_bench():
     return out
 
 
-def load_legacy():
+def load_legacy(root=ROOT):
     """(name, case, expected_sorted_H) for the six legacy directories."""
     out = []
     for name, mode in LEGACY_H.items():
-        case = load_case(ROOT / "data/v3/legacy_rerun" / name)
+        case = load_case(root / "data/v3/legacy_rerun" / name)
         n_h = sum(1 for el in case.structure.elements if el == "H")
         expected = sorted([-1] + [1] * (n_h - 1)) if mode == "one_hydride" \
             else [1] * n_h
@@ -121,10 +124,16 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", type=Path,
                     default=ROOT / "data/v3/arbiter_scan_20260710.tsv")
+    ap.add_argument("--root", type=Path, default=None,
+                    help="alternate data tree root mirroring the repo layout "
+                         "(default: the repo root; collection rules and "
+                         "scoring are unchanged)")
     args = ap.parse_args()
+    root = args.root.resolve() if args.root else ROOT
+    full_bench.ROOT = root      # collect() resolves case dirs against this
 
     t0 = time.time()
-    bench, legacy = load_bench(), load_legacy()
+    bench, legacy = load_bench(), load_legacy(root)
     print(f"loaded {len(bench)} #WP bench cases + {len(legacy)} legacy cases "
           f"({time.time()-t0:.1f}s); grid {len(TAUS)}x{len(PMARGINS)} "
           f"+ baseline, beta={BETA}")
@@ -153,10 +162,11 @@ def main():
                   f"({time.time()-t1:.1f}s)")
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    src = f"; root={root}" if root != ROOT else ""
     with args.out.open("w") as fh:
-        fh.write(f"# arbiter sensitivity scan 2026-07-10; beta={BETA}; "
-                 f"baseline tier-1: bench {base_ok}/{len(bench)}, "
-                 f"legacy_H_err={base_herr}\n")
+        fh.write(f"# arbiter sensitivity scan {time.strftime('%Y-%m-%d')}; "
+                 f"beta={BETA}; baseline tier-1: bench {base_ok}/{len(bench)}, "
+                 f"legacy_H_err={base_herr}{src}\n")
         fh.write("tau\tpmargin\tbench_ok\tlegacy_H_err\tnonH_flips\t"
                  "verdict\tgained\tlost\n")
         for r in rows:
