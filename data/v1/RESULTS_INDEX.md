@@ -1,8 +1,16 @@
-# LEOS 结果索引
+# LEOS 结果索引（v1 历史基线）
+
+> 迁移注记（2026-07-12）：本索引写于 v1 时代，原指向的本机工作区
+> `~/Desktop/EOS4VASP/leos_work/` 已不存在——数据早已全部迁入本仓库：
+> 汇总表在 `data/v1/oxide_leos_summary.tsv` 与
+> `data/v1/eos_dataset/leos_vs_bader.tsv`，运行目录在 `data/v1/oxides/`
+> 与 `data/v1/eos_dataset/`。下文正文保留当时的统计口径供追溯；
+> 文中旧路径一律按上述仓库内路径读。v1 之后的全部结果见
+> `data/v3/` 与 docs/RESULTS.md。
 
 ## 氧化物套件（历史输出）
-- 汇总 TSV：`/Users/mastreina/Desktop/EOS4VASP/leos_work/oxide_leos_summary.tsv`（tag=default 为默认回归集合；tag=stress 为压力/实验用例）
-- 原始输出目录：`/Users/mastreina/Desktop/EOS4VASP/leos_work/leos-oxide-*-*`（同一 case 可能多次运行；TSV 仅选取最新一次）
+- 汇总 TSV：`data/v1/oxide_leos_summary.tsv`（tag=default 为默认回归集合；tag=stress 为压力/实验用例）
+- 原始输出目录：`data/v1/oxides/leos-oxide-*-*`（同一 case 可能多次运行；TSV 仅选取最新一次）
 
 ### 氧化物套件概况（以汇总 TSV 为准）
 - 总用例：29（default=24, stress=5）
@@ -11,8 +19,8 @@
   - reo2 (NO_EOSCAR)
 
 ## EOS 数据集（LEOS vs Bader）
-- 对比汇总 TSV：`/Users/mastreina/Desktop/EOS4VASP/leos_work/leos_eos_dataset/leos_vs_bader.tsv`（按“结构×元素”逐行对齐 LEOS 与 Bader）
-- 原始输出目录：`/Users/mastreina/Desktop/EOS4VASP/leos_work/leos_eos_dataset/<structure>`（结构名会被净化，例如 `(Cu5I7)2-`→`_Cu5I7_2-`）
+- 对比汇总 TSV：`data/v1/eos_dataset/leos_vs_bader.tsv`（按“结构×元素”逐行对齐 LEOS 与 Bader）
+- 原始输出目录：`data/v1/eos_dataset/<structure>`（结构名会被净化，例如 `(Cu5I7)2-`→`_Cu5I7_2-`）
 
 ### 当前进度（以对比 TSV 为准）
 - EOS 数据集总结构数：45
@@ -41,7 +49,8 @@
 ### 本地输出但未写入对比 TSV（需重跑或手动补记）
 - Ca3AuN（NO_EIGENVAL；-）
 
-### 继续全量批跑（NP=14）
+### 继续全量批跑（历史命令，环境已不存在，仅存档）
 ```bash
 orb -m Ubuntu-x64 bash -lc 'NP=14 WORK_ROOT=/Users/mastreina/Desktop/EOS4VASP/leos_work CLEANUP=1 bash /Users/mastreina/Desktop/EOS4VASP/leos_eos_dataset_tests.sh'
 ```
+（v1 批跑环境为本机虚拟机，已随 EOS4VASP 工作区退役；现行批跑见 pyleos/batch.py 与集群 `~/LEOS/tools/`。）
