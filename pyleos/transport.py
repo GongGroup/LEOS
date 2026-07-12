@@ -362,13 +362,17 @@ def _unit_problem(cost_rows, bounds, units, nw):
     return u_cost, u_bounds
 
 
-def assign_case(case: CaseData, beta: float = 3.0,
+def assign_case(case: CaseData, beta: float = 10.0,
                 eneg_scale: str = "allen",
                 drop_stray: bool = False,
                 gamma: float = 0.0,
                 fragments: Optional[List[List[int]]] = None,
                 tier2: str = "linear") -> AssignResult:
-    """gamma > 0 enables the tier-2 cost: c -= gamma * p_hat(w,a), where
+    """beta defaults to the production value 10 (plateau [8,12], see
+    data/v3/beta_scan_20260712.tsv); values around 3 misassign X-H bonds
+    silently, so never lower it below ~8 for real systems.
+
+    gamma > 0 enables the tier-2 cost: c -= gamma * p_hat(w,a), where
     p_hat is the per-WF-normalised projector-norm composition from the
     EOSCAR v3 #WP block (chemical fingerprint; complements the centre
     geometry and stays informative for stray WFs).
@@ -442,7 +446,7 @@ def assign_case(case: CaseData, beta: float = 3.0,
                         frag_os=frag_os)
 
 
-def reliability_margins(case: CaseData, beta: float = 3.0,
+def reliability_margins(case: CaseData, beta: float = 10.0,
                         eneg_scale: str = "allen",
                         drop_stray: bool = False,
                         gamma: float = 0.0,

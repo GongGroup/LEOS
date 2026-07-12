@@ -74,6 +74,11 @@ def main():
     ap.add_argument("--only-wp", action="store_true",
                     help="restrict to cases with a #WP block (tier-2 bench)")
     ap.add_argument("--no-reliability", action="store_true")
+    ap.add_argument("--greedy", action="store_true",
+                    help="score the in-situ greedy OS column of EOSCAR "
+                         "instead of the transport assignment (same cases, "
+                         "same dev criterion; R columns are meaningless "
+                         "here and emitted as '-')")
     args = ap.parse_args()
 
     rows = []
@@ -87,26 +92,32 @@ def main():
             if args.only_wp and not (case.eoscar and case.eoscar.wp_detail):
                 print("skip (no #WP)")
                 continue
-            res = assign_case(case, beta=args.beta, gamma=args.gamma,
-                              tier2=args.tier2)
-            if not args.no_reliability:
-                res = reliability_margins(case, beta=args.beta,
-                                          gamma=args.gamma, res=res,
-                                          tier2=args.tier2)
+            if args.greedy:
+                res = None
+            else:
+                res = assign_case(case, beta=args.beta, gamma=args.gamma,
+                                  tier2=args.tier2)
+                if not args.no_reliability:
+                    res = reliability_margins(case, beta=args.beta,
+                                              gamma=args.gamma, res=res,
+                                              tier2=args.tier2)
         except Exception as exc:
             print(f"ERROR {str(exc)[:50]}")
             rows.append((batch, name, "ERROR", "", "", "", "", ""))
             continue
-        means = element_means(case.structure.elements, res.os_int)
+        os_vals = case.eoscar.greedy_os if args.greedy else res.os_int
+        means = element_means(case.structure.elements, os_vals)
         dev = max((abs(means[el] - t) for el, t in ref_map.items() if el in means),
                   default=None)
         status = ("run" if dev is None else
                   "OK" if dev <= 0.25 else "~" if dev <= 1.0 else "FAIL")
+        has_r = res is not None and res.atom_margin
         rows.append((batch, name, status,
                      f"{dev:.2f}" if dev is not None else "-",
-                     f"{res.case_conf_elem:.1f}" if res.atom_margin else "-",
-                     f"{res.case_conf:.1f}" if res.atom_margin else "-",
-                     len(res.stray), res.ghost))
+                     f"{res.case_conf_elem:.1f}" if has_r else "-",
+                     f"{res.case_conf:.1f}" if has_r else "-",
+                     len(res.stray) if res is not None else "-",
+                     res.ghost if res is not None else "-"))
         print(f"{status} dev={rows[-1][3]} R_elem={rows[-1][4]} "
               f"({time.time()-t0:.1f}s)")
 
