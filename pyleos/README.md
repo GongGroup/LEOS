@@ -13,7 +13,7 @@ python3 pyleos/cli.py case data/v1/eos_dataset/As4S4 -v
 # 全量回归（对照 tests/reference_os.json 的理想氧化态）
 python3 pyleos/cli.py regress
 
-# 参数：--beta 电负性权重（默认 10.0；X-H 键的正确判定需要 β≥10，36 案例回归显示 β=10 无副作用）；--eneg allen|pauling（默认 allen）
+# 参数：--beta 电负性权重（默认 10.0；β 过低会静默错判 X-H 键，全量 β 扫描的安全平台为 [8,12]，默认取平台腹地 10——data/v3/beta_scan_20260712.tsv）；--eneg allen|pauling（默认 allen）
 ```
 
 ## 模型
@@ -25,7 +25,7 @@ python3 pyleos/cli.py regress
 - 原子容量 `[n_min, n_max]` 由 `capacity.py` 的宽物理界生成
   （`OS_BOUNDS`，宁松勿紧；半芯壳层通过 n_min 强制满占据，用负代价边段实现）。
 - 整数供给 + 整数容量 ⇒ 最优流自动是整数，氧化态无需舍入。
-- 诊断：spread > 3 Å² 或中心离所有原子 > 1.2 Å 的 WF 标记为 stray
+- 诊断：spread > 3 Å² 或中心离所有原子 > 1.6 Å 的 WF 标记为 stray
   （Wannier 化质量问题，分配层无法修复，应触发工作流层重跑）。
 
 ## 测试
