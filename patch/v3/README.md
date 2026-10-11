@@ -1,31 +1,32 @@
-# LEOS v3 增量（相对 patch/leos.patch = v2）
+# v2 → v3 增量材料（存档）
 
-v3 在 sai-pod 生产树 `~/apps/vasp.6.4.3_leos_v2` 上开发并验证
-（编译作业 593892，验证作业 593893/593894，2026-07-07）。
+本目录是 v3 开发时相对 v2（patch/leos.patch）的增量材料，内容已全部并入
+patch/leos_v3.patch。安装请直接用 leos_v3.patch，见 [../README.md](../README.md)。
 
-## 内容
+v3 在 SAI 集群的生产树 `vasp.6.4.3_leos_v2` 上开发和验证（编译作业 593892，
+验证作业 593893、593894，2026-07-07）。
 
-1. **eos.F**（本目录，全量替换 v2 的 eos.F）
-   - `EOS_PROJ_WEIGHTS`：每 WF 在各原子的投影仪范数指纹（#WP 块），
-     喂 pyleos 档 2 运输代价。QION 增广差加权已试验并放弃
-     （软赝化通道对比度仅 1.35:1；投影范数恢复到 ~5:1）。
-   - `EOS_SCDM_ONLY`：跳过 W90 最小化（CO2 验证：OS 不变，W90 时间
-     2s → 0.023s）。
-   - `EOS_WARM_START`（默认开，EOS_EVERY_N>0 生效）：把上一步 WF 中心
-     交给 mlwf 作为 guiding centres。
-2. **mlwf.F 注入**（apply_v3_mlwf.py）：LEOS 钩子变量 + win 写入段的
-   SCDM-only/guiding 注入。
-3. **main.F 注入**（apply_v3_main.py）：轨迹模式接线——老集成写死
-   `IF (NSTEP == 1)`，EOS_EVERY_N 特性在 v1/v2 中从未真正执行；
-   v3 起按 EOS_DO_THIS_STEP 逐步 Wannier 化+分析（纯 LWANNIER90
-   用户保持首步一次的原行为），并修复每步无条件 MLWF_FREE 的
-   悬空引用隐患。
+## 文件
 
-## 已知观察（进论文素材）
+| 文件 | 内容 |
+|---|---|
+| eos.F | 全量替换 v2 的 eos.F |
+| apply_v3_mlwf.py | 向 mlwf.F 注入 LEOS 变量，以及 .win 写入段中 SCDM-only 和引导中心的处理 |
+| apply_v3_main.py | 向 main.F 注入轨迹模式接线：按 EOS_DO_THIS_STEP 逐步做 Wannier 化和分析（只开 LWANNIER90 时仍只在第一步运行），并去掉每步无条件的 MLWF_FREE |
 
-- 3 步 92K CO2 MD：贪心 OS 在第 3 步漂移（C +4 → +3/+2），朴素贪心
-  在轨迹上不稳定 → 运输后处理的价值点。
-- 小体系上 guiding 开销 > 收益（0.58s → 1.3s）；warm start 的收益
-  场景是大体系/难收敛（As4S4 类），待基准。
-- MD 中 num_wann 随部分占据虚胖（32 → 40）；pyleos 的 NELECT 上限
-  流自动排除幽灵电子。
+eos.F 相对 v2 新增的功能：
+
+- `EOS_PROJ_WEIGHTS`：每个 WF 在各原子上的投影范数（#WP 块），供投影辅助判定
+  使用。曾试过按 QION 增广差加权，软赝势通道的对比度只有 1.35:1，改用投影
+  范数后约 5:1，因此放弃前者。
+- `EOS_SCDM_ONLY`：跳过 wannier90 的迭代局域化。CO2 上氧化态不变，wannier90
+  耗时 2 秒 → 0.023 秒。
+- `EOS_WARM_START`（默认开，EOS_EVERY_N > 0 时生效）：把上一步的 WF 中心作为
+  引导中心传给 wannier90。
+
+## 开发时的观察
+
+- CO2 在 92 K 下 3 步 MD：贪心结果在第 3 步漂移（C 由 +4 变为 +3 或 +2）。
+- 小体系上引导中心的开销大于收益（0.58 秒 → 1.3 秒）。
+- MD 中部分占据使 num_wann 增大（32 → 40）；pyleos 用 NELECT 总量上限排除
+  多出的 WF。
