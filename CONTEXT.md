@@ -1,181 +1,169 @@
-# LEOS
+# LEOS 术语表
 
-LEOS（Lattice Effective Oxidation States）：从 DFT 计算的 Wannier 函数自动判定
-固体中每个原子的整数氧化态。本文件是项目的术语表（ubiquitous language）——
-只定义概念，不记实现细节；实现与数据见 docs/PLAN.md、docs/RESULTS.md。
+本仓库文档统一使用下列术语。方法说明见 docs/PLAN.md，结果见 docs/RESULTS.md。
 
-## 核心概念
+## 基本概念
 
-**氧化态（OS, oxidation state）**:
-给原子记账的整数：假想把每条键的电子全部判给电负性更大的一端后，原子相对
-中性状态的电子盈亏。是记账约定，不是可测量的物理量。
-_Avoid_: 化合价（valence，指成键能力）、电荷（charge，Bader 等连续量）
+**氧化态（OS，oxidation state）**
+假想把每条键的电子全部判给电负性更大的一端后，原子相对中性时多出或缺少的
+电子数，是整数。它是记账约定，不是可测量的物理量。
+不要与化合价（valence，成键能力）或电荷（Bader 等方法给出的连续值）混用。
 
-**Wannier 函数（WF）**:
-把弥散的 DFT 电子波变换成的一团局域化电子云，有明确的中心坐标和 spread。
-闭壳层（ISPIN=1）每个 WF 装 2 个电子；自旋极化（ISPIN=2）每通道每 WF 装 1 个。
+**Wannier 函数（WF）**
+由 DFT 占据态变换得到的局域电子团，有中心坐标和 spread。闭壳层计算
+（ISPIN = 1）每个 WF 装 2 个电子；自旋极化计算（ISPIN = 2）每个自旋通道的
+每个 WF 装 1 个电子。
 
-**Wannier 中心（centre）**:
-WF 的中心坐标（笛卡尔，Å）。归属判定的几何依据：落在原子近旁通常是孤对，
-落在两原子中间是共价键电子对。
+**Wannier 中心**
+WF 的中心坐标（笛卡尔坐标，Å），是判断归属的几何依据。中心紧贴某原子时通常
+是孤对电子，落在两个原子之间时是共价键。
 
-**spread（弥散度）**:
-WF 的空间弥散程度（Å²），Wannier 化质量的量度；正常应低于 1 Å² 量级。
+**spread**
+WF 的空间展宽（Å²），衡量 Wannier 化的质量。定域良好的 WF 一般在 1–2 Å² 以下。
 
-**EOSCAR**:
-LEOS VASP 补丁写出的输出文件：Wannier 中心、spread、占据数、贪心判定结果，
-以及 #WF（per-WF 明细）、#WP（PAW 投影权重）数据块。pyleos 的唯一主输入。
+**EOSCAR**
+LEOS VASP 补丁输出的文件，pyleos 的输入。包含：逐原子表（贪心结果列
+OS(int)，运输结果列 OS(flow)）、#WF 块（每个 WF 的中心、spread、占据数）、
+#WP 块（每个 WF 在各原子 PAW 投影上的权重），以及电子丢失诊断块。
 
-**stray WF**:
-质量不合格的 WF：spread > 3 Å²，或中心离所有原子超过 1.6 Å。标记为 stray
-表示 Wannier 化本身失败，分配层无法修复，应触发工作流层重跑。
-_Avoid_: 坏函数（口语）、unlocalised WF
+## 分配
 
-**幽灵电子（ghost）**:
-WF 总数比实际占据电子对多出的部分（体系有分数占据时出现）。用总运输量
-上限（NELECT）排除，求解器自动丢弃最贵的多余货物。
+**贪心（greedy）**
+对照方法：每个 WF 独立判给最近（考虑电负性）的原子，WF 之间互不知情。可能
+给出物理上不可能的结果，例如一个 S 收到 14 个电子。结果在 EOSCAR 的
+OS(int) 列。
 
-**dNe（电子守恒偏差）**:
-Wannier 表示中的总电子数与 DFT 真实值之差。健康计算低于 1e-6；明显非零
-说明有电子未进入 Wannier 子空间（电子丢失）。与 stray、ghost 并列为三大
-质量警告。
+**运输（最小费用流）**
+LEOS 的分配方法：把所有 WF 的电子一起分配给原子，每个原子有接收上下限，
+求总代价最小的方案。电子数和容量都是整数，所以最优解是整数。论文中首次出现时
+写作 "minimum-cost-flow / optimal-assignment formulation"，以免被理解为电子
+输运。
 
-## 分配算法
+**OS(flow)**
+EOSCAR 逐原子表的最后一列，是 VASP 补丁内部完成的运输分配结果（INCAR 参数
+EOS_FLOW，默认开），与 pyleos 默认设置的结果逐原子相同。
 
-**运输（transport，运输形式化）**:
-本项目的核心方案：把"每团电子归哪个原子"表述为带容量约束的最小费用流
-（运输问题），所有电子一起做全局决策；整数供给 + 整数容量保证最优解自动
-是整数。论文首现处须写 "minimum-cost-flow / optimal-assignment formulation"，
-以免凝聚态读者误解为电子输运。
-_Avoid_: optimal transport（不加限定语时歧义）、电子输运
+**代价**
+把一个 WF 的电子给某个原子的代价：d² + β·(1 − χ/χmax)。d 是 WF 中心到原子的
+距离，χ 是电负性（默认 Allen 标度），β 默认 10。
 
-**OS(flow)**:
-v3.1 起 EOSCAR 逐原子表行尾的原位运输判定列：VASP 补丁内部直接完成最小
-费用流分配（档 1 口径，开关 EOS_FLOW 默认开），与 pyleos 结果逐原子全等。
-正式结论与 MD 轨迹逐帧判定不再依赖后处理。
+**β**
+代价中电负性项的权重，默认 10。8–12 之间结果稳定；太小时 X–H 键会被判错且
+没有警告。
 
-**贪心（greedy）**:
-对照基线：每团电子独立找最近（或电负性优先）的原子，互相不通气。VASP 补丁
-内置的原位路径，会产生物理上不可能的结果（如 S 收 14 个电子）。
+**容量**
+每个原子接收电子数的上下限 [n_min, n_max]，按价层物理极限设定，只排除不可能
+的情况，不排除罕见价态。不按"化学上常见的氧化态范围"设定。
 
-**宽物理界（wide physical bounds）**:
-原子容量 [n_min, n_max] 的设置原则：按价电子层的物理极限设定，只排除不可能，
-不排除罕见（高压相、新奇价态必须保持可行）。
-_Avoid_: 化学先验 / 紧容量（那是另一种尚未实现的诊断模式，不是默认口径）
+**半芯**
+必须记满的内层壳层（如 Na 的 2s2p），对应 n_min 中必须满足的部分。
 
-**半芯（semicore）**:
-必须保持满占据的内层壳层，对应容量下限 n_min 的强制部分。
+**投影辅助判定**
+可选的判定规则：某个 WF 的前两个候选原子代价差小于 TAU（1.0）、且 #WP 投影
+权重领先超过 PMARGIN（0.20）时，按投影改判。默认不开启。不适合含大量 C–H 键
+的有机体系。代码中叫 `tier2="arbiter"`；旧文档中的"档 2""仲裁"指的就是它，
+"档 1"指默认代价。
 
-**beta（β，电负性权重）**:
-运费公式 d² + β·(1 − χ/χmax) 中电负性折扣的权重，默认 10.0（β 过低会静默
-错判 X-H 键，全量 β 扫描的安全平台为 [8,12]，默认取平台腹地 10——
-data/v3/beta_scan_20260712.tsv）。电负性 χ 默认用 Allen 标度
-（IUPAC 2014/2016 配套）。
+**片段（fragment）**
+用户指定的一组原子，作为一个整体接收电子（容量相加，代价取离 WF 最近的成员），
+输出整体的氧化态。用于离域阴离子和金属簇（I3⁻、Au12、Co4 等）。
 
-**档 1 / 档 2（tier 1 / tier 2）**:
-档 1 = 纯几何 + 电负性的运费（正式口径，全部零参数结论出自它）；
-档 2 = 追加 #WP 投影成分信息，定位为显式诊断工具，默认关闭。
+**位点简并**
+等价原子之间交换电子几乎不改变总代价的情况，例如同核键两端、簇内等价位点、
+等价 O2 单元。此时元素平均可信，单个原子的值不唯一，R_site 接近 0，应看元素
+平均或片段总价。
 
-**仲裁（arbiter）**:
-档 2 的选定模式：仅当档 1 的前两名归属代价差小于阈值 TAU 时，才让 #WP
-成分信息介入裁决（参数 (TAU, PMARGIN)，默认 (1.0, 0.20)）。含大量 C-H 键
-的体系不适用（H 1s 在键中点权重偏大，会翻错）。
+**可靠性指标 R（R_site、R_elem）**
+解出最优分配后，强制某原子多拿或少拿 1 个电子、全局重新求解所需多付的代价 m，
+按 R = 100·m/(m+1) 归一化到 0–100。R_site 计入所有扰动，同核键两端等简并会
+使它接近 0；R_elem 只计入改变某元素总电子数的扰动。R 是 Comas-Vilà R(%) 的
+对应物。R 低表示解不唯一，R 高不保证正确。
 
-**片段（fragment）**:
-用户指定的一组原子合并成的单一仓库（容量相加、运费按最近成员），输出片段
-总氧化态。用于离域阴离子与金属簇（I3⁻、Au12、Co4）等"每团电子归一两个
-原子"图像失效的场景。
+## 质量警告
 
-**可靠性指标（R_site / R_elem）**:
-每笔归属的"票差"：解完最小费用流后，强制某原子（或片段）的电子数 ±1、
-全局重解需要多付的运费（链式重排全部计价）。R_site 计任何 ±1 重排（同核
-键对半等本征简并会拉低它）；R_elem 只计改变某元素总账的重排。Comas-Vilà
-R(%) 指标的对应物。
+**stray**
+未定域的 WF：spread > 3 Å²，或中心离所有原子都超过 1.6 Å。说明 Wannier 化本身
+有问题，分配无法修正，应重做 Wannier 化。
 
-**位点简并（site degeneracy）**:
-等价原子之间互换电子归属的代价近零的局面（同核键两端、簇内等价位点、
-等价 O2 单元）：元素平均仍唯一可信，但单原子归属不唯一，R_site 给出近零
-分。此时该下结论的层级是元素平均或片段总价，不是单个原子。
+**ghost**
+WF 数多于占据的电子对时，多出来的、没有电子可装的 WF（常见于金属和分数占据
+体系）。总电子数上限（NELECT）使求解器丢掉代价最高的部分。ghost > 0 时电正性
+金属的价态可能被高估。
+
+**dNe**
+Wannier 表示中的总电子数与 DFT 真实电子数之差。健康计算低于 1e-6；明显不为零
+说明有电子没有进入 Wannier 子空间（电子丢失）。
+
+**诊断版 EOSCAR**
+电子丢失超过 EOS_NELECT_ABORT 时，补丁中止前写出的 EOSCAR，带
+`# LEOS_ABORTED` 标记和丢失定位块（窗口型 #NL、弥散型 #NLD）。wannier90 自身
+失败时不产生这个文件。
 
 ## 基准与数据
 
-**74 案例基准**:
-三批测试体系（历史回归 36 + 扩展第一波 13 + 扩展第二波 25），其中 72 个
-有参考答案（计分分母 72）。金标文件 data/v3/reliability_74.tsv，CI 对它做
-逐案例 diff 防回归。
+**74 案例基准**
+三批测试体系：历史回归集 36、扩展第一波 13、扩展第二波 25，其中 72 个有参考
+答案。
 
-**dev（偏差指标）**:
-对每个体系：每种元素的氧化态平均值与参考值之差，取所有元素中最大的绝对
-偏差。dev ≤ 0.25 记为通过。是元素平均口径，不检验单个原子。
+**参考答案**
+按化学常识和 IUPAC 规则人工标注的氧化态，存于 pyleos/tests/reference_os.json。
+混合价体系标元素平均值（Fe3O4 中 Fe 为 +2.667）。
 
-**参考答案（reference OS）**:
-按化学常识和 IUPAC 规则人工标注的理想氧化态（pyleos/tests/reference_os.json）。
-混合价体系标元素平均值（Fe3O4 的 Fe = +2.667）。
+**dev**
+每种元素的平均氧化态与参考值之差的最大绝对值。dev ≤ 0.25 为通过。只检查元素
+平均，不检查单个原子。
 
-**金标（golden reference）**:
-作为回归对照的既定正确输出。两处用法：74 案例的 reliability_74.tsv（分配
-层）；wannier90.x 的参考 .wout（gpuw90 数值验收，中心偏差阈值 1e-4 Å）。
+**基准参考表**
+data/v3/reliability_74.tsv。CI 把新跑出的基准结果与它逐行比较（status 和
+dev 两列）。gpuw90 中与之对应的是 wannier90 参考输出（.wout）。
 
-**Comas-Vilà（参考方法）**:
-JCTC 2025 的重型对照方法（QTAIM 原子域 + 原子重叠矩阵，四程序串联），
-"EOS"名字的出处；其 40 固体测试集是扩展基准的蓝本，已全量覆盖
-（data/v3/comas_gap/）。
+**Comas-Vilà**
+参考方法：Comas-Vilà et al., JCTC 2025，用 QTAIM 原子域和原子重叠矩阵判定
+有效氧化态，测试集为 40 个固体。"EOS"这个名字出自该文。
 
-**v1 / v3**:
-数据版本：v1 = 项目接手前贪心时代的历史数据；v3 = 当前补丁（leos_v3.patch）
-产出的现行数据。
+**v1 / v3**
+数据版本。v1 是项目早期程序（贪心）产生的历史数据（data/v1/）；v3 是当前
+补丁产生的数据（data/v3/）。
 
-**M4 / M5（波次）**:
-数据生产的里程碑波次编号（如 data/v3/m4_wave2）。M5-B 指论文应用的富锂
-正极三体系集（Li2MnO3 / Li2RuO3 / NMC）。
+**M4 / M5**
+数据批次编号。M4 为扩展基准（data/v3/m4_wave1、m4_wave2）；M5 为应用：
+M5-A 为 Li2O2，M5-B 为富锂正极三体系（data/m5b/），M5-C 为 CeO2。
 
-## Wannier 管线
+## Wannier 流程
 
-**原位 / 离线（in-situ / offline）**:
-原位 = VASP 补丁内部完成 Wannier 化与判定——快速贪心（对照基线）加 v3.1
-起的原位最小费用流 OS(flow) 列（EOS_FLOW 默认开，服务分子动力学逐帧
-判定）；离线 = pyleos / gpuw90 / 独立 wannier90.x 在 DFT 之外做后处理。
+**原位 / 离线**
+原位：在 VASP 内完成 Wannier 化和分配（贪心列和 OS(flow) 列），可用于分子
+动力学逐帧分析。离线：在 VASP 之外用 pyleos、gpuw90 或独立的 wannier90.x 处理。
 
-**wannierise**:
-Marzari–Vanderbilt 幺正最小化：在固定子空间内旋转规范，最小化总 spread，
-得到 Wannier 中心与 spread。
+**局域化（wannierise）**
+Marzari–Vanderbilt 方法：在给定子空间内做幺正变换，使总 spread 最小，得到
+Wannier 中心和 spread。
 
-**解纠缠（disentanglement）**:
-纠缠带组（num_bands > num_wann，金属/含导带体系）在 wannierise 之前的
-子空间选取步骤（Souza–Marzari–Vanderbilt）。把全带直接喂给 wannierise
-会得到静默错误结果。
+**解纠缠（disentanglement）**
+能带数多于 WF 数（num_bands > num_wann，金属或含导带的体系）时，在局域化之前
+先选出要局域化的子空间（Souza–Marzari–Vanderbilt 方法）。跳过这一步直接局域化
+会得到错误结果且没有报错。
 
-**孤立带组 / 纠缠带组**:
-num_bands == num_wann 的带组直接 wannierise；num_bands > num_wann 的带组
-必须先解纠缠。
+**冻结窗口**
+解纠缠时必须原样保留的能量范围，通常覆盖占据态，保证价电子不因子空间选取而
+丢失。
 
-**冻结窗（frozen window）**:
-解纠缠中强制原样保留的能量窗口（占据态所在），保证价电子物理不被子空间
-选取改变。
+**自动冻结窗口（AUTO_WINDOW）**
+补丁按占据态自动设定冻结窗口的功能（INCAR 参数 LWANNIER90_AUTO_WINDOW），
+不需要手写 dis_froz_max。手写输入缺少窗口是 NELECT mismatch 失败的主要原因。
 
-**AUTO_WINDOW（自动冻结窗）**:
-v3 补丁按占据态自动设定解纠缠冻结窗口的机制，免手写 dis_froz_max。旧版
-手写输入缺窗口导致的电子丢失（NELECT mismatch 类失败）由它根治。
+**SCDM**
+Wannier 化的初猜方法（selected columns of the density matrix），不需要手工设定
+投影。SCDM-only 是跳过迭代局域化、只用初猜中心的快速模式。
 
-**SCDM**:
-Wannier 化的初猜方法（selected columns of the density matrix）。SCDM-only
-指跳过迭代最小化、只用 SCDM 初猜的快速筛查模式。
+**引导中心（guiding centres）**
+热启动的实现方式：把上一帧的 Wannier 中心写进下一帧的 wannier90 输入。
 
-**引导中心（guiding centres）**:
-轨迹模式热启动的实现：把上一帧的 Wannier 中心写进下一帧的输入作初猜引导。
+**gpuw90**
+本仓库中用 PyTorch 实现的解纠缠和局域化工具，CPU 和 CUDA 用同一份代码，不修改
+wannier90 和 VASP。
 
-**gpuw90**:
-本仓库的独立 GPU Wannier 化工具（PyTorch，CPU/CUDA 同码）：Phase 1 =
-wannierise（孤立带），Phase 2 = disentangle（纠缠带）。不 fork wannier90、
-不改 VASP。
-
-**abort-EOSCAR**:
-丢失电子超过熔断阈值（EOS_NELECT_ABORT）时补丁先写出的诊断版 EOSCAR
-（`# LEOS_ABORTED` 标记 + 窗口型 #NL / 弥散型 #NLD 丢失定位块）再中止，
-保证失败也可定责。注意 wannier90 自身的硬失败（FAIL_W90）不产生此文件。
-
-**失败分诊（triage：FAIL_DFT / FAIL_W90 / FAIL_LEOS）**:
-批跑对失败案例的三级归因：FAIL_DFT = SCF 崩溃或 OUTCAR 不完整；
-FAIL_W90 = DFT 正常但 wannier90 未收尾；FAIL_LEOS = Wannier 化正常但无
-可用 EOSCAR（缺失或带 LEOS_ABORTED 标记）。每类各有自动重试梯
-（retry ladder）。
+**失败分类（FAIL_DFT / FAIL_W90 / FAIL_LEOS）**
+batch.py 对失败算例的分类：FAIL_DFT 为 SCF 崩溃或 OUTCAR 不完整；FAIL_W90 为
+DFT 正常但 wannier90 没有完成；FAIL_LEOS 为 Wannier 化正常但没有可用的 EOSCAR
+（缺失或带 LEOS_ABORTED 标记）。每类有各自的自动重试设置。
