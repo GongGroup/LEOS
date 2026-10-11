@@ -4,12 +4,10 @@ __pycache__/
 # macOS
 .DS_Store
 # reference PDFs (copyrighted, not tracked)
-docs/refs/*.pdf
+*.pdf
+*.pptx
 
 # --- job data guard: raw VASP/wannier90/MD outputs stay on the cluster ---
-# Harvest convention (v3+): only EOSCAR / INCAR / POSCAR / CONTCAR / KPOINTS /
-# *.win / *.wout / summary tsv+json go into git. Rules below only block NEW
-# files; v1-era files already tracked are unaffected. Override: git add -f.
 WAVECAR*
 CHGCAR*
 CHG
@@ -37,6 +35,7 @@ POTCAR*
 *.spn
 *.eig
 UNK*
+
 # gpuw90 gold-standard test inputs are text-sized and must stay in git
 !gpuw90/testdata/**
 # ...but the whitelist above un-ignores .DS_Store too; re-ignore it
@@ -48,7 +47,10 @@ gpuw90/testdata/li2mno3/*.mmn
 gpuw90/testdata/li2mno3/*.amn
 gpuw90/testdata/vircef/*.mmn
 gpuw90/testdata/vircef/*.amn
+
 # MD trajectories
 *.extxyz
 docs/refs/*
 !docs/refs/.gitkeep
+
+CLAUDE.md
