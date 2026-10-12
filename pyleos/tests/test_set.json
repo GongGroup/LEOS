@@ -1,0 +1,44 @@
+{
+ "_comment": "Pre-registered held-out test sets for the clean benchmark (script/clean_bench.py). Labels follow the clean-set rules (pyleos/tests/clean_set.json: IUPAC ionic approximation, Allen electronegativity, homonuclear bonds split equally) and were committed before any test calculation existed, so they cannot have been tuned to results. A case is scored only once its 'dir' points at the recomputed data; dir = null means the calculation has not landed.",
+ "test_regression": {
+  "_comment": "The 12 clean-set cases whose archived data had unlocalised (stray) WFs. Element references come from pyleos/tests/reference_os.json and site specs from clean_set.json; the archived data is never scored for this split. Recomputation: v1 oxides re-Wannierised with gpuw90 from the archived overlap matrices (git 2f14831^); v3 cases re-exported from VASP (LWRITE_MMN_AMN) and re-Wannierised with gpuw90.",
+  "cases": {
+   "coo": {"batch": "v1_oxide", "dir": null},
+   "feo": {"batch": "v1_oxide", "dir": null},
+   "mno": {"batch": "v1_oxide", "dir": null},
+   "nio": {"batch": "v1_oxide", "dir": null},
+   "reo3": {"batch": "v1_oxide", "dir": null},
+   "fe3o4": {"batch": "wave1", "dir": null},
+   "tio": {"batch": "wave1", "dir": null},
+   "rb3auo": {"batch": "wave2", "dir": null},
+   "rbpb": {"batch": "wave2", "dir": null},
+   "ruo2": {"batch": "wave2", "dir": null},
+   "wcl3": {"batch": "wave2", "dir": null},
+   "wcl4": {"batch": "wave2", "dir": null}
+  }
+ },
+ "test_homonuclear": {
+  "_comment": "New non-magnetic compounds with homonuclear bonds and unambiguous IUPAC labels. Every element pair passes the clean-set convention filter (Allen |dchi| >= 0.15 and Allen/Pauling agree on the order). Site specs use the clean-set syntax; the count rule for BaS3 distinguishes the central S (2 S neighbours) from the terminal S (1). Structures: experimental, sources to be registered here before computing.",
+  "cases": {
+   "fes2":   {"formula": "FeS2",   "ref": {"Fe": 2, "S": -1},  "site": {}, "note": "pyrite, S2(2-) dumbbell", "dir": null},
+   "na2s2":  {"formula": "Na2S2",  "ref": {"Na": 1, "S": -1},  "site": {}, "note": "disulfide", "dir": null},
+   "bas3":   {"formula": "BaS3",   "ref": {"Ba": 2, "S": -0.6667}, "site": {"S": {"count": "S", "within": 2.3, "map": {"1": -1, "2": 0}}}, "note": "trisulfide S3(2-): terminal S -1, central S 0", "dir": null},
+   "li2o2":  {"formula": "Li2O2",  "ref": {"Li": 1, "O": -1},  "site": {}, "note": "Foppl crystal, P63/mmc (the archived li2o2 was an isolated molecule)", "dir": null},
+   "bao2":   {"formula": "BaO2",   "ref": {"Ba": 2, "O": -1},  "site": {}, "note": "peroxide, CaC2 type", "dir": null},
+   "h2o2":   {"formula": "H2O2",   "ref": {"H": 1, "O": -1},   "site": {}, "note": "molecular crystal", "dir": null},
+   "n2h4":   {"formula": "N2H4",   "ref": {"N": -2, "H": 1},   "site": {}, "note": "hydrazine molecular crystal", "dir": null},
+   "c2h6":   {"formula": "C2H6",   "ref": {"C": -3, "H": 1},   "site": {}, "note": "ethane molecular crystal", "dir": null},
+   "si2h6":  {"formula": "Si2H6",  "ref": {"Si": 3, "H": -1},  "site": {}, "note": "disilane; Allen and Pauling both put H above Si", "dir": null},
+   "cac2":   {"formula": "CaC2",   "ref": {"Ca": 2, "C": -1},  "site": {}, "note": "acetylide C2(2-)", "dir": null},
+   "hg2cl2": {"formula": "Hg2Cl2", "ref": {"Hg": 1, "Cl": -1}, "site": {}, "note": "calomel, Hg-Hg bond", "dir": null},
+   "gas":    {"formula": "GaS",    "ref": {"Ga": 2, "S": -2},  "site": {}, "note": "layered, Ga-Ga bond", "dir": null},
+   "inse":   {"formula": "InSe",   "ref": {"In": 2, "Se": -2}, "site": {}, "note": "layered, In-In bond", "dir": null},
+   "nasi":   {"formula": "NaSi",   "ref": {"Na": 1, "Si": -1}, "site": {}, "note": "Zintl phase, Si4(4-) tetrahedra", "dir": null},
+   "s8":     {"formula": "S",      "ref": {"S": 0},            "site": {}, "note": "alpha-sulfur, S8 rings", "dir": null}
+  }
+ },
+ "dev_fix": {
+  "_comment": "Recomputations that change a dev case rather than add a test case.",
+  "rb2cucl4": {"batch": "wave2", "change": "ISPIN = 2 rerun (Cu d9); restores per-atom Cu scoring", "dir": null}
+ }
+}
