@@ -72,12 +72,16 @@
  },
  "dev_fix": {
   "_comment": "Recomputations that change a dev case rather than add a test case.",
-  "rb2cucl4": {"batch": "wave2", "change": "ISPIN = 2 rerun (Cu d9); restores per-atom Cu scoring", "dir": null}
+  "rb2cucl4": {"batch": "wave2", "change": "ISPIN = 2 rerun (Cu d9); restores per-atom Cu scoring", "dir": "data/v3/m4_wave2/rb2cucl4_ispin2"}
  },
  "amendments": [
   {
    "date": "2026-10-12",
    "what": "test_homonuclear: c2h6 and si2h6 withdrawn (13 cases remain); structure sources, edits and POSCAR hashes registered; computation and scored-input protocol fixed. test_regression: recomputation described as it is actually done (gpuw90 from the archived overlap exports, no VASP re-export) and the results-blind rule for the scored input fixed. No label of a remaining case changed; no test case had been computed or scored."
+  },
+  {
+   "date": "2026-10-12",
+   "what": "dev_fix rb2cucl4 landed (SAI job 1762612, LEOS v3.1 GPU build): clean_set.json now scores the case from the ISPIN = 2 rerun with per-atom Cu labels, so the dev split has 769 labelled atoms instead of 765. Done between search rounds 1 and 2; every round-1 candidate was re-scored."
   }
  ]
 }
