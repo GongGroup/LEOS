@@ -10,7 +10,7 @@
   "exclude.broken_wannier": "More than half of the Wannier functions are unlocalised (stray), so centres carry no chemical information.",
   "exclude.duplicate": "Same compound and phase as another case; the kept copy is named in detail.",
   "exclude.structure": "Structure audit (docs/testset_registry.tsv, 2026-07-12) verdict WRONG or SUSPECT for the cell currently in the data directory.",
-  "pending_rerun": "rb2cucl4 was computed without spin polarisation (ISPIN default 1), so the d9 Cu(+2) cannot be represented with 2-electron WFs; Cu is scored on its element mean only until the ISPIN=2 rerun lands."
+  "overrides": "A case listed under overrides is scored from the rerun in that directory instead of the 74-case benchmark directory. rb2cucl4: the archived run had no spin polarisation (ISPIN default 1), so the d9 Cu(+2) could not be represented with 2-electron WFs and Cu was scored on its element mean only; the ISPIN = 2 rerun (2026-10-12, same structure and INCAR plus ISPIN = 2 and MAGMOM 1.0 on Cu) restores per-atom Cu labels."
  },
  "cases": {
   "v1_mol": {
@@ -128,9 +128,7 @@
    "kmgf3": {},
    "mocl2": {},
    "nabf4": {},
-   "rb2cucl4": {
-    "Cu": "mean"
-   },
+   "rb2cucl4": {},
    "rb3auo": {},
    "rbpb": {},
    "cs3auo": {},
@@ -341,6 +339,9 @@
    "detail": "SUSPECT: orthorhombic cell 25% less dense than the known monoclinic phase"
   }
  ],
+ "overrides": {
+  "wave2": {"rb2cucl4": "data/v3/m4_wave2/rb2cucl4_ispin2"}
+ },
  "splits": {
   "_comment": "dev = every selected case not listed under test_regression. test_regression cases had unlocalised (stray) WFs in the archived data; they are being recomputed and are scored from the dirs registered in pyleos/tests/test_set.json, never from the archived data.",
   "test_regression": [

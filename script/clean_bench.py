@@ -39,12 +39,22 @@ sys.path.insert(0, str(ROOT / "script"))
 
 import pyleos.capacity as capacity                              # noqa: E402
 import pyleos.transport as transport                            # noqa: E402
-from full_bench import collect, element_means                   # noqa: E402
+from full_bench import collect as collect_all, element_means    # noqa: E402
 from pyleos.parsers import load_case                            # noqa: E402
 
 print = functools.partial(print, flush=True)
 CLEAN = json.loads((ROOT / "pyleos/tests/clean_set.json").read_text())
 DEFAULT_METHOD = ROOT / "pyleos/search/baseline.py"
+
+
+def collect():
+    """full_bench.collect() with the data directories that clean_set.json
+    overrides (reruns that fix a clean-set case without touching the 74-case
+    benchmark data)."""
+    over = {(b, n): ROOT / d for b, cases in CLEAN.get("overrides", {}).items()
+            if not b.startswith("_") for n, d in cases.items()}
+    for batch, name, d, ref in collect_all():
+        yield batch, name, over.get((batch, name), d), ref
 
 # ---------------------------------------------------------------- tracking
 TABLES_USED = set()
