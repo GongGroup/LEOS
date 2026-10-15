@@ -2,6 +2,9 @@
  "_comment": "Pre-registered held-out test sets for the clean benchmark (script/clean_bench.py). Labels follow the clean-set rules (pyleos/tests/clean_set.json: IUPAC ionic approximation, Allen electronegativity, homonuclear bonds split equally) and were committed before any test calculation existed, so they cannot have been tuned to results. A case is scored only once its 'dir' points at the recomputed data; dir = null means the calculation has not landed. Amendments made before any test calculation was scored are listed under \"amendments\"; the labels of the remaining cases were not touched.",
  "test_regression": {
   "_comment": "The 12 clean-set cases whose archived data had unlocalised (stray) WFs. Element references come from pyleos/tests/reference_os.json and site specs from clean_set.json; the archived data is never scored for this split. Recomputation and choice of the scored input: see protocol.",
+  "wannier_status": {"coo": "converged", "feo": "unconverged", "mno": "unconverged", "nio": "converged", "reo3": "converged", "fe3o4": "unconverged", "tio": "unconverged", "rb3auo": "unconverged", "rbpb": "unconverged", "ruo2": "converged", "wcl3": "converged", "wcl4": "converged"},
+  "stray_archived_to_selected": {"coo": "1 -> 0", "feo": "7 -> 0", "mno": "3 -> 0", "nio": "1 -> 0", "reo3": "1 -> 0", "fe3o4": "11 -> 11", "tio": "6 -> 6", "rb3auo": "2 -> 2", "rbpb": "48 -> 81", "ruo2": "2 -> 0", "wcl3": "6 -> 6", "wcl4": "2 -> 3"},
+  "_wannier_status_comment": "Outcome of the recomputation under the scored-input rule, from Wannier quality only (Omega, convergence, reproducibility across starts, stray count); recorded before any oxidation state was computed on recomputed data. unconverged = at least one spin channel had no converged start (fe3o4, tio, rb3auo, rbpb: 0 of 17 starts per channel converged within 200000 iterations; feo, mno: spin 2). Unconverged cases are scored advisory-only. Plugins get the recomputed centres and spreads and NELECT(Wannier); the EOSCAR #WF block is dropped because its per-WF occupations belong to the archived gauge (script/test_bench.py).",
   "protocol": {
    "recomputation": "Every case is re-Wannierised with gpuw90 from the overlap export (.mmn/.amn/.eig/.win) of the archived run itself, i.e. the run that produced the archived EOSCAR; no VASP run is repeated. v1 oxides: git 2f14831^. fe3o4, tio, rb3auo, rbpb, ruo2: the SAI run directories (GPU nvhpc data). wcl3, wcl4: the Chinahpc run directories with the corrected structures (CPU Intel data). Starts per spin channel: the standard start plus 16 seeded random unitary gauges; steepest descent, conv_tol 1e-10 over 3 iterations, 200000-iteration cap, stability probe.",
    "scored_input": "The scored input of a case is the recomputed Wannier set that keeps the archived problem definition (same .win: num_bands, num_wann, disentanglement windows) and has the lowest total Omega among the runs that converged and whose minimum was reached by at least two independent starts to within 1e-3 A^2. Variants that change num_wann (occupied-only) are stored as separate entries and are never the scored input. A spin channel in which no start converged is marked unconverged; the case keeps its lowest-Omega end point, is scored advisory-only and is left out of the pass/fail count. The rule uses Wannier quality only and was fixed before any oxidation state was computed on recomputed data.",
@@ -82,6 +85,10 @@
   {
    "date": "2026-10-12",
    "what": "dev_fix rb2cucl4 landed (SAI job 1762612, LEOS v3.1 GPU build): clean_set.json now scores the case from the ISPIN = 2 rerun with per-atom Cu labels, so the dev split has 769 labelled atoms instead of 765. Done between search rounds 1 and 2; every round-1 candidate was re-scored."
+  },
+  {
+   "date": "2026-10-15",
+   "what": "test_regression: recomputation finished; per-case Wannier status and stray counts recorded (6 cases scored, 6 advisory-only); occupations of the archived gauge are not shown to plugins. script/test_bench.py added as the test-set scorer. Recorded before any candidate was frozen or any oxidation state was computed on test data."
   }
  ]
 }
