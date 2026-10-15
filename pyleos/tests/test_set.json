@@ -77,6 +77,42 @@
   "_comment": "Recomputations that change a dev case rather than add a test case.",
   "rb2cucl4": {"batch": "wave2", "change": "ISPIN = 2 rerun (Cu d9); restores per-atom Cu scoring", "dir": "data/v3/m4_wave2/rb2cucl4_ispin2"}
  },
+ "frozen": {
+  "_comment": "Candidates frozen for the one-shot test evaluation, with the sha256 of the reviewed file. A frozen file is never edited; a later fix is a new candidate. The table-free track had no candidate fit to freeze; its repair briefs were fixed before any test evaluation (sha256 of the search's state/freeze.json below).",
+  "date": "2026-10-15",
+  "with_table": [
+   {
+    "cid": "r2-W-A-lewis-first-hardened",
+    "file": "pyleos/search/frozen/r2-W-A-lewis-first-hardened.py",
+    "sha256": "6d5940ce9e4e7e770ce142edb34957bef7ca3917aed863fd9eeafb43d27563c6",
+    "role": "primary"
+   },
+   {
+    "cid": "r2-W-B-bond-graph-capped",
+    "file": "pyleos/search/frozen/r2-W-B-bond-graph-capped.py",
+    "sha256": "fcf2da458996a2228515a52bab430a08f811938f8fd8c93d295394b9a702a312",
+    "role": "comparator"
+   }
+  ],
+  "table_free": {
+   "decision": "repair_round",
+   "repair_briefs": [
+    "r3-T-B-cap-repair",
+    "r3-T-D-live-shells"
+   ],
+   "freeze_json_sha256": "f67b103d7b43aa60ab0dc07423b90e4b67151ae3532bf8acce5ff13fd82416ca"
+  },
+  "baselines": [
+   {
+    "file": "pyleos/search/baseline.py",
+    "sha256": "1645fab0d9bceca6727a317b7dc539dfef68ea560cb347c3bcdd4932d86d51a4"
+   },
+   {
+    "file": "pyleos/search/baseline_geo.py",
+    "sha256": "044a3a7e497b78eb07b3668f76ca020255b966e845591904e7bd96a4ca686a35"
+   }
+  ]
+ },
  "amendments": [
   {
    "date": "2026-10-12",
@@ -89,6 +125,10 @@
   {
    "date": "2026-10-15",
    "what": "test_regression: recomputation finished; per-case Wannier status and stray counts recorded (6 cases scored, 6 advisory-only); occupations of the archived gauge are not shown to plugins. script/test_bench.py added as the test-set scorer. Recorded before any candidate was frozen or any oxidation state was computed on test data."
+  },
+  {
+   "date": "2026-10-15",
+   "what": "Freeze: r2-W-A-lewis-first-hardened (primary) and r2-W-B-bond-graph-capped (comparator), with_table; table_free not frozen (repair round). Registered before any oxidation state was computed on test data."
   }
  ]
 }
