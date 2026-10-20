@@ -1,0 +1,67 @@
+
+ gpuw90 driver run at 2026-10-12T10:43:47
+   case dir            : /private/tmp/claude-501/-Users-mastreina-Desktop-EOS/72ab7a9d-086f-4822-aaec-6447e7e17f5e/scratchpad/holdout/a1/reo3
+   seed / spin         : wannier90.1 / 1
+   mode / device       : multistart best of 16 (rand seed 13, scale 1.0) / cpu
+   num_bands / num_wann: 20 / 15
+   num_kpts / nntot    : 64 / 6
+   B1 residual         : 4.441e-16
+
+ DISENTANGLE (gpuw90 SMV)
+   Outer:  -18.02370  to   17.63708  (eV)
+   Inner:  -18.02370  to   -0.17672  (eV)
+   ndimwin  min/max    : 20 / 20
+   ndimfroz min/max    : 9 / 12
+   iterations          : 200  converged=False
+        Final Omega_I     8.89406855 (Ang^2)
+
+ WANNIERISE (gpuw90 steepest descent)
+   num_iter cap / conv_tol / conv_window : 200000 / 1.0e-10 / 3
+   iterations          : 63931  converged=True  stability-probe=True
+   SD step alpha       : start 1.0  final 0.5  (rejected chunks: 9, step regrowths: 8, total SD iterations incl. rejected/probe: 66931)
+
+ ------------------------------------------------------------------------------
+ Initial State
+  WF centre and spread    1  (  -1.512041, -0.858800, -0.847333 )      4.12946698
+  WF centre and spread    2  (  -0.854441, -0.707844, -1.129992 )      5.33548000
+  WF centre and spread    3  (  -0.465791, -0.194871, -1.259058 )      5.64603320
+  WF centre and spread    4  (  -0.620251, -0.971346, -0.980958 )      5.07321367
+  WF centre and spread    5  (  -0.079133,  0.978779, -1.476213 )      6.08011632
+  WF centre and spread    6  (  -0.449197, -0.538357, -0.868665 )      5.97315675
+  WF centre and spread    7  (  -1.285038,  0.122034, -1.348180 )      4.04070125
+  WF centre and spread    8  (  -0.409109, -1.220451, -0.416325 )      5.02208664
+  WF centre and spread    9  (  -0.606554, -0.078379, -0.808693 )      6.26333817
+  WF centre and spread   10  (  -0.750826, -0.567164, -0.925431 )      5.88988663
+  WF centre and spread   11  (  -0.191910, -0.202832, -0.690371 )      6.54056963
+  WF centre and spread   12  (  -0.057022, -0.673558, -1.222956 )      5.70735699
+  WF centre and spread   13  (  -0.563506, -0.489011, -0.506471 )      6.86089175
+  WF centre and spread   14  (  -1.044525, -0.208873, -0.925512 )      5.68015887
+  WF centre and spread   15  (  -1.345760, -0.799525, -0.702030 )      4.98288234
+  Sum of centres and spreads ( -10.235103, -6.410198,-14.108186 )     83.22533919
+
+ ------------------------------------------------------------------------------
+
+ Final State
+  WF centre and spread    1  (  -1.755472, -1.755021,  0.380570 )      0.71821697
+  WF centre and spread    2  (  -1.848634,  0.000828, -2.142219 )      0.54803300
+  WF centre and spread    3  (  -1.874994,  1.874237, -1.875761 )      0.94384288
+  WF centre and spread    4  (   0.380666, -1.755519, -1.755264 )      0.71766795
+  WF centre and spread    5  (   1.874232,  1.874241, -1.874998 )      0.94353020
+  WF centre and spread    6  (  -0.382658, -1.756591, -1.756835 )      0.71974488
+  WF centre and spread    7  (  -1.754830,  0.380515, -1.755546 )      0.71809619
+  WF centre and spread    8  (   0.000907, -1.848129,  1.607827 )      0.54803021
+  WF centre and spread    9  (  -1.756998, -1.756556, -0.382716 )      0.71986714
+  WF centre and spread   10  (  -1.756817, -0.382805, -1.757016 )      0.71931875
+  WF centre and spread   11  (   0.000674,  1.607798, -1.848176 )      0.54785812
+  WF centre and spread   12  (   1.607651, -1.848626,  0.000871 )      0.54935264
+  WF centre and spread   13  (   1.874231,  1.874996,  1.874237 )      0.94384728
+  WF centre and spread   14  (  -2.142155,  0.001065, -1.847670 )      0.54785289
+  WF centre and spread   15  (  -1.847641, -2.142255,  0.000873 )      0.54935118
+  Sum of centres and spreads (  -9.381838, -5.631821,-13.131823 )     10.43461028
+
+         Spreads (Ang^2)       Omega I      =     8.894068549
+        ================       Omega D      =     0.000021879
+                               Omega OD     =     1.540519855
+    Final Spread (Ang^2)       Omega Total  =    10.434610282
+ ------------------------------------------------------------------------------
+
