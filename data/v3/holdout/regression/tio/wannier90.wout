@@ -1,0 +1,73 @@
+
+ gpuw90 driver run at 2026-10-13T11:07:57
+   case dir            : /org/sjtu-gongxueqing/zhangxianyang/temp/org/LEOS/holdout_20261012/gpuw90/tio/inputs
+   seed / spin         : wannier90 / 1
+   mode / device       : multistart selected of 17 starts (start 09, status unconverged) / cpu
+   num_bands / num_wann: 20 / 18
+   num_kpts / nntot    : 225 / 8
+   B1 residual         : 1.771e-08
+
+ DISENTANGLE (gpuw90 SMV)
+   Outer:  -15.83853  to    7.86447  (eV)
+   Inner:  -15.83853  to    6.41336  (eV)
+   ndimwin  min/max    : 20 / 20
+   ndimfroz min/max    : 14 / 16
+   iterations          : 200  converged=False
+        Final Omega_I    37.01848207 (Ang^2)
+
+ WANNIERISE (gpuw90 steepest descent)
+   num_iter cap / conv_tol / conv_window : 200000 / 1.0e-10 / 3
+   iterations          : 200000  converged=False  stability-probe=False
+   SD step alpha       : start 1.0  final 0.015625  (rejected chunks: 6, step regrowths: 0, total SD iterations incl. rejected/probe: 201500)
+
+ ------------------------------------------------------------------------------
+ Initial State
+  WF centre and spread    1  (   0.387890,  0.021026, -0.402456 )     11.69828226
+  WF centre and spread    2  (  -0.074186, -0.182097, -0.145040 )      9.61658016
+  WF centre and spread    3  (  -0.429528, -0.764684, -0.346561 )     10.19148303
+  WF centre and spread    4  (   0.054674, -0.335209, -0.116965 )      8.96533457
+  WF centre and spread    5  (   0.388874, -0.581997, -0.141294 )      8.41349423
+  WF centre and spread    6  (   0.027247,  0.180364,  0.104727 )     10.93743369
+  WF centre and spread    7  (   0.184967, -0.713845,  0.065295 )     10.57487151
+  WF centre and spread    8  (   0.195014, -0.537121, -0.370857 )     12.27808364
+  WF centre and spread    9  (   0.541240, -0.121463, -0.189961 )      7.89748721
+  WF centre and spread   10  (   0.201935,  0.206559,  0.007469 )     10.49064997
+  WF centre and spread   11  (  -0.005882, -0.151007, -0.331944 )      6.76458321
+  WF centre and spread   12  (  -0.298966, -0.321901,  0.062530 )      7.27546238
+  WF centre and spread   13  (  -0.454562, -0.108812, -0.231897 )     10.23832957
+  WF centre and spread   14  (  -0.343573, -0.217580, -0.165282 )     10.52087714
+  WF centre and spread   15  (   0.065429,  0.450382,  0.060951 )      6.77424862
+  WF centre and spread   16  (   0.389470,  0.282573,  0.030778 )      7.28490031
+  WF centre and spread   17  (  -0.161751,  0.037001, -0.329908 )      9.91618370
+  WF centre and spread   18  (   0.767866, -0.906054, -0.420822 )     11.65037496
+  Sum of centres and spreads (   1.436158, -3.763863, -2.861236 )    171.48866015
+
+ ------------------------------------------------------------------------------
+
+ Final State
+  WF centre and spread    1  (   1.932403, -0.776341, -0.251368 )      0.97678067
+  WF centre and spread    2  (   1.878736, -0.974314,  0.354533 )      0.93933395
+  WF centre and spread    3  (  -1.612550, -1.342660, -0.102428 )      0.89677344
+  WF centre and spread    4  (  -2.572330, -1.390017, -1.406181 )      4.42906080
+  WF centre and spread    5  (   1.630210, -1.342170, -0.152202 )      0.90934044
+  WF centre and spread    6  (  -0.092135,  1.338480, -0.537530 )     10.65335670
+  WF centre and spread    7  (   0.531008, -0.429480,  0.512276 )      8.16448173
+  WF centre and spread    8  (   0.032877, -2.076051, -1.409686 )      4.30685377
+  WF centre and spread    9  (   1.326512, -0.771240,  0.009772 )      0.91457901
+  WF centre and spread   10  (   0.288285,  2.054305,  0.260296 )      1.04566158
+  WF centre and spread   11  (  -0.028107,  1.543388, -0.005436 )      0.93818972
+  WF centre and spread   12  (  -1.861589, -0.985607,  0.348937 )      1.00392403
+  WF centre and spread   13  (  -1.961138, -0.819868, -0.260156 )      0.93992592
+  WF centre and spread   14  (  -1.342802, -0.750115,  0.004614 )      0.95000462
+  WF centre and spread   15  (  -0.351896,  2.113344,  0.161591 )      1.06556450
+  WF centre and spread   16  (   0.123474,  2.111558, -0.355480 )      0.96678672
+  WF centre and spread   17  (  -0.204122,  0.137400, -0.064736 )      9.53410685
+  WF centre and spread   18  (   2.537557, -1.415424, -1.378004 )      4.45703858
+  Sum of centres and spreads (   0.254391, -3.774810, -4.271190 )     53.09176300
+
+         Spreads (Ang^2)       Omega I      =    37.018482073
+        ================       Omega D      =     1.825978251
+                               Omega OD     =    14.247302738
+    Final Spread (Ang^2)       Omega Total  =    53.091763061
+ ------------------------------------------------------------------------------
+

@@ -17,18 +17,18 @@
    }
   },
   "cases": {
-   "coo": {"batch": "v1_oxide", "dir": null},
-   "feo": {"batch": "v1_oxide", "dir": null},
-   "mno": {"batch": "v1_oxide", "dir": null},
-   "nio": {"batch": "v1_oxide", "dir": null},
-   "reo3": {"batch": "v1_oxide", "dir": null},
-   "fe3o4": {"batch": "wave1", "dir": null},
-   "tio": {"batch": "wave1", "dir": null},
-   "rb3auo": {"batch": "wave2", "dir": null},
-   "rbpb": {"batch": "wave2", "dir": null},
-   "ruo2": {"batch": "wave2", "dir": null},
-   "wcl3": {"batch": "wave2", "dir": null},
-   "wcl4": {"batch": "wave2", "dir": null}
+   "coo": {"batch": "v1_oxide", "dir": "data/v3/holdout/regression/coo"},
+   "feo": {"batch": "v1_oxide", "dir": "data/v3/holdout/regression/feo"},
+   "mno": {"batch": "v1_oxide", "dir": "data/v3/holdout/regression/mno"},
+   "nio": {"batch": "v1_oxide", "dir": "data/v3/holdout/regression/nio"},
+   "reo3": {"batch": "v1_oxide", "dir": "data/v3/holdout/regression/reo3"},
+   "fe3o4": {"batch": "wave1", "dir": "data/v3/holdout/regression/fe3o4"},
+   "tio": {"batch": "wave1", "dir": "data/v3/holdout/regression/tio"},
+   "rb3auo": {"batch": "wave2", "dir": "data/v3/holdout/regression/rb3auo"},
+   "rbpb": {"batch": "wave2", "dir": "data/v3/holdout/regression/rbpb"},
+   "ruo2": {"batch": "wave2", "dir": "data/v3/holdout/regression/ruo2"},
+   "wcl3": {"batch": "wave2", "dir": "data/v3/holdout/regression/wcl3"},
+   "wcl4": {"batch": "wave2", "dir": "data/v3/holdout/regression/wcl4"}
   }
  },
  "test_homonuclear": {
@@ -58,19 +58,19 @@
    "s8": {"source": "COD 9011362 (AMCSD 0010056; = ICSD 63082), full-data refinement (not the high-angle twin entry 9011363); Rettig, Trotter, Acta Cryst. C43, 2260-2262 (1987), DOI 10.1107/S0108270187088152; alpha-S8, single-crystal X-ray, 298 K", "url": "https://www.crystallography.net/cod/9011362.cif", "input_sha256": "5512a9d82bb3d5c7a1e03d974fa55d3fffc2d8ac492f2c63db38b09d5fb41bde", "edits": "none", "spacegroup": "Fddd (No. 70), origin choice 2", "natoms": 32, "poscar_sha256": "2c2acb7ee5197a8d78a7b7a70193ad1f8267e59d9d9c80972fa1861f9ac57954"}
   },
   "cases": {
-   "fes2":   {"formula": "FeS2",   "ref": {"Fe": 2, "S": -1},  "site": {}, "note": "pyrite, S2(2-) dumbbell", "dir": null},
-   "na2s2":  {"formula": "Na2S2",  "ref": {"Na": 1, "S": -1},  "site": {}, "note": "disulfide", "dir": null},
-   "bas3":   {"formula": "BaS3",   "ref": {"Ba": 2, "S": -0.6667}, "site": {"S": {"count": "S", "within": 2.3, "map": {"1": -1, "2": 0}}}, "note": "trisulfide S3(2-): terminal S -1, central S 0", "dir": null},
-   "li2o2":  {"formula": "Li2O2",  "ref": {"Li": 1, "O": -1},  "site": {}, "note": "Foppl crystal, P63/mmc (the archived li2o2 was an isolated molecule)", "dir": null},
-   "bao2":   {"formula": "BaO2",   "ref": {"Ba": 2, "O": -1},  "site": {}, "note": "peroxide, CaC2 type", "dir": null},
-   "h2o2":   {"formula": "H2O2",   "ref": {"H": 1, "O": -1},   "site": {}, "note": "molecular crystal", "dir": null},
-   "n2h4":   {"formula": "N2H4",   "ref": {"N": -2, "H": 1},   "site": {}, "note": "hydrazine molecular crystal", "dir": null},
-   "cac2":   {"formula": "CaC2",   "ref": {"Ca": 2, "C": -1},  "site": {}, "note": "acetylide C2(2-)", "dir": null},
-   "hg2cl2": {"formula": "Hg2Cl2", "ref": {"Hg": 1, "Cl": -1}, "site": {}, "note": "calomel, Hg-Hg bond", "dir": null},
-   "gas":    {"formula": "GaS",    "ref": {"Ga": 2, "S": -2},  "site": {}, "note": "layered, Ga-Ga bond", "dir": null},
-   "inse":   {"formula": "InSe",   "ref": {"In": 2, "Se": -2}, "site": {}, "note": "layered, In-In bond", "dir": null},
-   "nasi":   {"formula": "NaSi",   "ref": {"Na": 1, "Si": -1}, "site": {}, "note": "Zintl phase, Si4(4-) tetrahedra", "dir": null},
-   "s8":     {"formula": "S",      "ref": {"S": 0},            "site": {}, "note": "alpha-sulfur, S8 rings", "dir": null}
+   "fes2":   {"formula": "FeS2",   "ref": {"Fe": 2, "S": -1},  "site": {}, "note": "pyrite, S2(2-) dumbbell", "dir": "data/v3/holdout/homonuclear/fes2"},
+   "na2s2":  {"formula": "Na2S2",  "ref": {"Na": 1, "S": -1},  "site": {}, "note": "disulfide", "dir": "data/v3/holdout/homonuclear/na2s2"},
+   "bas3":   {"formula": "BaS3",   "ref": {"Ba": 2, "S": -0.6667}, "site": {"S": {"count": "S", "within": 2.3, "map": {"1": -1, "2": 0}}}, "note": "trisulfide S3(2-): terminal S -1, central S 0", "dir": "data/v3/holdout/homonuclear/bas3"},
+   "li2o2":  {"formula": "Li2O2",  "ref": {"Li": 1, "O": -1},  "site": {}, "note": "Foppl crystal, P63/mmc (the archived li2o2 was an isolated molecule)", "dir": "data/v3/holdout/homonuclear/li2o2"},
+   "bao2":   {"formula": "BaO2",   "ref": {"Ba": 2, "O": -1},  "site": {}, "note": "peroxide, CaC2 type", "dir": "data/v3/holdout/homonuclear/bao2"},
+   "h2o2":   {"formula": "H2O2",   "ref": {"H": 1, "O": -1},   "site": {}, "note": "molecular crystal", "dir": "data/v3/holdout/homonuclear/h2o2"},
+   "n2h4":   {"formula": "N2H4",   "ref": {"N": -2, "H": 1},   "site": {}, "note": "hydrazine molecular crystal", "dir": "data/v3/holdout/homonuclear/n2h4"},
+   "cac2":   {"formula": "CaC2",   "ref": {"Ca": 2, "C": -1},  "site": {}, "note": "acetylide C2(2-)", "dir": "data/v3/holdout/homonuclear/cac2"},
+   "hg2cl2": {"formula": "Hg2Cl2", "ref": {"Hg": 1, "Cl": -1}, "site": {}, "note": "calomel, Hg-Hg bond", "dir": "data/v3/holdout/homonuclear/hg2cl2"},
+   "gas":    {"formula": "GaS",    "ref": {"Ga": 2, "S": -2},  "site": {}, "note": "layered, Ga-Ga bond", "dir": "data/v3/holdout/homonuclear/gas"},
+   "inse":   {"formula": "InSe",   "ref": {"In": 2, "Se": -2}, "site": {}, "note": "layered, In-In bond", "dir": "data/v3/holdout/homonuclear/inse"},
+   "nasi":   {"formula": "NaSi",   "ref": {"Na": 1, "Si": -1}, "site": {}, "note": "Zintl phase, Si4(4-) tetrahedra", "dir": "data/v3/holdout/homonuclear/nasi"},
+   "s8":     {"formula": "S",      "ref": {"S": 0},            "site": {}, "note": "alpha-sulfur, S8 rings", "dir": "data/v3/holdout/homonuclear/s8"}
   }
  },
  "dev_fix": {
@@ -144,6 +144,10 @@
   {
    "date": "2026-10-20",
    "what": "Freeze, table-free track: r3-T-B-cap-repair (sha256 91e8a2af...). Registered before any oxidation state was computed with a table-free candidate on test data."
+  },
+  {
+   "date": "2026-10-20",
+   "what": "Both tracks frozen and evaluated once; the recomputed test inputs were committed to data/v3/holdout/ and every case dir registered. Results: data/v3/holdout/test_results.json (script/test_bench.py)."
   }
  ]
 }
