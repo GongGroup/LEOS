@@ -95,12 +95,23 @@
    }
   ],
   "table_free": {
-   "decision": "repair_round",
-   "repair_briefs": [
+   "decision": "freeze",
+   "date": "2026-10-20",
+   "frozen": [
+    {
+     "cid": "r3-T-B-cap-repair",
+     "file": "pyleos/search/frozen/r3-T-B-cap-repair.py",
+     "sha256": "91e8a2afd9b24494412e2b83797a559a7d70a76cfc4e8d58583ccd0178cc7016",
+     "role": "primary"
+    }
+   ],
+   "round2_repair_briefs": [
     "r3-T-B-cap-repair",
     "r3-T-D-live-shells"
    ],
-   "freeze_json_sha256": "f67b103d7b43aa60ab0dc07423b90e4b67151ae3532bf8acce5ff13fd82416ca"
+   "round2_freeze_json_sha256": "f67b103d7b43aa60ab0dc07423b90e4b67151ae3532bf8acce5ff13fd82416ca",
+   "freeze_r3_json_sha256": "a61bd65119001eace0fbd82c62ff8b8995df10b5ef37bfa72d9811d679bd0d8e",
+   "note": "Frozen by the round-3 advisor with known risks (state/freeze_r3.json). The round-3 search agents never saw test data or with-table test results; the with-table results existed only outside the search area and the repository."
   },
   "baselines": [
    {
@@ -129,6 +140,10 @@
   {
    "date": "2026-10-15",
    "what": "Freeze: r2-W-A-lewis-first-hardened (primary) and r2-W-B-bond-graph-capped (comparator), with_table; table_free not frozen (repair round). Registered before any oxidation state was computed on test data."
+  },
+  {
+   "date": "2026-10-20",
+   "what": "Freeze, table-free track: r3-T-B-cap-repair (sha256 91e8a2af...). Registered before any oxidation state was computed with a table-free candidate on test data."
   }
  ]
 }
