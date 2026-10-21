@@ -44,18 +44,22 @@ CSe<sub>2</sub> appear twice because the benchmark contains two independent
 calculations of each. L = PPh<sub>3</sub>.
 
 **(c)** Per-atom accuracy on the development subset of the clean benchmark (38
-cases, 765 atoms with a per-atom reference). Left: fraction of these atoms
+cases, 769 atoms with a per-atom reference). Left: fraction of these atoms
 that receive the reference oxidation state, and fraction of cases in which
 every one of them does, for the three methods; the numbers are counts. Right:
-the ten development cases in which the min-cost flow is not fully correct,
+the eleven development cases in which the min-cost flow is not fully correct,
 with the number of incorrect atoms (incorrect/labelled). In every case the
 incorrect atoms belong to a single element; the entry gives that element pair
 and the shortest distance from an incorrect atom to another atom of the same
 element. A dash marks the nine cases in which every incorrect atom shares a
 Wannier centre with an atom of the same element (a homonuclear bond): the
 reference divides the shared pair equally, whereas the assignment places the
-whole pair on one atom. Dots mark Re<sub>2</sub>, in which the two Re atoms
-are 4.80 Å apart and share no Wannier centre.
+whole pair on one atom. Dots mark the two cases whose incorrect atoms share no
+Wannier centre with a like atom: Re<sub>2</sub>, whose two Re atoms are 4.80 Å
+apart (the input meant a 2.4 Å dimer, but its Cartesian coordinates were scaled
+by the POSCAR scale factor; see docs/testset_findings.md), and
+Rb<sub>2</sub>CuCl<sub>4</sub>, where two Cu atoms 5.05 Å apart are assigned
++1 and +3 instead of +2.
 
 **(d)** Reliability index *R*<sub>elem</sub> of the min-cost-flow result for
 the 72 scored cases, grouped by the verdict of panel (a): pass (*n* = 64), and
@@ -142,15 +146,15 @@ per-WF greedy rule only 2 (1 in E2); by neither 6.
 | neither | Ca3AuN (E1) | 2.00 | 7.00 |
 | neither | As4S4 (L1) | 1.00 | 2.12 |
 
-### Panel (c), development split (38 cases, 765 labelled atoms)
+### Panel (c), development split (38 cases, 769 labelled atoms)
 
 | Quantity | Min-cost flow | Per-WF greedy rule | Min-cost flow, *β* = 0 |
 |---|---|---|---|
-| labelled atoms correct | 687 (89.8%) | 585 (76.5%) | 499 (65.2%) |
-| cases with all labelled atoms correct | 28 (73.7%) | 27 (71.1%) | 19 (50.0%) |
+| labelled atoms correct | 689 (89.6%) | 589 (76.6%) | 497 (64.6%) |
+| cases with all labelled atoms correct | 27 (71.1%) | 27 (71.1%) | 19 (50.0%) |
 | cases passing by element means (not plotted) | 38 | 31 | 25 |
 
-Min-cost flow, the ten cases that are not fully correct (shared centre = Wannier
+Min-cost flow, the eleven cases that are not fully correct (shared centre = Wannier
 centre whose two nearest atoms are of the same element, nearer distance at
 least half of the farther one):
 
@@ -164,11 +168,12 @@ least half of the farther one):
 | H2S5 | E2 | 5/7 | S-S | 2.059-2.065 | 4 | 5/5 |
 | CrO5 | E1 | 4/6 | O-O | 1.393-1.394 | 2 | 4/4 |
 | H2S3 | E2 | 3/5 | S-S | 2.059 | 2 | 3/3 |
+| Rb2CuCl4 | E2 | 2/28 | Cu...Cu | 5.050 | 0 | 0/2 |
 | H2S2 | E2 | 2/4 | S-S | 2.054 | 1 | 2/2 |
 | Re2 | L2 | 2/2 | Re...Re | 4.800 | 0 | 0/2 |
 
-Total 78 incorrect atoms = 765 − 687; 76 of them (nine cases) on homonuclear
-bonds, 2 (Re2) not. The plotted distance is the lower end of each range.
+Total 80 incorrect atoms = 769 − 689; 76 of them (nine cases) on homonuclear
+bonds, 4 (Re2, Rb2CuCl4) not. The plotted distance is the lower end of each range.
 
 ### Panel (d)
 
@@ -266,7 +271,7 @@ with the printed provenance; the *β* scan repeated on the present data tree
 
 ## Where the data and the documentation disagree
 
-1. The per-atom numbers of panel (c) (687, 585, 499 of 765; 28, 27, 19 of 38)
+1. The per-atom numbers of panel (c) (689, 589, 497 of 769; 27, 27, 19 of 38)
    are not in `docs/RESULTS.md` or `docs/PLAN.md`; the clean benchmark is not
    described there at all. Their only source is the evaluator output.
 2. `docs/PLAN.md`, section "β = 10", states that the result does not change
@@ -337,9 +342,9 @@ with the printed provenance; the *β* scan repeated on the present data tree
   two well-separated groups (at most 0.24, at least 0.69), so the
   classification does not depend on the threshold; in MoCl2 the ratios are
   spread continuously across 0.5 (0.493 and 0.502 are the nearest values).
-- The per-WF greedy rule has almost as many fully correct cases as the
-  min-cost flow (27 against 28 of 38); the difference between the two methods
-  on this subset is in the number of atoms (585 against 687 of 765).
+- The per-WF greedy rule has as many fully correct cases as the min-cost flow
+  (27 each of 38); the difference between the two methods on this subset is in
+  the number of atoms (589 against 689 of 769).
 - Panel (d): *R*<sub>elem</sub> measures how stable the solution is for the
   given input; a high value does not mean agreement with the reference
   (Ca3AuN, WAu12), and a low value does not mean disagreement (CH2F2,

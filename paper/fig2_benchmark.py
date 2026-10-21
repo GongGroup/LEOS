@@ -364,12 +364,11 @@ def like_atom_contacts(flow, recompute=False):
                 and {(r["batch"], r["case"]) for r in cached["rows"]} == set(todo)):
             return cached["rows"]
     import pyleos.bench as cb                      # frozen evaluator
-    from pyleos.bench import collect
     plugin = cb.load_plugin(FLOW_PLUGIN)
     spec = {(b, n): s for b, cases in cb.CLEAN["cases"].items()
             for n, s in cases.items()}
     rows = []
-    for batch, name, d, ref in collect():
+    for batch, name, d, ref in cb.collect_clean():   # same dirs as the evaluator
         if (batch, name) not in todo:
             continue
         case = load_case(d)
