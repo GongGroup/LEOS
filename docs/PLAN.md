@@ -88,7 +88,7 @@ ARBITER_TAU 和 ARBITER_PMARGIN。默认不开启；参数扫描和适用范围�
 RESULTS.md"参数选择"。
 
 使用方式：库函数 `assign_case(case, tier2="arbiter")`，或
-`script/full_bench.py --tier2 arbiter`。**cli.py 的 `--gamma` 用的是另一种
+`python3 -m pyleos bench full --tier2 arbiter`。**cli.py 的 `--gamma` 用的是另一种
 线性叠加模式（`tier2="linear"`），不是这里说的投影辅助判定。**
 
 ### 片段
@@ -117,7 +117,7 @@ R 的扰动。
 ### pyleos 输出
 
 ```bash
-python3 pyleos/cli.py case data/v3/m4_wave2/as4s4 -v
+python3 pyleos/cli.py case cases/as4s4/v3 -v
 ```
 
 ```
@@ -165,7 +165,7 @@ EOSCAR 逐原子表中，`OS(int)` 列是贪心结果，`OS(flow)` 列是运输�
 
 ### 用全局分配取代贪心
 
-项目开始时的实现（data/v1/ 的数据由它产生）用贪心分配。检查中发现三个
+项目开始时的实现（cases/*/v1 的数据由它产生）用贪心分配。检查中发现三个
 问题：
 
 1. **贪心会给出不可能的结果。** As4S4 中一个 S 被分到 14 个电子，而 S 价层
@@ -266,8 +266,10 @@ operations-research sense)"。
 
 ## 7. 工程约定
 
-- **数据分层。** 集群保存完整运行目录（含波函数等大文件）。本地 data/ 只收
-  小文本：EOSCAR、输入文件、wout、汇总表。.gitignore 拦截大文件和赝势。
+- **数据布局。** 集群保存完整运行目录（含波函数等大文件）。本地只收小文本：
+  计算按体系放在 cases/<体系>/<运行>/（EOSCAR、输入文件、wout），每个运行在
+  cases/INDEX.tsv 登记一行；汇总表平铺在 results/。不按批次分目录。
+  .gitignore 拦截大文件和赝势。
 - **集群位置。** 计算在 SAI 集群（ssh 别名 sai）上完成。2026-07-25 家目录
   迁移后，项目目录在 `/org/sjtu-gongxueqing/zhangxianyang/temp/org/LEOS/`
   （目录说明见其中的 README.txt），补丁版 VASP 在
@@ -278,9 +280,9 @@ operations-research sense)"。
 - **只写现状。** 文档只写当前正确的结果，不写演进过程。已完成阶段的计划、
   审查报告不在工作区保留副本，需要时用 git log / git show 查看。
 - **待办只在 issue。** 文档里不写待办。
-- **数字有出处。** 文档中的每个结果数字都要能对应到 data/ 下的文件，并注明
+- **数字有出处。** 文档中的每个结果数字都要能对应到 results/ 或 cases/ 下的文件，并注明
   产出命令或统计方式（例如计时是否包含 R 的计算）。要改数字，先改或重新生成
   数据文件，再改文档。
-- **基准参考表。** data/v3/reliability_74.tsv 是 CI 逐案例比较的对象。改变
+- **基准参考表。** results/bench74_golden.tsv 是 CI 逐案例比较的对象。改变
   判定结果的改动，要先重新生成这个表，逐案例解释差异，再改文档中的数字。
 - **快照文档标状态。** 体检报告这类记录某一时刻结论的文档，开头注明当前状态。

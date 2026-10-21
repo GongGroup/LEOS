@@ -49,7 +49,7 @@ SAI 集群上的构建环境：nvhpc 24.3 + openmpi 5.0.8 + fftw 3.3.10（module
 
 后四个参数只影响 EOSCAR 中的贪心列 OS(int)，不影响 OS(flow)。
 
-一个可用的单点 INCAR（data/v3/m4_wave2/as4s4/INCAR）：
+一个可用的单点 INCAR（cases/as4s4/v3/INCAR）：
 
 ```
 PREC = Accurate
@@ -176,7 +176,7 @@ LEOS 目录下的旧作业脚本仍指向家目录迁移前的路径
 | M/A 矩阵及时释放 | 非主进程归约后即释放 M（每进程 −0.9 GB）；wannier90 结束后释放 M/A（每进程常驻 −1 GB）；A 只在 SCDM 路径下释放，不影响 LOCPROJ、elphon |
 | 原位最小费用流：OS(flow) 列 | EOSCAR 逐原子表最后一列为 VASP 内完成的最小费用流分配（β = 10，Allen 电负性，镧系用与 pyleos 相同的电负性表），开关 EOS_FLOW 默认开。与 pyleos 逐原子相同：7 个测试的 Python 对照代价逐位相同，CO2、VIRCEF 实机验证 |
 | #WP 带组归约修正（提交 e0ad691） | 多进程带并行时，先把各带组的复数分量跨组求和，再取模方。串行结果逐位不变；修正后串行与多进程的每原子聚合值相差 2×10⁻⁴（收敛噪声量级），两个集群回归通过 |
-| 批跑与离线流程 | 见 pyleos/README.md 的 batch.py 一节和 script/offline_w90_prep.py |
+| 批跑与离线流程 | 见 pyleos/README.md 的 batch.py 一节和 tools/offline_w90_prep.py |
 
 ### v2 → v3
 
@@ -222,7 +222,7 @@ LEOS 目录下的旧作业脚本仍指向家目录迁移前的路径
    错误窗口两种设置下分别验证了 `#NLD` 和中止行为。
 3. 内存：Ce18O36Co4（63 原子，ISPIN = 2）在 4 GPU、KPAR = 1、NBANDS = 308
    下 VASP 总内存 41 GB（62.5 GB 配额的 66%）。
-4. 回归数据：data/v3/regress_v31/。
+4. 回归数据：cases/INDEX.tsv 中 run 为 v31、v31-4gpu、v31-abort2 的运行。
 
 ## 归档文件
 

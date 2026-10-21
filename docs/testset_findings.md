@@ -74,7 +74,7 @@ na3vo4 和 reo2 在参考答案表中没有条目，因此不在计分案例中�
 
 | 案例 | 判定 | 处理 | 当前基准结果 |
 |---|---|---|---|
-| wcl3、wcl4、wcl5、wcl6 | WRONG | 按空间群展开或换用文献结构后重算，数据目录 data/v3/m4_wave2/ 中已是新结构 | WCl3、WCl4、WCl6 通过；WCl5 未通过（Wannier 化失败） |
+| wcl3、wcl4、wcl5、wcl6 | WRONG | 按空间群展开或换用文献结构后重算，cases/wcl*/v3 中已是新结构 | WCl3、WCl4、WCl6 通过；WCl5 未通过（Wannier 化失败） |
 | scdm_wcl4/5/6 | WRONG | 未重算（SCDM-only 对照用的副本） | 不计入 74 案例基准 |
 | CO | WRONG | 保留，按乙烯二酮解读 | 通过 |
 | sno、ti2o3 | WRONG | 保留，数据来源中注明 | 通过 |
@@ -85,10 +85,10 @@ na3vo4 和 reo2 在参考答案表中没有条目，因此不在计分案例中�
 
 另外，Comas-Vilà 对照集中的 MgXe 和 MH4 氢化物（mgh4、srh4、ceh4、thh4）原来
 使用 0 GPa 的近似结构，核查时判为 OK，之后换用了文献中的精确结构（Bi & Zurek
-2021 SI；MgXe 按 Miao 2015 推定晶格）并重算，数据在 data/v3/comas_gap/。
+2021 SI；MgXe 按 Miao 2015 推定晶格）并重算，数据在 cases/<体系>/v3。
 
-所有替换结构的来源、空间群和自检记录在 [structures_fix/](structures_fix/)
-（MANIFEST.tsv 和各目录的 SOURCE.md）。
+所有替换结构的来源、空间群和自检记录在 cases/<体系>/structure-fixed/SOURCE.md，
+汇总表为 results/structures_fixed_manifest.tsv。
 
 **74 案例基准中仍有 3 个结构错误的案例：CO、sno、ti2o3。** 它们的胞不是案例
 名所指的真实化合物，但组成与名称相同，参考答案对实际胞内容也成立，所以判定

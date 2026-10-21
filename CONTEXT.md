@@ -106,7 +106,7 @@ Wannier 表示中的总电子数与 DFT 真实电子数之差。健康计算低�
 答案。
 
 **参考答案**
-按化学常识和 IUPAC 规则人工标注的氧化态，存于 pyleos/tests/reference_os.json。
+按化学常识和 IUPAC 规则人工标注的氧化态，存于 pyleos/sets/reference_os.json。
 混合价体系标元素平均值（Fe3O4 中 Fe 为 +2.667）。
 
 **dev**
@@ -114,20 +114,25 @@ Wannier 表示中的总电子数与 DFT 真实电子数之差。健康计算低�
 平均，不检查单个原子。
 
 **基准参考表**
-data/v3/reliability_74.tsv。CI 把新跑出的基准结果与它逐行比较（status 和
+results/bench74_golden.tsv。CI 把新跑出的基准结果与它逐行比较（status 和
 dev 两列）。gpuw90 中与之对应的是 wannier90 参考输出（.wout）。
 
 **Comas-Vilà**
 参考方法：Comas-Vilà et al., JCTC 2025，用 QTAIM 原子域和原子重叠矩阵判定
 有效氧化态，测试集为 40 个固体。"EOS"这个名字出自该文。
 
-**v1 / v3**
-数据版本。v1 是项目早期程序（贪心）产生的历史数据（data/v1/）；v3 是当前
-补丁产生的数据（data/v3/）。
+**案例 / 运行**
+案例是一个化学体系，对应 cases/<case>/；运行是该体系的一次计算，对应
+cases/<case>/<run>/。运行名写程序版本和差别：v1 是项目早期程序（贪心）的
+计算，v3 是当前补丁的计算，v31-* 是 v3.1 的重算或诊断（v31-wp 带 #WP、
+v31-ghost 为 ghost A/B），structure/ 与 structure-fixed/ 只放结构。每个运行
+的用途（role）、所属基准集（bench_set）和原路径（origin）记在 cases/INDEX.tsv。
 
-**M4 / M5**
-数据批次编号。M4 为扩展基准（data/v3/m4_wave1、m4_wave2）；M5 为应用：
-M5-A 为 Li2O2，M5-B 为富锂正极三体系（data/m5b/），M5-C 为 CeO2。
+**基准集**
+74 案例基准分四组：v1_mol（10 个分子晶体）、v1_oxide（26 个氧化物和卤化物）、
+wave1（13 个）、wave2（25 个），即 INDEX.tsv 的 bench_set 列和金标表的 batch
+列。wave1/wave2 也称扩展第一波、第二波（旧称 M4）。应用体系旧称 M5：M5-A
+为 Li2O2，M5-B 为富锂正极三体系，M5-C 为 CeO2。
 
 ## Wannier 流程
 

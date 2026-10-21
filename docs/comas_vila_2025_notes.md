@@ -210,7 +210,7 @@ LEOS 的 EOSCAR 带原位判定列 OS(flow)，分子动力学中可以逐帧判�
 | 体系 | 规模 | 结果 | 出处 |
 |---|---|---|---|
 | Li15O16 | 40 步室温 MD，每 2 步分析一次，共 20 帧 | O 的元素平均氧化态 20 帧都是 −0.94 | docs/RESULTS.md「Li2O2 脱锂：氧的价态」 |
-| 富锂正极 Li2MnO3、Li2RuO3、NMC | 3 个体系 × 3 个脱锂点 × 50 ps，共 180 帧 | 价态时间序列 | docs/RESULTS.md「富锂正极：价态时间序列」；data/m5b/ |
+| 富锂正极 Li2MnO3、Li2RuO3、NMC | 3 个体系 × 3 个脱锂点 × 50 ps，共 180 帧 | 价态时间序列 | docs/RESULTS.md「富锂正极：价态时间序列」；results/cathode_md/ |
 
 逐帧 Wannier 化的耗时，以 96 原子 Li2MnO3 脱锂帧计：完整 MLWF 的 wannier90
 段 554 秒/帧；SCDM-only 快速模式 8.3 秒/帧，但在该体系上元素平均一致
@@ -258,7 +258,7 @@ dNe 是 Wannier 表示中的总电子数与 DFT 值之差。R_site 能单独反�
 | 判对（OK） | 64 | 83.0 |
 | 偏差（FAIL 或 ~） | 8 | 25.55 |
 
-数据：data/v3/reliability_74.tsv，按 status 列分组；As4S4、GaSe 的 R_site
+数据：results/bench74_golden.tsv，按 status 列分组；As4S4、GaSe 的 R_site
 取同一文件的 As4S4、sega 行。定义和读法见 docs/RESULTS.md「可靠性指标 R
 的表现」。
 
@@ -279,7 +279,7 @@ Au(−1) + 2e⁻ 的电子化物图像更准确（p.7079）。原文的 EOS 分�
 LEOS 给出 Au(−1)，2 个游离电子记在一个 Ca 名下，所以这个 Ca 显示 0 价。
 两边的可靠性读数都低：原文 R = 60.4，LEOS R_site = 7.1。
 
-数据：data/v3/reliability_74.tsv 的 ca3aun 行；详见 docs/RESULTS.md
+数据：results/bench74_golden.tsv 的 ca3aun 行；详见 docs/RESULTS.md
 「Ca3AuN：电子化物」。
 
 ## 40 固体对照结果
@@ -308,21 +308,21 @@ HgF4 依据 PDOS（p.7083）。
 
 ### LEOS 判定的数据位置
 
-- 30 个体系在 data/v3/comas_gap/<case>/，都是完整 MLWF 计算。
-- 10 个体系与 74 案例基准重合，判定取 data/v3/reliability_74.tsv：cro3、
+- 30 个体系在 cases/<case>/v3（INDEX.tsv 中 role=comas），都是完整 MLWF 计算。
+- 10 个体系与 74 案例基准重合，判定取 results/bench74_golden.tsv：cro3、
   kmgf3、nabf4、srbe_oh_4、cs3auo、rb3auo、ca3aun、sega（GaSe）、wcl4、
   rb2cucl4。其中 9 个为 OK。ca3aun 为 FAIL，因为基准参考答案取 Au(−3)
-  （pyleos/tests/reference_os.json）。WCl4 用的是修正后的结构
-  data/v3/m4_wave2/wcl4。
-- data/v3/comas_gap/ 另有 6 个 scdm_* 目录，是 SCDM-only 快速模式的运行
-  （INCAR 中 EOS_SCDM_ONLY = .TRUE.），不作为对照结果。其中 scdm_cse2、
-  scdm_mocl2、scdm_wcl5、scdm_wcl6 不在原文测试集内；scdm_sega、scdm_wcl4
-  与 GaSe、WCl4 同名，scdm_wcl4 的胞实为 WCl3（docs/testset_registry.tsv）。
-- data/v3/comas_gap/summary.tsv 有 36 行（30 + 6），status 全为 OK。这一列
+  （pyleos/sets/reference_os.json）。WCl4 用的是修正后的结构
+  cases/wcl4/v3。
+- 另有 6 个 v3-scdm-only 运行，是 SCDM-only 快速模式
+  （INCAR 中 EOS_SCDM_ONLY = .TRUE.），不作为对照结果。其中 cse2、
+  mocl2、wcl5、wcl6 不在原文测试集内；sega、wcl4 的 v3-scdm-only
+  与 GaSe、WCl4 同名，cases/wcl4/v3-scdm-only 的胞实为 WCl3（docs/testset_registry.tsv）。
+- results/comas40_summary.tsv 有 36 行（30 + 6），status 全为 OK。这一列
   是批处理运行状态，表示 EOSCAR 正常产出（pyleos/batch.py 的 triage），
   不表示判定与参考答案一致。
 - 结构来源：SI 逐表转录、实验 CIF、数据库同相结构共 29 个新结构，另加
-  docs/structures_fix/ 中的高压精确相（MgXe 与 Mg/Sr/Ce/Th 四个氢化物）。
+  cases/<体系>/structure-fixed/ 中的高压精确相（MgXe 与 Mg/Sr/Ce/Th 四个氢化物）。
   每个结构的来源与体检结论登记在 docs/testset_registry.tsv；其中 cs2pt、
   csh3、lin5 标为 SUSPECT。
 - 判定设置：β = 10，Allen 电负性。comas_gap 下 30 个目录在默认代价
@@ -332,9 +332,9 @@ HgF4 依据 PDOS（p.7083）。
 ### 逐类对照
 
 原文一栏的 R 均指 R(%)。LEOS 一栏的写法沿用 docs/RESULTS.md「Comas-Vilà
-对照集（40 个固体）」。带 OK 的行来自 data/v3/reliability_74.tsv：
+对照集（40 个固体）」。带 OK 的行来自 results/bench74_golden.tsv：
 OK 表示 dev = 0.00，即各元素平均氧化态等于基准参考答案，表中数值取自
-pyleos/tests/reference_os.json。
+pyleos/sets/reference_os.json。
 
 | 编号 | 体系 | 原文判定（页码） | LEOS 判定 | LEOS 数据 |
 |---|---|---|---|---|
@@ -346,7 +346,7 @@ pyleos/tests/reference_os.json。
 | 9 | GaSe | 按原子划分 R = 50，平摊后 Ga +2；Ga–Ga 片段 R = 77.7（p.7080） | Ga+2 / Se−2，OK | reliability_74.tsv 的 sega 行 |
 | 10 | Ba3Si4 | Si4 作片段：Ba +2、Si4 −6，R = 100（p.7080） | Ba+2 / Si−1.5，Si4⁶⁻ 蝴蝶簇 | comas_gap/ba3si4 |
 | 11 | Cs2Pt | Pt −2，判定无争议（p.7080） | Cs+1 / Pt−2 | comas_gap/cs2pt |
-| 12 | WCl4 | W +4，R = 92.6（p.7080） | W+4 / Cl−1，OK | reliability_74.tsv；m4_wave2/wcl4 |
+| 12 | WCl4 | W +4，R = 92.6（p.7080） | W+4 / Cl−1，OK | bench74_golden.tsv；cases/wcl4/v3 |
 | 13 | Rb2CuCl4 | Cu +2，β 通道 R = 75.4（p.7080–7081） | Rb+1/Cu+2/Cl−1，OK | reliability_74.tsv |
 | 14–15 | YBaFe2O5 两相 | 低温相 Fe1 +3、Fe2 +2，R = 55.6；高温相两个 Fe 平摊为 +2.5，R = 61.3（p.7081） | 两相 Y+3 / Ba+2 / Fe+2.5 / O−2；元素级一致，位点电荷序另论 | comas_gap/ybafe2o5_a、_b |
 | 16–18 | MgH4、CaH4、SrH4 | M +2，Hb −1；Ha–Ha 作片段时为中性 H2，比按原子划分更明确（p.7081） | M+2 + 2H⁻ + H2；H2 单元内部为位点简并 | comas_gap/mgh4、cah4、srh4 |
@@ -373,7 +373,7 @@ pyleos/tests/reference_os.json。
 - MH4 氢化物：金属价态和 H 的元素平均都与原文一致。ScH4、YH4 的位点分布
   不同：原文是 2 个 Hb(−1) 加 2 个 Ha(−½)，LEOS 是 3 个 H⁻ 加 1 个中性 H。
 - XeO、XeO2、XeF2/XeF3/XeF4、MgXe，以及 HgF4 的两个结构。XeF3 在位点
-  层面也一致，两类 Xe 分别为 +2 和 +4（data/v3/comas_gap/xef3）。
+  层面也一致，两类 Xe 分别为 +2 和 +4（cases/xef3/v3）。
 - 贪心基线在 SrH4、CeH4、ThH4 上给出金属 +10、+9、+10（EOSCAR 的贪心
   列），运输分配给出 +2、+4、+4。
 
@@ -401,10 +401,10 @@ pyleos/tests/reference_os.json。
 复现：
 
 ```bash
-# 单个 comas_gap 目录：逐元素判定、stray/ghost 警告、R_elem/R_site
-python3 pyleos/cli.py case data/v3/comas_gap/xeo3_a
+# 单个 Comas-Vilà 体系：逐元素判定、stray/ghost 警告、R_elem/R_site
+python3 pyleos/cli.py case cases/xeo3_a/v3
 # 74 案例基准（含 10 个重合体系）；必须显式给 --out，否则会覆盖基准参考表
-python3 script/full_bench.py --out /tmp/bench.tsv
+python3 -m pyleos bench full --out /tmp/bench.tsv
 ```
 
 ## 原文位置速查

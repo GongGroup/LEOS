@@ -1,6 +1,6 @@
-# LEOS：从 Wannier 函数判定固体中的氧化态
+# Lattice Effective Oxidation States (LEOS)
 
-LEOS（Lattice Effective Oxidation States）根据 VASP 计算得到的 Wannier 函数，
+LEOS 根据 VASP 计算得到的 Wannier 函数，
 自动给出晶体中每个原子的整数氧化态。它把"每份电子归哪个原子"写成带容量约束的
 最小费用流问题，所有电子一起做全局最优分配，结果自动是整数。
 
@@ -26,14 +26,14 @@ LEOS（Lattice Effective Oxidation States）根据 VASP 计算得到的 Wannier 
 
 ## 快速开始
 
-pyleos 只需要 Python 3：
+pyleos 只需要 Python 3，所有功能都从 `python3 -m pyleos` 进入：
 
 ```bash
 # 分析一个算例（目录中需要 POSCAR、EOSCAR 和 wannier90 的 .wout）
-python3 pyleos/cli.py case data/v3/m4_wave2/as4s4 -v
+python3 -m pyleos case cases/as4s4/v3 -v
 
-# 74 案例基准，约 25 秒；一定要给 --out，否则会覆盖基准参考表
-python3 script/full_bench.py --no-reliability --out /tmp/bench.tsv
+# 74 案例基准，约 25 秒；--out 必填，金标表不会被误覆盖
+python3 -m pyleos bench full --no-reliability --out /tmp/bench.tsv
 
 # 单元测试
 python3 -m unittest discover pyleos/tests -v
@@ -42,31 +42,32 @@ python3 -m unittest discover pyleos/tests -v
 编译和运行补丁版 VASP 见 [patch/README.md](patch/README.md)；gpuw90 需要
 torch 和 numpy，见 [gpuw90/README.md](gpuw90/README.md)。
 
-## 文档
+## 我想……
 
-| 文件 | 内容 |
+| 想做的事 | 去哪里 |
 |---|---|
-| [docs/PLAN.md](docs/PLAN.md) | 问题、方法、怎么读输出、主要设计决定、文献、工程约定 |
-| [docs/RESULTS.md](docs/RESULTS.md) | 全部测试与应用结果，每个数字注明数据文件 |
-| [CONTEXT.md](CONTEXT.md) | 术语表 |
-| [docs/testset_findings.md](docs/testset_findings.md) | 测试集结构来源核查，逐案例记录在 testset_registry.tsv |
-| [docs/comas_vila_2025_notes.md](docs/comas_vila_2025_notes.md) | 参考方法 Comas-Vilà 2025 的笔记与对比 |
-| [patch/README.md](patch/README.md) | 补丁安装、INCAR 参数、运行注意、版本记录 |
-| [pyleos/README.md](pyleos/README.md) | pyleos 用法、模块、批跑脚本 |
-| [gpuw90/README.md](gpuw90/README.md)、[gpuw90/DESIGN.md](gpuw90/DESIGN.md) | gpuw90 用法与设计 |
+| 分析一个体系 | `python3 -m pyleos case cases/<体系>/<运行>`；体系和运行都列在 [cases/INDEX.tsv](cases/INDEX.tsv) |
+| 找某个体系的全部计算 | `cases/<体系>/`，一个化学体系一个目录，每个子目录是一次计算 |
+| 跑基准、对比金标 | `python3 -m pyleos bench full\|clean\|test`，见 [pyleos/README.md](pyleos/README.md)"基准" |
+| 查一个成绩数字的出处 | [docs/RESULTS.md](docs/RESULTS.md)，每个数字都标了 results/ 或 cases/ 下的文件 |
+| 在集群上批量算 | `python3 -m pyleos batch ...`，见 [pyleos/README.md](pyleos/README.md)"batch.py" |
+| 理解方法和设计取舍 | [docs/PLAN.md](docs/PLAN.md)，术语见 [CONTEXT.md](CONTEXT.md) |
+| 重画论文插图 | [paper/](paper/)，每张图一个脚本加图注 |
 
 ## 目录
 
 | 目录 | 内容 |
 |---|---|
-| data/structures/ | 48 个测试结构及其 Bader 分析 |
-| data/v1/ | 早期 v1 程序的历史数据，74 案例基准中历史回归集的来源（见 [data/v1/README.md](data/v1/README.md)） |
-| data/v3/ | 当前补丁产生的数据：m4_wave1、m4_wave2（扩展基准）、comas_gap（Comas-Vilà 对照集）、m5a_li2o2、m5c_ceo2、legacy_rerun 等，以及基准参考表 reliability_74.tsv |
-| data/m5b/ | 富锂正极三体系的逐帧价态序列 |
-| script/ | 基准、参数扫描、轨迹分析、离线 wannier90 输入生成等脚本 |
-| docs/structures_fix/ | 替换后的正确结构及来源记录 |
+| cases/ | 全部计算数据：`cases/<体系>/<运行>/`，登记表 INDEX.tsv，命名规则见 [cases/README.md](cases/README.md) |
+| results/ | 全部汇总表：金标 bench74_golden.tsv、贪心对照、参数扫描、对照集与测试集结果、富锂正极时间序列（cathode_md/） |
+| pyleos/ | Python 包：分配、基准（bench.py）、案例登记（cases.py）、批跑（batch.py）；基准定义在 sets/，分配插件在 methods/ |
+| patch/ | VASP 补丁 |
+| gpuw90/ | GPU Wannier 化工具 |
+| tools/ | 研究用脚本：参数扫描、MD 与轨迹、Bader、离线 wannier90 输入生成 |
+| docs/ | 方法、结果、测试集核查、参考方法笔记 |
+| paper/ | 论文插图脚本与图注 |
 
-data/ 只保存小文本文件（EOSCAR、输入、.wout、汇总表）；波函数等大文件在集群上，
+cases/ 只保存小文本文件（EOSCAR、输入、.wout）；波函数等大文件在集群上，
 位置见 docs/PLAN.md"工程约定"。
 
 ## 待办
