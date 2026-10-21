@@ -11,11 +11,16 @@ pyleos 读 LEOS VASP 补丁输出的 EOSCAR，把每个 Wannier 函数（WF）�
 ```bash
 # 单个算例。目录中需要 POSCAR、EOSCAR，以及 wannier90.wout
 # （自旋极化时为 wannier90.1.wout 和 wannier90.2.wout）
-python3 pyleos/cli.py case data/v3/m4_wave2/as4s4 -v
+python3 -m pyleos case cases/as4s4/v3 -v
 
-# 历史回归集：对 data/v1 下的算例比较运输与贪心，并对照参考答案
-python3 pyleos/cli.py regress
+# 历史回归集：对 36 个 v1 运行比较运输与贪心，并对照参考答案
+python3 -m pyleos regress
+
+# 基准（见下文"基准"）
+python3 -m pyleos bench full --no-reliability --out /tmp/bench.tsv
 ```
+
+`python3 pyleos/cli.py ...` 与 `python3 -m pyleos ...` 等价。
 
 `case` 的选项：
 
@@ -28,10 +33,24 @@ python3 pyleos/cli.py regress
 | `--drop-stray` | | 排除未定域的 WF（stray）后再分配，用于判断错误来自输入还是分配。排除后总电子数变少，元素平均值不能再与参考答案比较 |
 | `--gamma G` | 0.0 | 线性叠加投影权重：代价减去 G 乘以归一化的投影权重。这种方式对参数敏感、偏向重原子，不推荐；推荐的阈值规则见下文"作为库使用" |
 
-`regress` 的选项：`--root`（默认 data/v1）、`--beta`、`--eneg`、
-`--reliability`（同时计算 R）。
+`regress` 的选项：`--beta`、`--eneg`、`--reliability`（同时计算 R）。
 
-全部 74 个基准案例用 script/full_bench.py，见 docs/RESULTS.md"74 案例基准"。
+## 基准
+
+`python3 -m pyleos bench` 有三个子命令，案例目录都从 cases/INDEX.tsv 查得：
+
+| 子命令 | 内容 |
+|---|---|
+| `full --out FILE` | 74 案例基准，输出与 results/bench74_golden.tsv 同格式（`--out` 必填，防止误覆盖金标）；`--greedy` 改为给贪心列打分，`--no-reliability` 跳过 R |
+| `clean` | clean 集：元素平均 dev 加逐原子正确率；`--method` 指定分配插件（默认 methods/baseline.py） |
+| `test --set regression\|homonuclear\|both --method PLUGIN` | 预注册的留出测试集；`--selftest` 只用开发集自检打分路径 |
+
+分配插件是定义了 `assign(case)` 的 .py 文件，放在 methods/；methods/frozen/
+下是已冻结、不再修改的候选（sha256 记在 sets/test_set.json）。插件看不到其他
+方法的结果和文件系统，规则见 bench.py 开头。
+
+基准定义在 sets/：reference_os.json（74 案例的参考氧化态，按 dataset、oxides、
+wave1、wave2 分组）、clean_set.json（逐原子标注）、test_set.json（留出测试集）。
 
 ## 作为库使用
 
@@ -40,7 +59,7 @@ from pathlib import Path
 from pyleos.parsers import load_case
 from pyleos.transport import assign_case, reliability_margins
 
-case = load_case(Path("data/v3/m4_wave2/as4s4"))
+case = load_case(Path("cases/as4s4/v3"))
 res = assign_case(case)                      # 默认：beta=10，Allen，几何 + 电负性
 res = assign_case(case, tier2="arbiter")     # 投影辅助判定，需要 EOSCAR 的 #WP 块
 res = reliability_margins(case, res=res)     # 计算 R_site / R_elem
@@ -56,7 +75,9 @@ ARBITER_PMARGIN（0.20）。
 | parsers.py | 读 POSCAR、EOSCAR（含 #WF、#WP 块）和 wannier90 .wout，组装成 CaseData |
 | capacity.py | 各元素的容量上下限 OS_BOUNDS，Allen 和 Pauling 电负性表 |
 | transport.py | 最小费用流分配、stray 和 ghost 诊断、可靠性指标 R |
-| cli.py | 命令行入口 |
+| cases.py | 读 cases/INDEX.tsv（案例登记表） |
+| bench.py | 74 案例、clean 集和留出测试集三个基准 |
+| cli.py | 命令行入口（`python3 -m pyleos`） |
 | batch.py | 集群批跑驱动（见下） |
 | xsd2poscar.py | 把 Materials Studio 的 .xsd 转成 POSCAR |
 
@@ -85,7 +106,8 @@ EOSCAR 解析的一个兼容处理：官方 Xe 赝势的 VRHFIN 字段写作 "X"
 
 ## batch.py：集群批跑
 
-batch.py 只依赖标准库，可以单独复制到集群上运行。
+batch.py 只依赖标准库，可以单独复制到集群上运行；在仓库内也可用
+`python3 -m pyleos batch ...` 调用。
 
 ```bash
 python3 batch.py stage   --dest ~/leos_batch1 --cases cases.json
@@ -121,7 +143,7 @@ wannier90 报 "Not enough bvectors" 时归为 FAIL_W90（是 k 网格问题，�
 - **离线 wannier90**（`stage --offline-w90`，之后反复运行 `w90`）：GPU 作业
   只导出 .mmn/.amn（`LWRITE_MMN_AMN = .TRUE.`，`LWANNIER90_RUN = .FALSE.`），
   wannier90 在 DSPRHBM CPU 分区上运行。`w90` 命令推进每个算例的状态：导出完成
-  → 生成每个自旋的 .win（script/offline_w90_prep.py）并提交一个 CPU 作业
+  → 生成每个自旋的 .win（tools/offline_w90_prep.py，单文件部署时与 batch.py 放在一起）并提交一个 CPU 作业
   （两个自旋并发）→ 两个 .wout 都有 Final State 后复制回算例目录，供 pyleos
   读取。只导出的运行不产生可用的 EOSCAR，离线模式按导出文件和 .wout 判断状态。
 
@@ -140,7 +162,6 @@ python3 -m unittest discover pyleos/tests -v   # 21 个测试
 |---|---|
 | test_mcf.py | 最小费用流求解器与分配 |
 | test_batch.py、test_batch_tier.py、test_batch_offline.py | batch.py 的失败分类、重试、分级筛查和离线模式 |
-| reference_os.json | 基准案例的参考氧化态，按批次分组（dataset、oxides、wave1、wave2） |
 
 ## 已知限制
 

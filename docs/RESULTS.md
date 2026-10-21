@@ -8,12 +8,12 @@
 
 | 项目 | 结果 | 数据 |
 |---|---|---|
-| 74 案例基准（72 个有参考答案） | 运输 64/72（89%），贪心 51/72（71%） | data/v3/reliability_74.tsv、data/v3/greedy_74.tsv |
-| Comas-Vilà 2025 的 40 个固体 | 40 个全部给出判定 | data/v3/comas_gap/ |
-| Li2O2 脱锂（Li16O16 / Li15O16 / Li14O16） | O 的平均氧化态 −1.00 / −0.94 / −0.88，与电荷计数一致 | data/v3/m5a_li2o2/ |
-| CeO2 氧空位（Ce4O7） | 4 个 Ce 为 [3, 3, 4, 4] | data/v3/m5c_ceo2/ |
-| 富锂正极，3 体系 × 3 个脱锂点 × 20 帧 | 有序体系过渡金属平均价态等于 4 + 2x，50 ps 内无漂移 | data/m5b/ |
-| 甲烷在 Ce18O36Co4 上的 C–H 活化 | 一个 H 以 H⁻ 形式转移到 Co4 团簇，Co4 总价 0 → +2 → +2 | data/v3/legacy_rerun/ |
+| 74 案例基准（72 个有参考答案） | 运输 64/72（89%），贪心 51/72（71%） | results/bench74_golden.tsv、results/bench74_greedy.tsv |
+| Comas-Vilà 2025 的 40 个固体 | 40 个全部给出判定 | cases/INDEX.tsv 中 role=comas 的运行、results/comas40_summary.tsv |
+| Li2O2 脱锂（Li16O16 / Li15O16 / Li14O16） | O 的平均氧化态 −1.00 / −0.94 / −0.88，与电荷计数一致 | cases/li16o16/、cases/li15o16/、cases/li14o16/、results/li2o2_summary.tsv |
+| CeO2 氧空位（Ce4O7） | 4 个 Ce 为 [3, 3, 4, 4] | cases/ce4o7/、cases/ce4o8/ |
+| 富锂正极，3 体系 × 3 个脱锂点 × 20 帧 | 有序体系过渡金属平均价态等于 4 + 2x，50 ps 内无漂移 | results/cathode_md/、cases/{li2mno3,li2ruo3,nmc}/md-x* |
+| 甲烷在 Ce18O36Co4 上的 C–H 活化 | 一个 H 以 H⁻ 形式转移到 Co4 团簇，Co4 总价 0 → +2 → +2 | cases/ce18o36co4ch4_{is,ts,fs}/v3 |
 
 基准中未通过的 8 个案例都查明了原因，见"74 案例基准"一节的未通过案例表。
 
@@ -21,11 +21,11 @@
 
 ### 测试体系
 
-| 批次 | 数量 | 内容 | 数据目录 |
+| 基准集 | 数量 | 内容 | 数据（cases/INDEX.tsv 的 bench_set 列） |
 |---|---|---|---|
-| 历史回归集 | 36 | 项目原有数据：10 个分子晶体，26 个氧化物和卤化物，含磁性、金属、过氧化物、带电体系 | data/v1/ |
-| 扩展第一波 | 13 | 混合价（Fe3O4、CrO5）、羰基化合物 Cr(CO)6、电子化物 Ca3AuN 等 | data/v3/m4_wave1/ |
-| 扩展第二波 | 25 | 氢化物、Zintl 相、金属簇、钙钛矿、160 原子的 SrBe(OH)4 等 | data/v3/m4_wave2/ |
+| 历史回归集 | 36 | 项目原有数据：10 个分子晶体，26 个氧化物和卤化物，含磁性、金属、过氧化物、带电体系 | cases/*/v1（v1_mol、v1_oxide） |
+| 扩展第一波 | 13 | 混合价（Fe3O4、CrO5）、羰基化合物 Cr(CO)6、电子化物 Ca3AuN 等 | cases/*/v3（wave1） |
+| 扩展第二波 | 25 | 氢化物、Zintl 相、金属簇、钙钛矿、160 原子的 SrBe(OH)4 等 | cases/*/v3（wave2） |
 
 其中 AuClB 配合物和 CuCl4 没有参考答案，只检查能否跑通，不计分。计分
 案例共 72 个。
@@ -38,7 +38,7 @@ SnO（假想的岩盐相）、Ti2O3（金红石去掉一个 O 的缺陷模型）
 ### 参考答案
 
 每个体系的理想氧化态按化学常识和 IUPAC 规则人工标注，存于
-pyleos/tests/reference_os.json。混合价体系标元素平均值，例如 Fe3O4 中
+pyleos/sets/reference_os.json。混合价体系标元素平均值，例如 Fe3O4 中
 Fe 为 +2.667（1 个 Fe²⁺ 加 2 个 Fe³⁺）。答案本身有争议的体系（如 Ca3AuN）
 在标注中注明了不同观点。
 
@@ -70,7 +70,7 @@ dev 只检查元素平均，不检查单个原子。例如 As4S4 中 As 一半�
 
 ### 通过数
 
-| 批次（计分案例数） | 运输通过 | 贪心通过 |
+| 基准集（计分案例数） | 运输通过 | 贪心通过 |
 |---|---|---|
 | 历史回归集（35） | 33 | 30 |
 | 扩展第一波（12） | 10 | 9 |
@@ -80,21 +80,21 @@ dev 只检查元素平均，不检查单个原子。例如 As4S4 中 As 一半�
 逐案例比较：15 个案例只有运输通过，2 个只有贪心通过（CSe2 的 v1 数据和
 hi3），其余案例两种方法结论相同。第二波中这两个数字是 10 和 1。
 
-数据：运输为 data/v3/reliability_74.tsv，贪心为 data/v3/greedy_74.tsv，
+数据：运输为 results/bench74_golden.tsv，贪心为 results/bench74_greedy.tsv，
 两表由同一脚本、按同一 dev 定义产出。
 
 复现（约 25 秒）：
 
 ```bash
-python3 script/full_bench.py --no-reliability --out /tmp/bench.tsv
-python3 script/full_bench.py --greedy --no-reliability --out /tmp/greedy.tsv
+python3 -m pyleos bench full --no-reliability --out /tmp/bench.tsv
+python3 -m pyleos bench full --greedy --no-reliability --out /tmp/greedy.tsv
 ```
 
-去掉 `--no-reliability` 会同时计算可靠性指标 R，需要几分钟。**不加
-`--out` 时脚本会覆盖 data/v3/reliability_74.tsv。**
+去掉 `--no-reliability` 会同时计算可靠性指标 R，需要较长时间。`--out` 是必填
+参数；只有在有意重产金标时才写 results/bench74_golden.tsv。
 
 .github/workflows/ci.yml 在每次 push 时运行单元测试和这个基准，并逐行比较
-status 和 dev 两列与 data/v3/reliability_74.tsv 是否一致。仓库的 GitHub
+status 和 dev 两列与 results/bench74_golden.tsv 是否一致。仓库的 GitHub
 Actions 目前还没有启用（issue #3）。
 
 ### 未通过的案例
@@ -110,7 +110,7 @@ Actions 目前还没有启用（issue #3）。
 | WCl5 | FAIL / 4.67 | W 平均 +0.33，Cl 平均 −0.07 | W +5，Cl −1 | Wannier 化失败，598 个 WF 中 316 个未定域（见"典型案例"） |
 
 单个案例的结果用 `python3 pyleos/cli.py case <目录> -v` 查看，例如
-`data/v3/m4_wave2/hi3`。
+`cases/hi3/v3`。
 
 ### 运输修正的典型案例（第二波）
 
@@ -132,8 +132,8 @@ As +4，S 平均 −4。
 
 | 数据 | 运输 As / S | 贪心 As / S | 未定域的 WF | 状态 |
 |---|---|---|---|---|
-| v3：data/v3/m4_wave2/as4s4 | +2.00 / −2.00 | +4.00 / −4.00 | 0 | OK |
-| v1：data/v1/eos_dataset/As4S4 | +1.00 / −1.00 | +4.12 / −4.12 | 15 | ~ |
+| v3：cases/as4s4/v3 | +2.00 / −2.00 | +4.00 / −4.00 | 0 | OK |
+| v1：cases/as4s4/v1 | +1.00 / −1.00 | +4.12 / −4.12 | 15 | ~ |
 
 单个原子：晶胞里有 8 条 As–As 键，每个 As 恰好在其中一条上。这条键上的
 一对电子只能整对判给一端，所以 8 个 As 记 +1、8 个记 +3。元素平均不受
@@ -141,7 +141,7 @@ As +4，S 平均 −4。
 两个 As 合成一个单元，每个单元总价 +4，即每个 As +2：
 
 ```bash
-python3 pyleos/cli.py case data/v3/m4_wave2/as4s4 -v \
+python3 pyleos/cli.py case cases/as4s4/v3 -v \
   --fragment 17,19 --fragment 18,20 --fragment 21,23 --fragment 22,24 \
   --fragment 25,27 --fragment 26,28 --fragment 29,31 --fragment 30,32
 ```
@@ -153,8 +153,8 @@ v1 数据的问题：88 个 WF 中 15 个没有定域，spread 最大 22.6 Å²�
 同一份数据上，贪心给某些 S 记了 14 个电子（氧化态 −8），超出 S 价层能
 容纳的 8 个。
 
-v3 数据有两份：data/v3/m4_wave2/as4s4 和
-data/v3/rerun_20260711/g4_projection/as4s4。两次计算的 POSCAR、INCAR
+v3 数据有两份：cases/as4s4/v3 和
+cases/as4s4/v31-wp。两次计算的 POSCAR、INCAR
 相同，判定结果逐原子相同；后者由 v3.1 补丁产出，其 EOSCAR 的 OS(flow) 列
 与 pyleos 的结果逐原子一致。
 
@@ -204,8 +204,8 @@ IUPAC 氧化态技术报告（Karen 等）讨论过这个体系：按其他钙�
 | WCl3 | OK，W 平均 +3 | W6 簇内各 W 位点等价，单个 W 的值不唯一，可用片段 |
 | WCl5 | FAIL，dev 4.67 | 实验晶格和自洽弛豫晶格两次计算分别有 316 和 323 个 WF 未定域。问题出在 Wannier 化，与结构转录无关 |
 
-数据：data/v3/m4_wave2/wcl3、wcl4、wcl5、wcl5_v2（弛豫晶格）、wcl6；
-修正结构及来源：docs/structures_fix/。
+数据：cases/wcl3/v3、cases/wcl4/v3、cases/wcl5/v3、cases/wcl5/v3-relaxed（弛豫晶格）、
+cases/wcl6/v3；修正结构及来源：cases/wcl*/structure-fixed/。
 
 在只有不对称单元的错误结构上，程序给出的是这个残缺胞实际组成的结果，例如
 名为 WCl6、实际只有一个 W 和一个 Cl 的胞判为 W +1。
@@ -215,15 +215,15 @@ IUPAC 氧化态技术报告（Karen 等）讨论过这个体系：按其他钙�
 Comas-Vilà 2025（JCTC）用 QTAIM 原子重叠矩阵方法测试了 40 个固体，我们
 对全部 40 个做了判定：
 
-- 30 个在 data/v3/comas_gap/ 下，都是完整 MLWF 计算。默认代价和投影辅助
+- 30 个是 cases/INDEX.tsv 中 role=comas 的运行，都是完整 MLWF 计算。默认代价和投影辅助
   判定给出的元素平均值相同。
 - 10 个与 74 案例基准重合（CrO3、KMgF3、NaBF4、SrBe(OH)4、Cs3AuO、
   Rb3AuO、Ca3AuN、GaSe、WCl4、Rb2CuCl4），结果取自
-  data/v3/reliability_74.tsv。
+  results/bench74_golden.tsv。
 
 结构来自论文 SI 表格转录、实验 CIF 和数据库，共 29 个新结构；MgXe 和
-MH4 氢化物的精确结构见 docs/structures_fix/。comas_gap/ 下另有 6 个
-scdm_* 目录，是 SCDM-only 快速模式的运行，不计入对照。两种方法的逐体系
+MH4 氢化物的精确结构见 cases/<体系>/structure-fixed/。另有 6 个
+v3-scdm-only 运行，是 SCDM-only 快速模式，不计入对照。两种方法的逐体系
 对比见 [comas_vila_2025_notes.md](comas_vila_2025_notes.md)。
 
 | 类别 | 体系与判定 | 说明 |
@@ -243,7 +243,7 @@ scdm_* 目录，是 SCDM-only 快速模式的运行，不计入对照。两种�
 （36）、xeo3_b（9）、ceh4（8）、thh4（8）、k_hp（6）、mgxe（5）、
 ybafe2o5_b（4）、csh3（3）、mgh4（3）、sch4（3）、lin5（1）、xeo3_a（1）。
 
-数据：data/v3/comas_gap/。其中 summary.tsv 的 status 列是批跑状态（EOSCAR
+数据：role=comas 的运行。results/comas40_summary.tsv 的 status 列是批跑状态（EOSCAR
 是否正常产出），不表示判定是否与原文一致。
 
 ## 5. 应用
@@ -269,7 +269,7 @@ Li14O16。
 分子动力学：Li15O16 室温 40 步，每 2 步分析一次（共 20 帧），运输给出的
 O 平均值 20 帧都是 −0.94。
 
-数据：data/v3/m5a_li2o2/（li16o16、li15o16、li14o16、li15o16_md）。
+数据：cases/li16o16/v3、cases/li15o16/v3、cases/li14o16/v3、cases/li15o16/v3-md。
 
 **空穴位置。** 物理上只有 1 个空穴，但纯 PBE 计算中逐帧看会有多个 O2 单元
 轮流显示被氧化，且所有 O–O 键长都没有缩短（局域的超氧根键长应从 1.55 Å
@@ -293,7 +293,7 @@ HSE06 单点：
 （U = 8 时 3 对到约 2.2 Å），所以结论要用无 U 或杂化泛函单点交叉检查，
 即表中最后两行。
 
-数据：data/v3/m5a_li2o2/polaron/（u0、u4、u6、u8、sp_pbe、sp_hse）。
+数据：cases/li15o16/polaron-{u0,u4,u6,u8,sp-pbe,sp-hse}。
 
 空穴具体在哪个 O2 单元，运输方法给不出可靠答案。所有计算中，运输与贪心的
 O 平均值都等于 −0.9375，但把空穴改判到相邻单元只多花约 0.005 个代价单位，
@@ -314,7 +314,7 @@ R_site 只有 0.3–0.5。在这种等价位点之间，运输解落在哪个单
 
 历史数据中不加 U 的 Ce2O3 计算丢失了 0.30 个电子（dNe 警告）。
 
-数据：data/v3/m5c_ceo2/。
+数据：cases/ce4o7/v3、cases/ce4o8/v3。
 
 ### 富锂正极：价态时间序列
 
@@ -342,8 +342,8 @@ Li2RuO3 在完整 MLWF 流程下与 Li2MnO3 一样稳定，说明 4d 体系在 S
 金属性，由总电子数上限处理。50 ps 内 MACE 轨迹中没有出现 O–O 二聚。NMC 的
 SQS 初始结构在前约 1 ps 有弛豫过程（瞬时温度到 930 K 后回落），不影响抽帧。
 
-数据：data/m5b/timeseries/（逐帧序列）、data/m5b/acceptance/（汇总）。
-逐帧判定由 script/timeseries.py 完成，该脚本默认开启投影辅助判定
+数据：results/cathode_md/timeseries_*.tsv（逐帧序列）、results/cathode_md/acceptance_*.json（汇总）。
+逐帧判定由 tools/timeseries.py 完成，该脚本默认开启投影辅助判定
 （`--tier2 arbiter`）。
 
 ### Fe3O4：没有出现电荷序
@@ -355,7 +355,7 @@ ghost = 48 警告。OUTCAR 显示体系收敛到半金属态（费米面穿过�
 半金属；Verwey 电荷序需要低温单斜超胞（P2/c 或 Cc）和更强的关联处理，
 这里没有计算。
 
-数据：data/v3/fe3o4_verwey/。
+数据：cases/fe3o4/v3-verwey/。
 
 ## 6. 旧版程序失败体系的重算
 
@@ -379,8 +379,8 @@ ghost = 48 警告。OUTCAR 显示体系收敛到半金属态（费米面穿过�
 2. 旧输入里的 `kmesh_tol = 1e-5` 是它们的 4×4×2 k 网格能通过 wannier90
    b 向量检查的原因（使用方法见 patch/README.md）。
 
-数据：data/v3/legacy_rerun/；逐原子结果见
-data/v3/legacy_rerun/pyleos_rerun_20260709.txt。
+数据：cases/{ce18o36co4ch4_is,ce18o36co4ch4_ts,ce18o36co4ch4_fs,lasweh,mumnox,vircef}/v3；逐原子结果见
+results/legacy_rerun_pyleos.txt。
 
 ### 甲烷活化的三个像
 
@@ -401,7 +401,7 @@ Co 原子之间的归属是简并的：Ce、O 的 R 为 80–92，四个 Co 只�
 
 基态：三个像各用磁矩 6 和 10 两种初值重算，初态收敛到磁矩 6，过渡态 4，
 末态 6；末态两种初值的能量相同（−490.23423 eV）。数据：
-data/v3/rerun_20260711/g1_methane/groundstate_verdict.tsv。
+results/methane_groundstate_verdict.tsv。
 
 集群原始数据与本地入库 EOSCAR 的 md5 一致，对应作业 602731、604671、
 604672。
@@ -410,8 +410,8 @@ data/v3/rerun_20260711/g1_methane/groundstate_verdict.tsv。
 
 ### 电负性权重 β
 
-β 是代价函数中电负性项的权重，默认 10。对 β 的全量扫描（data/v3/
-beta_scan_20260712.tsv，script/beta_scan.py）：
+β 是代价函数中电负性项的权重，默认 10。对 β 的全量扫描（results/
+scan_beta.tsv，tools/beta_scan.py）：
 
 | β | 通过数 | 相对 β = 10 的变化 |
 |---|---|---|
@@ -439,7 +439,7 @@ PMARGIN 时，才按投影改判。几何上明确的归属不会被改变。
 出现了这种情况）。
 
 参数扫描：TAU × PMARGIN 为 6 × 5 网格，在 38 个 #WP 基准案例和 6 个旧版程序
-体系上运行（script/arbiter_scan.py，data/v3/arbiter_scan_20260712.tsv）。
+体系上运行（tools/arbiter_scan.py，results/scan_arbiter_20260712.tsv）。
 
 - 不开启时基线为 31/37（分母不含 Wannier 化失败的 WCl5）。
 - PMARGIN 在 0.20–0.30、TAU 在 0.25–1.5 之间的 8 个格点都安全，不新增错误。
@@ -458,7 +458,7 @@ PMARGIN 时，才按投影改判。几何上明确的归属不会被改变。
 
 ### 可靠性指标 R 的表现
 
-R 的定义见 PLAN.md"可靠性指标"。74 个案例（data/v3/reliability_74.tsv）
+R 的定义见 PLAN.md"可靠性指标"。74 个案例（results/bench74_golden.tsv）
 中，64 个通过案例的 R_elem 中位数为 83.0，8 个未通过案例为 25.55。hi3
 （25.2）、RhCl(CO)(PPh3)2（21.7）、CSe2（25.0 和 25.9）、WCl5（3.6）的
 R_elem 都很低。Ca3AuN 的 R_site = 7.1 反映了游离电子归属的任意性；H3PO3
@@ -476,7 +476,7 @@ R_elem 较高，两者都是参考答案的惯例与电负性规则不同。R �
 重算后，元素平均结果不变。自旋不对称的体系中 ghost 数下降，例如 Fe3O4
 由 42 降到 20。
 
-数据：data/v3/rerun_20260711/ghost_ab_summary.tsv。
+数据：results/ghost_ab_summary.tsv。
 
 ### ghost 对金属价态的系统偏差
 
@@ -489,7 +489,7 @@ LASWEH 的 Ag 曾被记为 +2 或 +3（应为 +1），VIRCEF 的 Ce、MUMNOX 的
 问题。解决办法是修好上游计算（加冻结窗口或用自动冻结窗口重算）。
 
 VIRCEF 的一组对照：离线 wannier90 用共享的 WF 数时 Ce 为 +4，库模式按自旋
-设置 WF 数时 Ce 为 +3，差别就来自这一偏差。数据：data/v3/w90_offline/。
+设置 WF 数时 Ce 为 +3，差别就来自这一偏差。数据：cases/li2mno3/w90-library、cases/li2mno3/w90-offline、cases/vircef/w90-offline。
 
 ## 9. 效率
 
@@ -519,7 +519,7 @@ Li2MnO3 是混合价且有金属性的体系，快速模式全部失败，但每
 ### 离线 wannier90 与线程化 MKL
 
 把 wannier90 从 GPU 作业里拆出来，在 CPU 节点上离线运行。测试帧为 96 原子
-Li2MnO3，两个自旋同时运行（data/v3/e2e_pipeline_20260712.tsv）：
+Li2MnO3，两个自旋同时运行（results/w90_e2e_pipeline.tsv）：
 
 | 方式 | wannier90 墙钟 | GPU 段 |
 |---|---|---|
@@ -530,7 +530,7 @@ Li2MnO3，两个自旋同时运行（data/v3/e2e_pipeline_20260712.tsv）：
 
 线程化 MKL：参考版数学库对线程数没有响应；换成线程化 MKL 后，8 进程 ×
 4 线程时解纠缠每次迭代 0.055–0.065 秒、局域化 0.074 秒，比单核参考版快约
-16 倍和 13 倍（18 组扫描，data/v3/w90_threads_scan_20260712.tsv）。正常
+16 倍和 13 倍（18 组扫描，results/w90_threads_scan.tsv）。正常
 收敛的通道结果与参考版逐位相同，18 次运行的 Ω_I 全部相同。
 
 两点限制：这个体系 k 点少（nk = 8），读 .mmn/.amn 的固定 IO 约 30 秒，
@@ -567,7 +567,7 @@ wannier90 输入。在 96 原子 Li2MnO3 脱锂超胞的 40 步 AIMD 上（每 5
 这个选项保留给不用 SCDM 初猜的场景。另外，分析步比普通 MD 步多花约 525 秒
 （wannier90 加 LEOS），这是 SCDM-only 在轨迹中能节省时间的上限。
 
-数据：data/m5b/ws_bench/。
+数据：results/cathode_md/warmstart_*。
 
 ### 分析耗时
 

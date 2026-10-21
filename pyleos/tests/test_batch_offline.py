@@ -15,7 +15,7 @@ from unittest import mock
 
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO))
-sys.path.insert(0, str(REPO / "script"))
+sys.path.insert(0, str(REPO / "tools"))
 
 import offline_w90_prep as prep                              # noqa: E402
 from pyleos import batch                                     # noqa: E402

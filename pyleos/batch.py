@@ -411,19 +411,19 @@ def status(dest: Path) -> None:
 
 def _load_prep():
     """offline_w90_prep module: next to this file (cluster deploy) or in the
-    repo's script/ directory (local checkout)."""
+    repo's tools/ directory (local checkout)."""
     try:
         import offline_w90_prep
         return offline_w90_prep
     except ImportError:
         pass
-    script_dir = Path(__file__).resolve().parent.parent / "script"
+    script_dir = Path(__file__).resolve().parent.parent / "tools"
     if (script_dir / "offline_w90_prep.py").is_file():
         sys.path.insert(0, str(script_dir))
         import offline_w90_prep
         return offline_w90_prep
     raise SystemExit("offline_w90_prep.py not found - deploy it next to "
-                     "batch.py or keep the repo script/ directory")
+                     "batch.py or keep the repo tools/ directory")
 
 
 def _wout_done(p: Path) -> bool:
