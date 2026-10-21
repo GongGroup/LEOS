@@ -6,6 +6,7 @@ Usage:
   python3 -m pyleos regress [--beta B] [--eneg SCALE] [--reliability]
   python3 -m pyleos bench full|clean|test ...     (see pyleos/bench.py)
   python3 -m pyleos batch stage|submit|status|... (see pyleos/batch.py)
+  python3 -m pyleos check                         (cases/INDEX.tsv vs STRUCTURES.tsv vs disk)
 
 regress runs the 36 v1 cases (bench sets v1_mol and v1_oxide of
 cases/INDEX.tsv) and compares transport with the in-situ greedy column.
@@ -23,11 +24,11 @@ print = functools.partial(print, flush=True)   # progress must survive redirecti
 
 if __package__ is None or __package__ == "":          # direct-script support
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from pyleos.cases import bench74_dirs                           # noqa: E402
+    from pyleos.cases import bench74_dirs, check_registry           # noqa: E402
     from pyleos.parsers import load_case                            # noqa: E402
     from pyleos.transport import assign_case, reliability_margins   # noqa: E402
 else:
-    from .cases import bench74_dirs
+    from .cases import bench74_dirs, check_registry
     from .parsers import load_case
     from .transport import assign_case, reliability_margins
 
@@ -201,6 +202,7 @@ def main(argv=None):
     p1.add_argument("--fragment", action="append", default=[],
                     help="comma-separated 1-based atom indices to merge into "
                          "one delocalised unit (repeatable), e.g. --fragment 2,3,4")
+    sub.add_parser("check", help="consistency of cases/INDEX.tsv, STRUCTURES.tsv and cases/")
     p2 = sub.add_parser("regress")
     p2.add_argument("--beta", type=float, default=10.0)
     p2.add_argument("--eneg", default="allen", choices=["allen", "pauling"])
@@ -211,6 +213,12 @@ def main(argv=None):
         frags = [[int(t) - 1 for t in f.split(",")] for f in args.fragment]
         run_case(args.dir, args.beta, args.eneg, args.verbose, args.drop_stray,
                  args.gamma, fragments=frags or None)
+    elif args.cmd == "check":
+        problems = check_registry()
+        for line in problems:
+            print(line)
+        print(f"{len(problems)} problem(s)")
+        sys.exit(1 if problems else 0)
     else:
         regress(args.beta, args.eneg, args.reliability)
 

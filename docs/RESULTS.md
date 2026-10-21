@@ -269,7 +269,14 @@ Li14O16。
 分子动力学：Li15O16 室温 40 步，每 2 步分析一次（共 20 帧），运输给出的
 O 平均值 20 帧都是 −0.94。
 
-数据：cases/li16o16/v3、cases/li15o16/v3、cases/li14o16/v3、cases/li15o16/v3-md。
+数据：上表为 cases/li16o16/v3、cases/li15o16/v3、cases/li14o16/v3；MD 为
+cases/li15o16/v3-md2（20 帧）。cases/li15o16/v3-md 是第一次 MD 尝试，在第一步后
+崩溃，只有 1 帧。
+
+**上表三个超胞的几何有误。** 有 8 个 Li 落在 O–O 键中点（Li–O 0.78 Å），单点
+计算直接用了这个几何，上表需要在正确的 Föppl 型超胞上重算。MD（v3-md2）、下文的
+v3-u 和极化子系列都从弛豫后的正确几何出发，不受影响。详见
+docs/testset_findings.md「几何复核」和 cases/STRUCTURES.tsv。
 
 **空穴位置。** 物理上只有 1 个空穴，但纯 PBE 计算中逐帧看会有多个 O2 单元
 轮流显示被氧化，且所有 O–O 键长都没有缩短（局域的超氧根键长应从 1.55 Å
