@@ -1,0 +1,305 @@
+{
+  "material": "CsSnI3",
+  "formula_counts": {
+    "Cs": 1,
+    "Sn": 1,
+    "I": 3
+  },
+  "method": "native",
+  "source_directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500",
+  "dft_input_source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500",
+  "parameters": {
+    "GGA": "PE",
+    "METAGGA": null,
+    "LDAU": null,
+    "LDAUTYPE": null,
+    "LDAUL": null,
+    "LDAUU": null,
+    "LDAUJ": null,
+    "ISPIN": "1",
+    "MAGMOM": null,
+    "NUPDOWN": null,
+    "NELECT": null,
+    "ISMEAR": "0",
+    "SIGMA": "0.05",
+    "ENCUT": "520",
+    "EDIFF": "1E-7",
+    "ISYM": "0",
+    "NBANDS": "64",
+    "ISTART": "0",
+    "ICHARG": "2",
+    "NELM": "200",
+    "NSW": "0",
+    "dis_num_iter": "500",
+    "num_iter": "500",
+    "kmesh_tol": "1e-5",
+    "EOS_BETA": null,
+    "EOS_FLOW": null,
+    "LWANNIER90": null,
+    "LWANNIER90_RUN": null
+  },
+  "optimizer": {
+    "dis_num_iter": "500",
+    "num_iter": "500",
+    "num_wann": [
+      25
+    ]
+  },
+  "beta_baseline": 10,
+  "beta_note": "Baseline convention; exact scan values are retained in scan files.",
+  "eoscar_present": true,
+  "eoscar_aborted": false,
+  "electronic_converged": true,
+  "normal_vasp_end": true,
+  "existing_assessment": {
+    "directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500",
+    "technical_success": true,
+    "converged": false,
+    "electronic_converged": true,
+    "normal_end": true,
+    "exit_code": 0,
+    "channels": [
+      {
+        "file": "wannier90.wout",
+        "final_state": true,
+        "all_done": true,
+        "disentanglement_converged": false,
+        "disentanglement_exhausted": true,
+        "localization_plateau": false,
+        "last_iterations": [
+          [
+            491,
+            -0.000826,
+            0.0327746337,
+            33.2524021673,
+            841.29
+          ],
+          [
+            492,
+            -0.000814,
+            0.0482495857,
+            33.2515877537,
+            841.65
+          ],
+          [
+            493,
+            -0.000664,
+            0.0324730688,
+            33.2509240059,
+            842.01
+          ],
+          [
+            494,
+            -0.000488,
+            0.0296262153,
+            33.2504358982,
+            842.36
+          ],
+          [
+            495,
+            -0.000424,
+            0.0256273683,
+            33.2500117135,
+            842.72
+          ],
+          [
+            496,
+            -0.000351,
+            0.022956207,
+            33.2496607306,
+            843.09
+          ],
+          [
+            497,
+            -0.000338,
+            0.0222603515,
+            33.2493232001,
+            843.46
+          ],
+          [
+            498,
+            -0.000334,
+            0.0325794151,
+            33.248989641,
+            843.81
+          ],
+          [
+            499,
+            -0.000346,
+            0.0221015969,
+            33.2486438781,
+            844.17
+          ],
+          [
+            500,
+            -0.000417,
+            0.0227786913,
+            33.2482265343,
+            844.52
+          ]
+        ],
+        "final_spread": 33.248226534
+      }
+    ],
+    "ion_results": [
+      {
+        "atom": 1,
+        "element": "Cs",
+        "os_flow": 1
+      },
+      {
+        "atom": 2,
+        "element": "Sn",
+        "os_flow": 2
+      },
+      {
+        "atom": 3,
+        "element": "I",
+        "os_flow": -1
+      },
+      {
+        "atom": 4,
+        "element": "I",
+        "os_flow": -1
+      },
+      {
+        "atom": 5,
+        "element": "I",
+        "os_flow": -1
+      }
+    ],
+    "parse_error": null,
+    "plateau_criterion": "Last 10 |delta total spread| <= 1e-6 A^2; not proof of global minimum",
+    "retry_iterations": true
+  },
+  "offline_summary": null,
+  "input_files_present": {
+    "CONTCAR": true,
+    "INCAR": true,
+    "KPOINTS": true,
+    "POSCAR": true,
+    "POTCAR": true
+  },
+  "note": "Archived output, not a scientific acceptance label. Source files are unchanged.",
+  "files": [
+    {
+      "file": "extended_leos_20261022/CsSnI3/PBE_U0_s1_nw25_d500_l500_m0_native_7b6d87dd/CONTCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/CONTCAR",
+      "source_sha256": "910b44e8df75218ae2d38a447f758717f2b20a5bbb7b0c76877104c2297f250e",
+      "source_bytes": 866,
+      "stored_bytes": 866,
+      "stored_sha256": "910b44e8df75218ae2d38a447f758717f2b20a5bbb7b0c76877104c2297f250e",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/CsSnI3/PBE_U0_s1_nw25_d500_l500_m0_native_7b6d87dd/EOSCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/EOSCAR",
+      "source_sha256": "d76d9785e1b2571558e94059e3eb73d409c6842eb5e5a99274fe6299bb46f011",
+      "source_bytes": 5914,
+      "stored_bytes": 5914,
+      "stored_sha256": "d76d9785e1b2571558e94059e3eb73d409c6842eb5e5a99274fe6299bb46f011",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/CsSnI3/PBE_U0_s1_nw25_d500_l500_m0_native_7b6d87dd/INCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/INCAR",
+      "source_sha256": "9bc464bac6b1a08641115433f48f6057fe546ac1b56927d7da38f1f6194b1f3c",
+      "source_bytes": 486,
+      "stored_bytes": 486,
+      "stored_sha256": "9bc464bac6b1a08641115433f48f6057fe546ac1b56927d7da38f1f6194b1f3c",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/CsSnI3/PBE_U0_s1_nw25_d500_l500_m0_native_7b6d87dd/KPOINTS",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/KPOINTS",
+      "source_sha256": "05432e7c377053e1ae44db1afc4e9dbcbdf2fb69951da88c3ed7717fa869f224",
+      "source_bytes": 89,
+      "stored_bytes": 89,
+      "stored_sha256": "05432e7c377053e1ae44db1afc4e9dbcbdf2fb69951da88c3ed7717fa869f224",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/CsSnI3/PBE_U0_s1_nw25_d500_l500_m0_native_7b6d87dd/POSCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/POSCAR",
+      "source_sha256": "557168690ef174d0ade127b512f7bbbd968e591e65acba3e162fea16df9b3dd5",
+      "source_bytes": 467,
+      "stored_bytes": 467,
+      "stored_sha256": "557168690ef174d0ade127b512f7bbbd968e591e65acba3e162fea16df9b3dd5",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/CsSnI3/PBE_U0_s1_nw25_d500_l500_m0_native_7b6d87dd/POTCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/POTCAR",
+      "source_sha256": "a5e0123f6cff83b57c730b728731d2fca458f8853197954dc8687d3b54bd6922",
+      "source_bytes": 523346,
+      "stored_bytes": 523346,
+      "stored_sha256": "a5e0123f6cff83b57c730b728731d2fca458f8853197954dc8687d3b54bd6922",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/CsSnI3/PBE_U0_s1_nw25_d500_l500_m0_native_7b6d87dd/assessment.json",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/assessment.json",
+      "source_sha256": "c00526cf56c512862c27de52f74d7cd3b02f03682e98c9545a562d52f8e6f1f6",
+      "source_bytes": 2298,
+      "stored_bytes": 2298,
+      "stored_sha256": "c00526cf56c512862c27de52f74d7cd3b02f03682e98c9545a562d52f8e6f1f6",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/CsSnI3/PBE_U0_s1_nw25_d500_l500_m0_native_7b6d87dd/wannier90.win",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/wannier90.win",
+      "source_sha256": "02ab04568a06c936dd6753f96ad9ff7361381a73d854c91a199f37c6c2ad7d57",
+      "source_bytes": 31881,
+      "stored_bytes": 31881,
+      "stored_sha256": "02ab04568a06c936dd6753f96ad9ff7361381a73d854c91a199f37c6c2ad7d57",
+      "gzip": false,
+      "role": "calculation"
+    }
+  ],
+  "omitted_from_upload": [
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/IBZKPT",
+      "sha256": "2c8993449b5c1c2cf94f4a722a65d0503a0259adcd5839b1e87491871343ca76",
+      "bytes": 19557,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/OSZICAR",
+      "sha256": "0c3ef83131149cb0448c1f32b13b49add37929a6d95f7f1a7588d5608a632246",
+      "bytes": 1576,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/OUTCAR",
+      "sha256": "18646a087d80aa6cecb6d288f239c938511d9cba44ea0d02c23e49473246d448",
+      "bytes": 752716,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/vasp.stderr",
+      "sha256": "a9c467fc1f3fc6487342caa39fa153461ab01cf1d723b20783ae49ca047923a7",
+      "bytes": 162,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/vasp.stdout",
+      "sha256": "68d5f42a964b7765b296ef8e835f7b35504263cc285d31dbf322d399f0f9b5d3",
+      "bytes": 2882,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/CsSnI3_leos_20261020_01/CsSnI3/iter_500/wannier90.wout",
+      "sha256": "9585b4f2b62104ef0b5ae392cf76acb8cd47f669b8b1c3357e50e5f26ed9faca",
+      "bytes": 1282253,
+      "reason": "Large log or intermediate; retained on SAI."
+    }
+  ],
+  "archive_policy": "Match existing data/v3: inputs, EOSCAR, centres, small Wannier output and result/scan summaries; omit bulky logs."
+}

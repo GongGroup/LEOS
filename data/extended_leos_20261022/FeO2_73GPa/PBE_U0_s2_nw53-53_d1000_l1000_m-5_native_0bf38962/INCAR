@@ -1,0 +1,39 @@
+SYSTEM = FeO2 73 GPa PBE spin-polarized static
+ISTART = 0
+ICHARG = 2
+GGA = PE
+ISPIN = 2
+MAGMOM = 8*0.0 4*1.0
+LDAU = .FALSE.
+LSORBIT = .FALSE.
+
+# Precision and magnetic initialization match the PBE+U comparison.
+ENCUT = 600
+PREC = Accurate
+LREAL = .FALSE.
+LASPH = .TRUE.
+ADDGRID = .TRUE.
+ALGO = Normal
+EDIFF = 1E-8
+NELM = 200
+NELMIN = 6
+
+# Fixed experimental lattice and positions.
+IBRION = -1
+NSW = 0
+ISIF = 2
+ISMEAR = -5
+
+LWAVE = .TRUE.
+LCHARG = .TRUE.
+LMAXMIX = 4
+LORBIT = 11
+NEDOS = 3001
+
+LEOS = .TRUE.
+EOS_WF_DETAIL = .TRUE.
+EOS_PROJ_WEIGHT = .TRUE.
+WANNIER90_WIN = "
+dis_num_iter = 1000
+num_iter = 1000
+"

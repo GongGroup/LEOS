@@ -1,0 +1,289 @@
+{
+  "material": "UO2F2",
+  "formula_counts": {
+    "O": 6,
+    "F": 6,
+    "U": 3
+  },
+  "method": "native",
+  "source_directory": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03",
+  "dft_input_source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03",
+  "parameters": {
+    "GGA": "PE",
+    "METAGGA": null,
+    "LDAU": ".TRUE.",
+    "LDAUTYPE": "2",
+    "LDAUL": "-1 -1 3",
+    "LDAUU": "0 0 4",
+    "LDAUJ": "0 0 0",
+    "ISPIN": "2",
+    "MAGMOM": "6*0 6*0 3*2",
+    "NUPDOWN": null,
+    "NELECT": null,
+    "ISMEAR": "0",
+    "SIGMA": "0.05",
+    "ENCUT": "600",
+    "EDIFF": "1E-6",
+    "ISYM": "0",
+    "NBANDS": null,
+    "ISTART": "0",
+    "ICHARG": "2",
+    "NELM": "200",
+    "NSW": "0",
+    "dis_num_iter": "500",
+    "num_iter": "500",
+    "kmesh_tol": "1e-5",
+    "EOS_BETA": null,
+    "EOS_FLOW": null,
+    "LWANNIER90": null,
+    "LWANNIER90_RUN": null
+  },
+  "optimizer": {
+    "dis_num_iter": "500",
+    "num_iter": "500",
+    "num_wann": [
+      60,
+      60
+    ]
+  },
+  "beta_baseline": 10,
+  "beta_note": "Baseline convention; exact scan values are retained in scan files.",
+  "eoscar_present": true,
+  "eoscar_aborted": false,
+  "electronic_converged": true,
+  "normal_vasp_end": true,
+  "existing_assessment": null,
+  "offline_summary": null,
+  "input_files_present": {
+    "CONTCAR": true,
+    "INCAR": true,
+    "KPOINTS": true,
+    "POSCAR": true,
+    "POTCAR": true
+  },
+  "note": "Archived output, not a scientific acceptance label. Source files are unchanged.",
+  "files": [
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/CONTCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/CONTCAR",
+      "source_sha256": "b6992e26091acf2ad549d4563413f1302b0632ac0a3f297ea588dcdc5bf509ef",
+      "source_bytes": 2165,
+      "stored_bytes": 2165,
+      "stored_sha256": "b6992e26091acf2ad549d4563413f1302b0632ac0a3f297ea588dcdc5bf509ef",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/EOSCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/EOSCAR",
+      "source_sha256": "cc53bc66752fe27391666712b32f1fd4e284c582df6e4dd2ec3d0c780ebc63e4",
+      "source_bytes": 24255,
+      "stored_bytes": 24255,
+      "stored_sha256": "cc53bc66752fe27391666712b32f1fd4e284c582df6e4dd2ec3d0c780ebc63e4",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/INCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/INCAR",
+      "source_sha256": "70e98b7aacd2ff94b8a54da71696c32eec37463197b2d0bed3547c2e9b8640a8",
+      "source_bytes": 827,
+      "stored_bytes": 827,
+      "stored_sha256": "70e98b7aacd2ff94b8a54da71696c32eec37463197b2d0bed3547c2e9b8640a8",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/KPOINTS",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/KPOINTS",
+      "source_sha256": "7cff0a88022f02bb53cbdb1cd10d7a0272af7dd41f160fde88c1618003713bfc",
+      "source_bytes": 67,
+      "stored_bytes": 67,
+      "stored_sha256": "7cff0a88022f02bb53cbdb1cd10d7a0272af7dd41f160fde88c1618003713bfc",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/POSCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/POSCAR",
+      "source_sha256": "9b5f50153f5207bcf0724978fd713cf0141faee6d01256530fb5df0a61687fda",
+      "source_bytes": 2303,
+      "stored_bytes": 2303,
+      "stored_sha256": "9b5f50153f5207bcf0724978fd713cf0141faee6d01256530fb5df0a61687fda",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/POTCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/POTCAR",
+      "source_sha256": "7483f9dc88bd189cb34258d652d8a47f2a25decd196bf769d8a377f364d01cd5",
+      "source_bytes": 691880,
+      "stored_bytes": 691880,
+      "stored_sha256": "7483f9dc88bd189cb34258d652d8a47f2a25decd196bf769d8a377f364d01cd5",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/README.zh.txt",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/README.zh.txt",
+      "source_sha256": "c66e98991ced224a31e4b21e05e78d8a82605e1e1427ee9e1b7b488a9ca208b2",
+      "source_bytes": 498,
+      "stored_bytes": 498,
+      "stored_sha256": "c66e98991ced224a31e4b21e05e78d8a82605e1e1427ee9e1b7b488a9ca208b2",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/centres.tsv",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/centres.tsv",
+      "source_sha256": "51c5f9e39008b3009480dafc2524a51066352fa07dc5908539777880c7efdd86",
+      "source_bytes": 5311,
+      "stored_bytes": 5311,
+      "stored_sha256": "51c5f9e39008b3009480dafc2524a51066352fa07dc5908539777880c7efdd86",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/input_check.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/input_check.json",
+      "source_sha256": "c8faefc5e79a964cfbe698f5be5c05630c6d5c15c03a61b60ef8fc3bf75c35a8",
+      "source_bytes": 1343,
+      "stored_bytes": 1343,
+      "stored_sha256": "c8faefc5e79a964cfbe698f5be5c05630c6d5c15c03a61b60ef8fc3bf75c35a8",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/oxidation_states.tsv",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/oxidation_states.tsv",
+      "source_sha256": "6168cb6e7800cbe390c43cd25737e5d358164368fc1922da61a32fe5e4447589",
+      "source_bytes": 257,
+      "stored_bytes": 257,
+      "stored_sha256": "6168cb6e7800cbe390c43cd25737e5d358164368fc1922da61a32fe5e4447589",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/result_summary.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/result_summary.json",
+      "source_sha256": "e6aedf7dd293397b90a18630c18dd2f66fb5501312e1d3d5049a48c1b1afba4d",
+      "source_bytes": 45729,
+      "stored_bytes": 45729,
+      "stored_sha256": "e6aedf7dd293397b90a18630c18dd2f66fb5501312e1d3d5049a48c1b1afba4d",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/wannier90.1.win",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/wannier90.1.win",
+      "source_sha256": "7dd11336e75b9e38d48fc52c696097eb57e822d51c1311abbe4c933b7cbda02e",
+      "source_bytes": 7099,
+      "stored_bytes": 7099,
+      "stored_sha256": "7dd11336e75b9e38d48fc52c696097eb57e822d51c1311abbe4c933b7cbda02e",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/wannier90.2.win",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/wannier90.2.win",
+      "source_sha256": "7dd11336e75b9e38d48fc52c696097eb57e822d51c1311abbe4c933b7cbda02e",
+      "source_bytes": 7099,
+      "stored_bytes": 7099,
+      "stored_sha256": "7dd11336e75b9e38d48fc52c696097eb57e822d51c1311abbe4c933b7cbda02e",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/wannier90.win",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/wannier90.win",
+      "source_sha256": "a105bcf9479499229a63fd50f72626ffb7c0c268d273bea3a4526d980a738f29",
+      "source_bytes": 7097,
+      "stored_bytes": 7097,
+      "stored_sha256": "a105bcf9479499229a63fd50f72626ffb7c0c268d273bea3a4526d980a738f29",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/wannier90.wout",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/wannier90.wout",
+      "source_sha256": "99114fb08d54f3449c1c018dea3e57e006e6cb1be14d17d105d7fb119a703700",
+      "source_bytes": 16687,
+      "stored_bytes": 16687,
+      "stored_sha256": "99114fb08d54f3449c1c018dea3e57e006e6cb1be14d17d105d7fb119a703700",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/beta_flow_20261016_01/RESULT.zh.txt",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/beta_flow_20261016_01/RESULT.zh.txt",
+      "source_sha256": "7f02ca029698a505c018bb6a2b40ad1a83d1630e66fa6a89378f8a1231283c7a",
+      "source_bytes": 1174,
+      "stored_bytes": 1174,
+      "stored_sha256": "7f02ca029698a505c018bb6a2b40ad1a83d1630e66fa6a89378f8a1231283c7a",
+      "gzip": false,
+      "role": "postprocessing"
+    },
+    {
+      "file": "extended_leos_20261022/UO2F2/PBE_U4_s2_nw60-60_d500_l500_m0_native_86d35f39/beta_flow_20261016_01/summary.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/beta_flow_20261016_01/summary.json",
+      "source_sha256": "fbc1c62b2e643b25b7043537d5c4b5f8072cff393e88dab042e3895dae2bdad6",
+      "source_bytes": 1600,
+      "stored_bytes": 1600,
+      "stored_sha256": "fbc1c62b2e643b25b7043537d5c4b5f8072cff393e88dab042e3895dae2bdad6",
+      "gzip": false,
+      "role": "postprocessing"
+    }
+  ],
+  "omitted_from_upload": [
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/IBZKPT",
+      "sha256": "76eb4cb2b3cfe95538d7fd8d6f894770cb091c5fcb8327275133553c6724df8c",
+      "bytes": 3807,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/OSZICAR",
+      "sha256": "fda0f0c8158118c492c4fcc5e462c8076171ca0f819cb268f379c8f1a01de09b",
+      "bytes": 2058,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/OUTCAR",
+      "sha256": "2b0272e41a589431865ee4270198bb9a107c5671ad3871931b0e60432adb9bfc",
+      "bytes": 598366,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/vasp.stderr",
+      "sha256": "a9c467fc1f3fc6487342caa39fa153461ab01cf1d723b20783ae49ca047923a7",
+      "bytes": 162,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/vasp.stdout",
+      "sha256": "63ccce0c4e7abe3319776da1981a23b9aa6cad242c5d563c90afd927f22ad7ed",
+      "bytes": 2985,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/wannier90.1.wout",
+      "sha256": "2520459e9472cf5a752ab488018870ee5dd78c05e6d1e3a846be84239f78943d",
+      "bytes": 2633652,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/wannier90.2.wout",
+      "sha256": "90168ebf50c800b84d8af9cccb292a5e93ecac7548f94723f3422da1d7a4c83e",
+      "bytes": 2633652,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03/beta_flow_20261016_01/all_results.json",
+      "sha256": "cd7df49508eeb102951d49899730d21db5588082bea89bc22fd743acfb9250d3",
+      "bytes": 158262,
+      "reason": "Large log or intermediate; retained on SAI."
+    }
+  ],
+  "archive_policy": "Match existing data/v3: inputs, EOSCAR, centres, small Wannier output and result/scan summaries; omit bulky logs.",
+  "num_wann_channels_note": "Use wannier90.1.wout and wannier90.2.wout; the unnumbered duplicate is not a third spin channel."
+}

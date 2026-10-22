@@ -1,0 +1,169 @@
+{
+  "run_directory": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_20261016_01",
+  "job_metadata": [
+    "job_id=1805314",
+    "partition=4V100",
+    "mpi_ranks=1",
+    "map_by=ppr:1:node:pe=4"
+  ],
+  "vasp_exit_code": 1,
+  "vasp_version": "vasp.6.4.3 19Mar24 (build Oct  1 2026 16:26:15) complex",
+  "electronic_converged": true,
+  "normal_end": false,
+  "energy_TOTEN_eV": null,
+  "total_magnetization_muB": null,
+  "elapsed_vasp_seconds": null,
+  "leos_aborted": false,
+  "stderr": "Warning: ieee_invalid is signaling\nWarning: ieee_divide_by_zero is signaling\nWarning: ieee_underflow is signaling\nWarning: ieee_inexact is signaling\nFORTRAN STOP\n--------------------------------------------------------------------------\nmpirun has exited due to process rank 0 with PID 1141248 on\nnode 4v100n16 exiting improperly. There are three reasons this could occur:\n\n1. this process did not call \"init\" before exiting, but others in\nthe job did. This can cause a job to hang indefinitely while it waits\nfor all processes to call \"init\". By rule, if one process calls \"init\",\nthen ALL processes must call \"init\" prior to termination.\n\n2. this process called \"init\", but exited without calling \"finalize\".\nBy rule, all processes that call \"init\" MUST call \"finalize\" prior to\nexiting or it will be considered an \"abnormal termination\"\n\n3. this process called \"MPI_Abort\" or \"orte_abort\" and the mca parameter\norte_create_session_dirs is set to false. In this case, the run-time cannot\ndetect that the abort call was an abnormal termination. Hence, the only\nerror message you will receive is this one.\n\nThis may have caused other processes in the application to be\nterminated by signals sent by mpirun (as reported here).\n\nYou can avoid this message by specifying -quiet on the mpirun command line.\n--------------------------------------------------------------------------\n",
+  "eos_headers": [],
+  "ion_results": [],
+  "centres": [],
+  "centre_counts": {},
+  "wannier_status": {
+    "wannier90.wout": {
+      "contains_final_state": false,
+      "contains_all_done": false,
+      "convergence_lines": [
+        "|  Convergence tolerence                     :         0.100E-09             |",
+        "|  Convergence window                        :                -1             |",
+        "|  Convergence tolerence                     :         1.000E-10             |",
+        "|  Convergence window                        :                 3             |"
+      ]
+    }
+  },
+  "technical_success": false,
+  "output_files": {
+    "CHG": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "CHGCAR": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "CONTCAR": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "DOSCAR": {
+      "bytes": 169,
+      "sha256": "18fa0c6f0a34ae7b3a2c59548051072c56bfdb7a9b08fb39d6c05dbc2a7d027f"
+    },
+    "EIGENVAL": {
+      "bytes": 195,
+      "sha256": "02bc515bb2b6710605e46991347d4ab5b5b557d89b950540c98cd6c726bda509"
+    },
+    "IBZKPT": {
+      "bytes": 3807,
+      "sha256": "76eb4cb2b3cfe95538d7fd8d6f894770cb091c5fcb8327275133553c6724df8c"
+    },
+    "INCAR": {
+      "bytes": 810,
+      "sha256": "06db2c4110cdeb6c73a03a256ff16a9a30067e82432281677c65fa1b20251c26"
+    },
+    "KPOINTS": {
+      "bytes": 67,
+      "sha256": "7cff0a88022f02bb53cbdb1cd10d7a0272af7dd41f160fde88c1618003713bfc"
+    },
+    "OSZICAR": {
+      "bytes": 1980,
+      "sha256": "c8341de1d784ed24a4e3a6076ee38fe1923882c434400bf4a0d354835d76be02"
+    },
+    "OUTCAR": {
+      "bytes": 583835,
+      "sha256": "c83682caea53fb7d37aa56f009276c27c402d9ed390504c6c4dfd29823bd5feb"
+    },
+    "PCDAT": {
+      "bytes": 234,
+      "sha256": "6daa91b9a7876bac81d8313f73083a1d6d6b18b5f215f84e286e326e93e8bfbd"
+    },
+    "POSCAR": {
+      "bytes": 2303,
+      "sha256": "9b5f50153f5207bcf0724978fd713cf0141faee6d01256530fb5df0a61687fda"
+    },
+    "POTCAR": {
+      "bytes": 691880,
+      "sha256": "7483f9dc88bd189cb34258d652d8a47f2a25decd196bf769d8a377f364d01cd5"
+    },
+    "README.zh.txt": {
+      "bytes": 972,
+      "sha256": "94b8092fb5179500333e01392a5f106bd817e6ac339821ac3b9f2834569dcd23"
+    },
+    "REPORT": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "RUN_STARTED": {
+      "bytes": 26,
+      "sha256": "ad856704013b54310bddb3a2c1d72bb36cafb6dbca234a9ae06c415fcf0aca5a"
+    },
+    "WAVECAR": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "XDATCAR": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "executed_binary.sha256": {
+      "bytes": 125,
+      "sha256": "a3284782e3c41d4d8945d99d36246ca7a7211fb05c51c5be52cfb859e7a3aabb"
+    },
+    "executed_inputs.sha256": {
+      "bytes": 292,
+      "sha256": "6af911bc43102c8193cb54ce0294f80adb0ea16e58e7377f64c57bd063ce66b0"
+    },
+    "gpu_inventory.txt": {
+      "bytes": 105,
+      "sha256": "5b455e409a565a3c09330fb25a79d72ed7fcc4077d7bcbfa3a39bdaf4571cd8d"
+    },
+    "input_check.json": {
+      "bytes": 1293,
+      "sha256": "ac33e1402192896bfa0b4051267658d95d04ca039f8892e2bebff8214ab939ed"
+    },
+    "inspect_result.py": {
+      "bytes": 7028,
+      "sha256": "0c762ae9c94291adc327a886ffaf1d4f36f671bbb52cdf44b6f5337ae3b1e7f4"
+    },
+    "job_metadata.txt": {
+      "bytes": 66,
+      "sha256": "0a2a787e6608f7eec4abc8b67d1b25e2b70c3d3423cdcdad62c4b859eb87e4ef"
+    },
+    "run_hostname.txt": {
+      "bytes": 19,
+      "sha256": "c420f382b83827d8c5d5fd9fe6fd72acc5864badf6280ffa2f0e847e99b7f762"
+    },
+    "runtime_libraries.txt": {
+      "bytes": 5468,
+      "sha256": "f64b9c5cc47590fe81c92d2ad478a18262751832c753886abd0ca115794b0a6d"
+    },
+    "vasp.stderr": {
+      "bytes": 1378,
+      "sha256": "8b7286a4288b5ae23027ea6efa4cd008295f5503f4b9a48ce99da90f8f09896a"
+    },
+    "vasp.stdout": {
+      "bytes": 2783,
+      "sha256": "d3b10b7c5f5f73d06bbfac91fae4e00d293b2bd986e9b0c9653f584d8c0aa650"
+    },
+    "vasp_exit_code.txt": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "vasp_leos_v3.sbatch": {
+      "bytes": 2396,
+      "sha256": "5b9b5004d05663ab50d25e2e30525bb324dcdfe7dd953e9c6fe5e7e9de517e0e"
+    },
+    "vasprun.xml": {
+      "bytes": 34506,
+      "sha256": "8ea3969eb5082de64860d33fec107e923e37cd91541d3e757c8700c82b711010"
+    },
+    "wannier90.win": {
+      "bytes": 7051,
+      "sha256": "b9db1ee9e378a8d8e2360f33a175abd676bd30b9c4bd6659fde7123393a9a04a"
+    },
+    "wannier90.wout": {
+      "bytes": 14133,
+      "sha256": "09e3ced231846e58391b3ee91e52f8cd40281dedd50cd8d0c8aaeb74abb6f6a8"
+    }
+  }
+}

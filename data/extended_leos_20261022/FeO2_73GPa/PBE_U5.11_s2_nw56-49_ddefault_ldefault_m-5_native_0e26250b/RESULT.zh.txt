@@ -1,0 +1,53 @@
+FeO2 73 GPa：直接 LEOS v3 计算结果（2026-10-15）
+
+状态：已完成本次授权计算；程序正常退出，但 Wannier/氧化态结果有明确质量问题。
+SAI 作业 1796134，COMPLETED，退出码 0:0，Slurm 耗时 00:10:14。
+单 V100，节点 8v100v0n12，课题组 sjtu-gongxueqing，improper-gpu。
+VASP 6.4.3 LEOS v3：/home/zhangyanglu/zack/app/vasp.6.4.3-leos-v3/bin/vasp_std
+VASP 实测耗时 605.600 秒。
+
+远端结果：
+/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_20261015_01
+
+输入与自洽
+沿用父目录全部既有 INCAR 参数及 POSCAR、POTCAR、KPOINTS；只新增 LEOS、
+EOS_WF_DETAIL、EOS_PROJ_WEIGHT。输入和执行程序均核对 SHA256。
+a=b=c=4.3488 Å，固定 8 O + 4 Fe 结构；PBE+U，Fe Ueff=5.11 eV。
+ENCUT=600 eV，EDIFF=1e-8，Gamma 5x5x5，ISPIN=2，MAGMOM=8*0.0 4*1.0。
+原 ISTART=0、ICHARG=2 保持不变，没有复制旧波函数进行重启。
+电子自洽 29 步收敛；总能量 -64.09705161 eV，与原静态输出精度内一致。
+总磁矩 8.0000 μB/晶胞，与原静态一致。未优化几何。
+
+Wannier 结果
+中心共 105 个：spin 1 为 56 个，spin 2 为 49 个。
+占据电子数为 103.974121，目标 NELECT=104，绝对偏差 0.025879 e。
+偏差超过原生 EOS_NELECT_WARN=0.01 e，但低于 EOS_NELECT_ABORT=0.35 e。
+两个通道都写出 Final State 和 All done；这不等于满足全部收敛条件。
+spin 1 解缠收敛条件满足；spin 2 明确报告解缠收敛条件未满足。
+总展宽分别为 29.611432585 和 46.665544182 Å²；
+EOSCAR 中逐中心展宽范围分别约为 0.2970–0.8630 和 0.2734–2.9622 Å²。
+N_LOST_STATES=0；N_LOST_STATES_DIFFUSE=2，N_LOST_E_DIFFUSE=0.004470 e。
+
+原生 EOSCAR 氧化态（保留两个结果列，不相互替换）
+原子顺序：O 1–8，Fe 9–12。
+OS(int)：4 个 Fe 全部 +3；O 为 4 个 -1、4 个 -2；氧化态总和为 0。
+OS(flow)：Fe 9–12 分别 +4、+3、+5、+4；8 个 O 全部 -2；总和为 0。
+OS(raw)：Fe 约 +3.007 至 +3.128；O 约 -1.734 至 -1.481。
+FLOW_TARGET=104，FLOW_GHOST=1，FLOW_INFEASIBLE=0，FLOW_N_STRAY=0。
+
+判断
+本次计算成功生成原生 Wannier 中心和 EOSCAR，但第二通道解缠未收敛，
+电子数偏差超过警告阈值，两种整数分配也明显不一致。
+不能据此把 Fe 的 +3/+4/+5 差异认定为真实混合价态，也不能把其中一列当作
+已经验证的氧化态真值。完整保留本次原始结果，未另改参数重算或加入训练。
+stderr 仍含 IEEE invalid/divide_by_zero/underflow/inexact 警告和 FORTRAN STOP；
+这些警告在原静态计算中也存在。VASP 正常结束，作业退出码为 0。
+stdout 另提示四面体法对金属的力/应力可能不准确；未改变原 ISMEAR=-5。
+
+文件
+EOSCAR：原生氧化态、中心占据、展宽和投影记录。
+centres.tsv：105 个中心的自旋、位置、占据和展宽。
+oxidation_states.tsv：逐原子的 OS(raw)、OS(int)、OS(flow)。
+result_summary.json：结果解析、Wannier 日志状态和原始输出文件哈希清单。
+input_check.json：原始输入保留与新增 LEOS 字段记录。
+完整压缩包保留 OUTCAR、vasprun.xml、WAVECAR、CHGCAR、Wannier 输出及执行脚本。

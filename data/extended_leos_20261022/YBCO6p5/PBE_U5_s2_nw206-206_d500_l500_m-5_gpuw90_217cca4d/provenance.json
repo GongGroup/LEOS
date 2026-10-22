@@ -1,0 +1,48 @@
+{
+  "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/YBCO6p5/iter_500",
+  "job_id": "1888867",
+  "num_wann": [
+    206,
+    206
+  ],
+  "dis_num_iter": 500,
+  "num_iter": 500,
+  "step": 1.0,
+  "ispin": 2,
+  "device": "Tesla V100-SXM2-32GB",
+  "torch": "2.6.0+cu124",
+  "input_sha256": {
+    "POSCAR": "c74b1a88e1a1249c9733c4da849499ee490c7f184c7a20a648e89c2ce7ede8c8",
+    "INCAR": "fc8d276af871795303a71bd4212d0ab0f0b275528af516ddac5986606a945d16",
+    "EOSCAR": "d0f1eb196a962f61fa66de231d486e3f526bd4b1823043e88d06d576c6baf1fa",
+    "EIGENVAL": "e94094cf13d30c478475dd98c4116befcc058ab0abecd8e4f4ef333abf641c3d",
+    "wannier90.1.win": "779cda96b9d1b76621056cff424d38c2bd6cc2cc89b9e4fe737b855c416b2f0a",
+    "wannier90.1.mmn": "f517ce52be409e242054ac685996f569416a17fa14ac4e73df9c60b32d93ebde",
+    "wannier90.1.amn": "c81e8f6bd8d6856b167172ec2ba2b9a6eaecf9da645055a85550a27a846cd2c7",
+    "wannier90.1.eig": "1e3a5722dd5799f816a5459e845b390f31e0589371df4f123626a3841f5bba71",
+    "wannier90.2.win": "779cda96b9d1b76621056cff424d38c2bd6cc2cc89b9e4fe737b855c416b2f0a",
+    "wannier90.2.mmn": "9baa0c1e1007f3ea0d82a37b9dc312c6d8c48a651a007ab64abb93e620f34c3f",
+    "wannier90.2.amn": "741808331e67ea99557a8b16b2d5b8c99e47841eb233182c10d71b8dbdec1423",
+    "wannier90.2.eig": "cfccce7b845154f9034f4675667f4fe4fbbf207ebac8cc4f08d6143703196dce"
+  },
+  "code_sha256": {
+    "code/gpuw90/wannierise.py": "b3a48beb27356a1fbfb0d658c6ec936337d85386e607ed0b1e77dc2ec067091a",
+    "code/gpuw90/fd_check.py": "f4ef2ced8c56d24aa3bbd9421de90af0a972e1dd7994d4d8b78e57fa23879804",
+    "code/gpuw90/test_guards.py": "3f7a140e24e8305001b29d5269ac51940a3c637ed90c145870c600a46545eac7",
+    "code/gpuw90/bench_gpu.py": "678555972a40eac9cae2489762a88b8ff7223da9db55168027d4ce0e93fc44cd",
+    "code/gpuw90/check_dis_against_w90.py": "f3ddb52eb788386cb0654e64da3eddae8dad12801587755b838045ba2b6a6304",
+    "code/gpuw90/disentangle.py": "8114e399984e50d0663286a4461838ef5879b28bc6e94833b4020bfffaf985ad",
+    "code/gpuw90/check_against_w90.py": "26950cc4ffbdd3a7ff24822a471713f033a73a8728879b6ac9ff3ce94821fc41",
+    "code/gpuw90/io_w90.py": "1b8864f10cf1d638099d4e42e5d22fbae0170e57a591239f673449340741ffd5",
+    "code/pyleos/capacity.py": "bff692b6380d0ee9335900c1c5a7f43c0f0fcd2ec866de28151c78ef1ceba391",
+    "code/pyleos/__init__.py": "2796349cc4441c146ac87edcb2aa26bb3baa3f3e9dea7b74f9ff52bfffeb1874",
+    "code/pyleos/transport.py": "2e41a5ed0a83eb7b4598b23819a4cdcc488e2fa7c983355812f4c329175cc188",
+    "code/pyleos/parsers.py": "c9e99fa5ce2886322a4b8d3bb497c2179c3ec851f00dc2ab9e306d4662653022"
+  },
+  "runner_sha256": "faa83110f110c4553c6f49db521ae0eda202591682ad1cf576c2be3357086b2d",
+  "vasp_run": false,
+  "training_run": false,
+  "window_rule": "Same VASP automatic frozen-window heuristic applied to requested count",
+  "projection_rule": "Use leading requested columns of original SCDM AMN",
+  "limitation": "Reduced subspace diagnostic. Native LEOS rejects this count for partially occupied bands."
+}

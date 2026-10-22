@@ -1,0 +1,641 @@
+{
+  "run_directory": "/home/zhangyanglu/zack/leos.sample/FeO2-sai/static_leos_v3_20261015_01",
+  "job_metadata": [
+    "job_id=1795064",
+    "partition=4V100",
+    "mpi_ranks=1",
+    "map_by=ppr:1:node:pe=4"
+  ],
+  "vasp_exit_code": 0,
+  "vasp_version": "vasp.6.4.3 19Mar24 (build Oct  1 2026 16:26:15) complex",
+  "electronic_converged": true,
+  "normal_end": true,
+  "energy_TOTEN_eV": -18.17473625,
+  "total_magnetization_muB": 3.9978,
+  "elapsed_vasp_seconds": 149.764,
+  "leos_aborted": false,
+  "eos_headers": [
+    "# LEOS: Wannier-centre counting + IUPAC(2014) rule",
+    "# EOS_ENEG_TOL =    0.05000",
+    "# EOS_ONSITE_CUT =    0.35000",
+    "# EOS_O_MAX =    8.00000",
+    "# NELECT(Wannier) =      26.010831",
+    "# |dNe| =   1.0831E-02",
+    "# N_LOST_STATES = 0",
+    "# N_LOST_E =       0.000000",
+    "# N_LOST_STATES_DIFFUSE = 0",
+    "# N_LOST_E_DIFFUSE =       0.000000",
+    "# EOS_NELECT_WARN =   1.0000E-02",
+    "# EOS_NELECT_ABORT =   3.5000E-01",
+    "# FLOW_MODE = tier1 min-cost flow (geometry + Allen, beta =  10.00)",
+    "# FLOW_TARGET = 26",
+    "# FLOW_GHOST = 1",
+    "# FLOW_INFEASIBLE = 0",
+    "# FLOW_N_STRAY = 11",
+    "# FLOW_COST =  -15918.903955",
+    "# ion  el   ZVAL    n_e(assigned)   OS(raw)   OS(int)      dOS  OS(flow)",
+    "# Sum OS(int) = 0",
+    "# Sum OS(flow) = 0",
+    "# Target sum  = 0",
+    "# |dOS|_max  =    0.011",
+    "# |dOS|_mean =    0.004",
+    "# |dOS|_rms  =    0.006",
+    "#WP spin    wf   [atom  weight] x4  weight_sum  (QION-weighted WF composition)",
+    "#WP  1     1     1   1.0479     2   0.0355     3   0.0347     0   0.0000    1.1181",
+    "#WP  1     2     1   1.0093     2   0.0290     3   0.0284     0   0.0000    1.0667",
+    "#WP  1     3     1   1.1035     2   0.0104     3   0.0102     0   0.0000    1.1241",
+    "#WP  1     4     1   1.0927     2   0.0031     3   0.0031     0   0.0000    1.0989",
+    "#WP  1     5     2   0.4670     3   0.4555     1   0.4163     0   0.0000    1.3388",
+    "#WP  1     6     1   0.6470     3   0.4579     2   0.4467     0   0.0000    1.5517",
+    "#WP  1     7     1   1.0967     2   0.0036     3   0.0036     0   0.0000    1.1039",
+    "#WP  1     8     1   0.9395     2   0.1229     3   0.1199     0   0.0000    1.1823",
+    "#WP  1     9     1   1.1826     2   0.0077     3   0.0077     0   0.0000    1.1980",
+    "#WP  1    10     1   0.9600     2   0.1423     3   0.1389     0   0.0000    1.2412",
+    "#WP  1    11     1   1.0619     2   0.1247     3   0.1217     0   0.0000    1.3084",
+    "#WP  1    12     1   0.6151     3   0.4573     2   0.4460     0   0.0000    1.5184",
+    "#WP  1    13     1   0.5396     2   0.4609     3   0.4495     0   0.0000    1.4500",
+    "#WP  1    14     3   0.4798     2   0.4680     1   0.1862     0   0.0000    1.1339",
+    "#WP  1    15     1   0.4933     2   0.4628     3   0.4514     0   0.0000    1.4075",
+    "#WP  1    16     1   0.6119     3   0.4574     2   0.4461     0   0.0000    1.5153",
+    "#WP  2     1     1   0.4984     3   0.3206     2   0.3205     0   0.0000    1.1395",
+    "#WP  2     2     1   0.4287     2   0.3498     3   0.3484     0   0.0000    1.1268",
+    "#WP  2     3     1   0.4698     3   0.3205     2   0.3098     0   0.0000    1.1000",
+    "#WP  2     4     1   0.6115     2   0.2459     3   0.2392     0   0.0000    1.0966",
+    "#WP  2     5     1   0.4701     2   0.3063     3   0.2944     0   0.0000    1.0707",
+    "#WP  2     6     1   0.5312     2   0.2858     3   0.2766     0   0.0000    1.0936",
+    "#WP  2     7     1   0.5114     2   0.2881     3   0.2836     0   0.0000    1.0831",
+    "#WP  2     8     1   0.5543     2   0.2859     3   0.2846     0   0.0000    1.1248",
+    "#WP  2     9     1   0.3809     3   0.3340     2   0.3263     0   0.0000    1.0412",
+    "#WP  2    10     1   0.5801     3   0.2580     2   0.2487     0   0.0000    1.0868",
+    "#WP  2    11     1   0.5052     3   0.2827     2   0.2755     0   0.0000    1.0633"
+  ],
+  "ion_results": [
+    {
+      "atom": 1,
+      "element": "Fe",
+      "zval": 14.0,
+      "assigned_electrons": 10.010831,
+      "os_raw": 3.989,
+      "os_integer": 4,
+      "os_flow": 4
+    },
+    {
+      "atom": 2,
+      "element": "O",
+      "zval": 6.0,
+      "assigned_electrons": 8.0,
+      "os_raw": -2.0,
+      "os_integer": -2,
+      "os_flow": -2
+    },
+    {
+      "atom": 3,
+      "element": "O",
+      "zval": 6.0,
+      "assigned_electrons": 8.0,
+      "os_raw": -2.0,
+      "os_integer": -2,
+      "os_flow": -2
+    }
+  ],
+  "centres": [
+    {
+      "spin": 1,
+      "index": 1,
+      "occupation_e": 0.987164,
+      "cartesian_A": [
+        -0.011213,
+        -0.184208,
+        2.244631
+      ],
+      "spread_A2": 0.6897
+    },
+    {
+      "spin": 1,
+      "index": 2,
+      "occupation_e": 0.995,
+      "cartesian_A": [
+        -0.151027,
+        -0.131565,
+        -2.374645
+      ],
+      "spread_A2": 0.5996
+    },
+    {
+      "spin": 1,
+      "index": 3,
+      "occupation_e": 0.975801,
+      "cartesian_A": [
+        -0.17332,
+        0.044455,
+        2.282797
+      ],
+      "spread_A2": 0.3824
+    },
+    {
+      "spin": 1,
+      "index": 4,
+      "occupation_e": 0.980227,
+      "cartesian_A": [
+        0.110642,
+        -0.115164,
+        -2.248919
+      ],
+      "spread_A2": 0.2829
+    },
+    {
+      "spin": 1,
+      "index": 5,
+      "occupation_e": 0.893244,
+      "cartesian_A": [
+        1.476347,
+        -1.124927,
+        1.31884
+      ],
+      "spread_A2": 0.6531
+    },
+    {
+      "spin": 1,
+      "index": 6,
+      "occupation_e": 0.897221,
+      "cartesian_A": [
+        -1.223255,
+        0.752242,
+        -1.659152
+      ],
+      "spread_A2": 0.5548
+    },
+    {
+      "spin": 1,
+      "index": 7,
+      "occupation_e": 0.979159,
+      "cartesian_A": [
+        -0.0389,
+        0.114822,
+        -2.222279
+      ],
+      "spread_A2": 0.286
+    },
+    {
+      "spin": 1,
+      "index": 8,
+      "occupation_e": 0.973728,
+      "cartesian_A": [
+        0.005391,
+        0.216092,
+        2.195049
+      ],
+      "spread_A2": 1.7313
+    },
+    {
+      "spin": 1,
+      "index": 9,
+      "occupation_e": 0.935369,
+      "cartesian_A": [
+        0.15067,
+        0.111307,
+        -2.309108
+      ],
+      "spread_A2": 0.3046
+    },
+    {
+      "spin": 1,
+      "index": 10,
+      "occupation_e": 0.959478,
+      "cartesian_A": [
+        0.212206,
+        -0.035916,
+        2.17215
+      ],
+      "spread_A2": 1.9387
+    },
+    {
+      "spin": 1,
+      "index": 11,
+      "occupation_e": 0.983259,
+      "cartesian_A": [
+        0.028372,
+        0.042457,
+        2.095285
+      ],
+      "spread_A2": 1.745
+    },
+    {
+      "spin": 1,
+      "index": 12,
+      "occupation_e": 0.880331,
+      "cartesian_A": [
+        -1.561629,
+        1.192829,
+        -1.559026
+      ],
+      "spread_A2": 0.5639
+    },
+    {
+      "spin": 1,
+      "index": 13,
+      "occupation_e": 0.868805,
+      "cartesian_A": [
+        -1.220025,
+        -0.734362,
+        1.416409
+      ],
+      "spread_A2": 0.6521
+    },
+    {
+      "spin": 1,
+      "index": 14,
+      "occupation_e": 0.945679,
+      "cartesian_A": [
+        -1.42683,
+        0.841872,
+        -1.171252
+      ],
+      "spread_A2": 0.5469
+    },
+    {
+      "spin": 1,
+      "index": 15,
+      "occupation_e": 0.877415,
+      "cartesian_A": [
+        1.294135,
+        -0.682017,
+        1.372818
+      ],
+      "spread_A2": 0.6934
+    },
+    {
+      "spin": 1,
+      "index": 16,
+      "occupation_e": 0.878953,
+      "cartesian_A": [
+        -1.771781,
+        0.667772,
+        -1.550785
+      ],
+      "spread_A2": 0.564
+    },
+    {
+      "spin": 2,
+      "index": 1,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        -0.424188,
+        -0.038354,
+        -0.176122
+      ],
+      "spread_A2": 12.3267
+    },
+    {
+      "spin": 2,
+      "index": 2,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        0.992074,
+        -0.125668,
+        0.592959
+      ],
+      "spread_A2": 16.2133
+    },
+    {
+      "spin": 2,
+      "index": 3,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        -0.178492,
+        0.274844,
+        0.397762
+      ],
+      "spread_A2": 16.4832
+    },
+    {
+      "spin": 2,
+      "index": 4,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        0.21588,
+        -0.149889,
+        0.407243
+      ],
+      "spread_A2": 17.0787
+    },
+    {
+      "spin": 2,
+      "index": 5,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        0.660916,
+        -0.229464,
+        -0.392322
+      ],
+      "spread_A2": 16.6213
+    },
+    {
+      "spin": 2,
+      "index": 6,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        1.679713,
+        -0.013712,
+        0.092722
+      ],
+      "spread_A2": 15.6747
+    },
+    {
+      "spin": 2,
+      "index": 7,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        0.805981,
+        -0.001139,
+        -0.193739
+      ],
+      "spread_A2": 16.3894
+    },
+    {
+      "spin": 2,
+      "index": 8,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        2.177443,
+        0.056405,
+        0.069706
+      ],
+      "spread_A2": 13.9795
+    },
+    {
+      "spin": 2,
+      "index": 9,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        1.66831,
+        0.120226,
+        0.021417
+      ],
+      "spread_A2": 14.4821
+    },
+    {
+      "spin": 2,
+      "index": 10,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        2.347666,
+        0.28942,
+        0.07325
+      ],
+      "spread_A2": 17.1502
+    },
+    {
+      "spin": 2,
+      "index": 11,
+      "occupation_e": 1.0,
+      "cartesian_A": [
+        1.361275,
+        -0.08637,
+        -0.106801
+      ],
+      "spread_A2": 13.2532
+    }
+  ],
+  "centre_counts": {
+    "1": 16,
+    "2": 11
+  },
+  "wannier_status": {
+    "wannier90.1.wout": {
+      "contains_final_state": true,
+      "contains_all_done": true,
+      "convergence_lines": [
+        "|  Convergence tolerence                     :         0.100E-09             |",
+        "|  Convergence window                        :                -1             |",
+        "|  Convergence tolerence                     :         1.000E-10             |",
+        "|  Convergence window                        :                 3             |",
+        "<<< Disentanglement convergence criteria satisfied >>>"
+      ]
+    },
+    "wannier90.2.wout": {
+      "contains_final_state": true,
+      "contains_all_done": true,
+      "convergence_lines": [
+        "|  Convergence tolerence                     :         0.100E-09             |",
+        "|  Convergence window                        :                -1             |",
+        "|  Convergence tolerence                     :         1.000E-10             |",
+        "|  Convergence window                        :                 3             |",
+        "<<< Disentanglement convergence criteria satisfied >>>"
+      ]
+    },
+    "wannier90.wout": {
+      "contains_final_state": false,
+      "contains_all_done": false,
+      "convergence_lines": [
+        "|  Convergence tolerence                     :         0.100E-09             |",
+        "|  Convergence window                        :                -1             |",
+        "|  Convergence tolerence                     :         1.000E-10             |",
+        "|  Convergence window                        :                 3             |"
+      ]
+    }
+  },
+  "output_files": {
+    "AECCAR0": {
+      "bytes": 3019489,
+      "sha256": "8f46d3026efd6fa18e703c41e0bf3dfd8d0e6877e624ecb25ba7b3c271374283"
+    },
+    "AECCAR1": {
+      "bytes": 3019489,
+      "sha256": "e6d44421e899aefb5f42be2f3afbdc956745b7407a116ce9cf36e262c2e5fdf2"
+    },
+    "AECCAR2": {
+      "bytes": 3019489,
+      "sha256": "bc625c9f5cfee4f4ac8c4eef4888186ffc3228dbaf6e65c933d1b9d7314433f8"
+    },
+    "CHG": {
+      "bytes": 4014835,
+      "sha256": "d8e0b2c8cf7596283a5bb627e1df4b5014733c66df90de3fd002139fd7a6821f"
+    },
+    "CHGCAR": {
+      "bytes": 6045131,
+      "sha256": "2838eeb2f44c6693039181b4714c0ad2764c9b9139138c4fc02d6048ec526225"
+    },
+    "CONTCAR": {
+      "bytes": 635,
+      "sha256": "5ff590c751d890206d6838cddc4038b1939a9f72c332da4ae02eb2fb21753c25"
+    },
+    "DOSCAR": {
+      "bytes": 224393,
+      "sha256": "fd280376ce130c4a709ebad4a8c2a9fd5ffc867b4e51c47c950826d21fa9a2b0"
+    },
+    "EIGENVAL": {
+      "bytes": 53915,
+      "sha256": "61dd07910f56f150d7cad3376e57506535db6dec0ad421540411dd9725feef63"
+    },
+    "EOSCAR": {
+      "bytes": 6153,
+      "sha256": "6ab804f27b3373a8970e98b785e91937ccaca5783ae250ac784af04e2b79ce4a"
+    },
+    "IBZKPT": {
+      "bytes": 25845,
+      "sha256": "3310ab811a18aa26dd0b892c8a034eefe55efca4a07d7f1377e237dcc131ea1c"
+    },
+    "INCAR": {
+      "bytes": 520,
+      "sha256": "f1d216ad859392709ba806ad166adddfb332183badb657dab919ad05d7f9eabd"
+    },
+    "KPOINTS": {
+      "bytes": 66,
+      "sha256": "8ac6fe1d02a38cc4358e155ca7d04b51d3c8b89c915752e583d6270e14fc1bd6"
+    },
+    "OSZICAR": {
+      "bytes": 1500,
+      "sha256": "632bebfc43ad51a66902d776ef3ad7f0defd93b58f0e43ebd2e34e5802b1ca47"
+    },
+    "OUTCAR": {
+      "bytes": 196694,
+      "sha256": "1031b858d410a0eee272edb27ca294b9921b79cfa0b3aaf999ccdfae9eee8691"
+    },
+    "PCDAT": {
+      "bytes": 234,
+      "sha256": "dbbc689eccb908cc90dcf28201fbec983f9ed69a19bd452fd173d4def6f4294f"
+    },
+    "POSCAR": {
+      "bytes": 430,
+      "sha256": "b90fd80c45a5b3bb7a126ca5965b8c8c5856bb235a420e5d9aca801f43d7097a"
+    },
+    "POTCAR": {
+      "bytes": 327371,
+      "sha256": "005b5e8ff7f672d2e6eedbb10b26d7116cc0a01b2bac906b9145e44807bc2866"
+    },
+    "PROCAR": {
+      "bytes": 702479,
+      "sha256": "2a5bb9e842cf77bfc1e82795dc0b8a598de7955af2647a751bc2679325bcb8c2"
+    },
+    "README.zh.txt": {
+      "bytes": 1518,
+      "sha256": "5d62b598ecaee576b1a6497837c511a9cc772e6a09ee550a6f61c33fe8cd39dd"
+    },
+    "REPORT": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "RUN_STARTED": {
+      "bytes": 26,
+      "sha256": "3c445bf74b322d81e0b0d28f32e97f477ea5205ad6d7702f240d06774274cf6b"
+    },
+    "WAVECAR": {
+      "bytes": 13805856,
+      "sha256": "850a6b3a6801c9de67a0e276c847a9fc1468b076748a1473e31644ee25105664"
+    },
+    "XDATCAR": {
+      "bytes": 335,
+      "sha256": "2c6047592306170efce7d01911e1ddd4cdbe377aaec1c4a3b6f3057233d0a2dd"
+    },
+    "executed_binary.sha256": {
+      "bytes": 125,
+      "sha256": "a3284782e3c41d4d8945d99d36246ca7a7211fb05c51c5be52cfb859e7a3aabb"
+    },
+    "gpu_inventory.txt": {
+      "bytes": 105,
+      "sha256": "aeff56004139c5f724c0ea83084b796c036744808648336d66587343b00b8264"
+    },
+    "input_check.json": {
+      "bytes": 1166,
+      "sha256": "09035485204ec5f938fc4caddf9cd692d53134d976e80fcd909947b4a141e08c"
+    },
+    "inspect_result.py": {
+      "bytes": 7142,
+      "sha256": "354373f363992a99e0614c80a4b7bc7e1869c669b7aa27fd01c77d57abe60d64"
+    },
+    "job_metadata.txt": {
+      "bytes": 66,
+      "sha256": "f69aa4bb355166bd9381a2b8e12ec7cd7e92590f2289c436fce223a75fbed86f"
+    },
+    "run_hostname.txt": {
+      "bytes": 19,
+      "sha256": "cc5423b027abffb2d197011190267caadeddbbbdfaed0056b6cccd7cd5f1db9c"
+    },
+    "runtime_libraries.txt": {
+      "bytes": 5468,
+      "sha256": "38e31de50aaf07f57ddf660b00c6ed6f40463f4906229e4d46226edf5b6fbe39"
+    },
+    "submission.json": {
+      "bytes": 550,
+      "sha256": "2848b362fc5b950940f1a0aae8b102e4f6dc7adee92b6129312d3b9f64ad24cf"
+    },
+    "vasp.stderr": {
+      "bytes": 162,
+      "sha256": "a9c467fc1f3fc6487342caa39fa153461ab01cf1d723b20783ae49ca047923a7"
+    },
+    "vasp.stdout": {
+      "bytes": 5403,
+      "sha256": "4b0be6dde9ecb250c8fbc6e6b9fe262352de220e03ea2d27c20f0e899b5b6ac9"
+    },
+    "vasp_exit_code.txt": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "vasp_leos_v3.sbatch": {
+      "bytes": 2206,
+      "sha256": "d065251fdc36156e1d03e7f7c3e1e6599ae5cc367e1bc3347d758c72417e406a"
+    },
+    "vasprun.xml": {
+      "bytes": 948552,
+      "sha256": "6e13360516b09312868547dd36d6314c1f970b00f610ab1cd31eafae28352b3f"
+    },
+    "wannier90.1.amn": {
+      "bytes": 5324902,
+      "sha256": "8424f69278af086680b07f7a8aea70c2f5e6012abf3a146bdd6abb94d99a4f38"
+    },
+    "wannier90.1.chk": {
+      "bytes": 13470361,
+      "sha256": "10606b5c30053eb7bf65489a3573a38db4c49579403da9f47e766951b2241d4e"
+    },
+    "wannier90.1.eig": {
+      "bytes": 300800,
+      "sha256": "7eeef68d670f309a1254d9511147191b7a5ca9e30bfe8886dc48aac17fa8687a"
+    },
+    "wannier90.1.mmn": {
+      "bytes": 37954662,
+      "sha256": "11709c900efbf43e3005ad24bed7f069162d134aff92390d2c4e668b4358e15d"
+    },
+    "wannier90.1.win": {
+      "bytes": 20024,
+      "sha256": "27de5129ac31ab25d6300148a05b2bbff690313eb1e0e8cdc888cddaffd08010"
+    },
+    "wannier90.1.wout": {
+      "bytes": 186648,
+      "sha256": "a26c5c7b183c00e821bea9ef0554ad42da4eb7599fc95cd606f925af7ebb14f4"
+    },
+    "wannier90.2.amn": {
+      "bytes": 5324902,
+      "sha256": "5509aae9146db70f8aa379c795ad3dbbffff6c4fb12db38f638f49e4c7e0e7be"
+    },
+    "wannier90.2.chk": {
+      "bytes": 6737401,
+      "sha256": "35598cd272c08611ddf9ea4e083e21e9da8e4f69d15ec2cef6c460d7b37f4777"
+    },
+    "wannier90.2.eig": {
+      "bytes": 300800,
+      "sha256": "aa4bf6e5e105329ffbe81230fdfdff8d42abe219a31172113da7849e4cd0f17d"
+    },
+    "wannier90.2.mmn": {
+      "bytes": 37954662,
+      "sha256": "c112739585fdcd4281a27bc860a5cf189fdc9ce5c9849701f12e56e70fe3faee"
+    },
+    "wannier90.2.win": {
+      "bytes": 20023,
+      "sha256": "a0f85d5a0c7e966cbf1465418f04e7d7856b18f81d72bf453d44f0dc1a2a0a17"
+    },
+    "wannier90.2.wout": {
+      "bytes": 145848,
+      "sha256": "b94dee1c8c6192444290545a5ae1c3d3a2f062fff253fed8bf5f7ef200f1b74a"
+    },
+    "wannier90.win": {
+      "bytes": 20023,
+      "sha256": "9095c02b3ff361c735a4ee7044267f7e9f00eb553eeb7a1579837d5655ef6a9d"
+    },
+    "wannier90.wout": {
+      "bytes": 15727,
+      "sha256": "b588a00e61ae28d06d9185928698310204a37368bffc17da832e4cb72c50bd0c"
+    }
+  },
+  "technical_success": true
+}

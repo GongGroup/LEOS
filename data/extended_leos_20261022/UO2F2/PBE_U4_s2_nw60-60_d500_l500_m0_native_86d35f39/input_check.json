@@ -1,0 +1,34 @@
+{
+  "source": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015",
+  "run_directory": "/home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03",
+  "binary": "/home/zhangyanglu/zack/app/vasp.6.4.3-leos-v3/bin/vasp_std",
+  "binary_sha256": "26ebfa0d8c79a170a3b9f04af6b2ef1c9af40293b1a705bf6b51d8438208d9b6",
+  "source_incar_sha256": "ff5114a14edb39e87b83e0ea0969e8b6d0f32da4785126a7a3add72d35a851f5",
+  "input_sha256": {
+    "POSCAR": "9b5f50153f5207bcf0724978fd713cf0141faee6d01256530fb5df0a61687fda",
+    "KPOINTS": "7cff0a88022f02bb53cbdb1cd10d7a0272af7dd41f160fde88c1618003713bfc",
+    "POTCAR": "7483f9dc88bd189cb34258d652d8a47f2a25decd196bf769d8a377f364d01cd5",
+    "INCAR": "70e98b7aacd2ff94b8a54da71696c32eec37463197b2d0bed3547c2e9b8640a8"
+  },
+  "changed_original_fields": {
+    "IBRION": [
+      "2",
+      "-1"
+    ],
+    "NSW": [
+      "200",
+      "0"
+    ]
+  },
+  "added_fields": {
+    "LEOS": ".TRUE.",
+    "EOS_WF_DETAIL": ".TRUE.",
+    "EOS_PROJ_WEIGHT": ".TRUE.",
+    "WANNIER90_WIN": "\"",
+    "KMESH_TOL": "1E-5",
+    "DIS_NUM_ITER": "500",
+    "NUM_ITER": "500"
+  },
+  "initialization": "Original ISTART=0, ICHARG=2; no restart files copied",
+  "wannier_protocol": "Native LEOS v3; dis_num_iter=500, num_iter=500; kmesh_tol=1e-5; default beta=10; automatic counts"
+}

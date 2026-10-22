@@ -1,0 +1,298 @@
+{
+  "material": "FeO2_73GPa",
+  "formula_counts": {
+    "O": 8,
+    "Fe": 4
+  },
+  "method": "native",
+  "source_directory": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01",
+  "dft_input_source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01",
+  "parameters": {
+    "GGA": "PE",
+    "METAGGA": null,
+    "LDAU": ".TRUE.",
+    "LDAUTYPE": "2",
+    "LDAUL": "-1 2",
+    "LDAUU": "0.0 5.11",
+    "LDAUJ": "0.0 0.0",
+    "ISPIN": "2",
+    "MAGMOM": "8*0.0 4*1.0",
+    "NUPDOWN": null,
+    "NELECT": null,
+    "ISMEAR": "-5",
+    "SIGMA": null,
+    "ENCUT": "600",
+    "EDIFF": "1E-8",
+    "ISYM": null,
+    "NBANDS": null,
+    "ISTART": "0",
+    "ICHARG": "2",
+    "NELM": "200",
+    "NSW": "0",
+    "dis_num_iter": "1000",
+    "num_iter": "1000",
+    "kmesh_tol": null,
+    "EOS_BETA": null,
+    "EOS_FLOW": null,
+    "LWANNIER90": null,
+    "LWANNIER90_RUN": null
+  },
+  "optimizer": {
+    "dis_num_iter": "1000",
+    "num_iter": "1000",
+    "num_wann": [
+      56,
+      49
+    ]
+  },
+  "beta_baseline": 10,
+  "beta_note": "Baseline convention; exact scan values are retained in scan files.",
+  "eoscar_present": true,
+  "eoscar_aborted": false,
+  "electronic_converged": true,
+  "normal_vasp_end": true,
+  "existing_assessment": null,
+  "offline_summary": null,
+  "input_files_present": {
+    "CONTCAR": true,
+    "INCAR": true,
+    "KPOINTS": true,
+    "POSCAR": true,
+    "POTCAR": true
+  },
+  "note": "Archived output, not a scientific acceptance label. Source files are unchanged.",
+  "files": [
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/CONTCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/CONTCAR",
+      "source_sha256": "e25da1a0a05fc98ac598436df1ddc9d21f4ce573d8349eb2213aaaa9bc05fe3e",
+      "source_bytes": 1788,
+      "stored_bytes": 1788,
+      "stored_sha256": "e25da1a0a05fc98ac598436df1ddc9d21f4ce573d8349eb2213aaaa9bc05fe3e",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/EOSCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/EOSCAR",
+      "source_sha256": "8572d7e3586bdaa78bf7e6767b2d7903a9ece45f03f909ad6e0cbb4cbb448129",
+      "source_bytes": 21404,
+      "stored_bytes": 21404,
+      "stored_sha256": "8572d7e3586bdaa78bf7e6767b2d7903a9ece45f03f909ad6e0cbb4cbb448129",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/INCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/INCAR",
+      "source_sha256": "b49716c1ef294ffe59f43dc0938e610600143d08c09a5c3d129a3dca2b4ac705",
+      "source_bytes": 878,
+      "stored_bytes": 878,
+      "stored_sha256": "b49716c1ef294ffe59f43dc0938e610600143d08c09a5c3d129a3dca2b4ac705",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/KPOINTS",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/KPOINTS",
+      "source_sha256": "f18d26f5327587ca93fa1c9cd799dc4cee650935635dea88b910dda1c93c1486",
+      "source_bytes": 27,
+      "stored_bytes": 27,
+      "stored_sha256": "f18d26f5327587ca93fa1c9cd799dc4cee650935635dea88b910dda1c93c1486",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/POSCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/POSCAR",
+      "source_sha256": "71b5c6a8ad6eff383a2204ac9310339117e9a3526b1ab8a2e79dcde629f32791",
+      "source_bytes": 838,
+      "stored_bytes": 838,
+      "stored_sha256": "71b5c6a8ad6eff383a2204ac9310339117e9a3526b1ab8a2e79dcde629f32791",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/POTCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/POTCAR",
+      "source_sha256": "66724a049761fe7a5ff1c09bee3e5caee4597b44787f31d88144006259cd2818",
+      "source_bytes": 459213,
+      "stored_bytes": 459213,
+      "stored_sha256": "66724a049761fe7a5ff1c09bee3e5caee4597b44787f31d88144006259cd2818",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/centres.tsv",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/centres.tsv",
+      "source_sha256": "41c1e8b5bb0cc5f0f2b41c08e97b78da6a41ef1cc1ddb98c81b4111ec418a174",
+      "source_bytes": 5170,
+      "stored_bytes": 5170,
+      "stored_sha256": "41c1e8b5bb0cc5f0f2b41c08e97b78da6a41ef1cc1ddb98c81b4111ec418a174",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/input_check.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/input_check.json",
+      "source_sha256": "0b1e682c9b0faef1639787912dd17cd0848c0ab1374d119e5ac40daed071375f",
+      "source_bytes": 936,
+      "stored_bytes": 936,
+      "stored_sha256": "0b1e682c9b0faef1639787912dd17cd0848c0ab1374d119e5ac40daed071375f",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/oxidation_states.tsv",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/oxidation_states.tsv",
+      "source_sha256": "fd318059ee7ab0b13dfc0334ab8f67bbfb90aefa60b7a70f9076e10f862a3dd4",
+      "source_bytes": 234,
+      "stored_bytes": 234,
+      "stored_sha256": "fd318059ee7ab0b13dfc0334ab8f67bbfb90aefa60b7a70f9076e10f862a3dd4",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/result_summary.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/result_summary.json",
+      "source_sha256": "6b1c1b040ecab8df21ac7cfa54335ca52f2e48d72651aa837499d845695f036f",
+      "source_bytes": 41816,
+      "stored_bytes": 41816,
+      "stored_sha256": "6b1c1b040ecab8df21ac7cfa54335ca52f2e48d72651aa837499d845695f036f",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/wannier90.1.win",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/wannier90.1.win",
+      "source_sha256": "e255a56407ddfe69e13d2decf6dc6b15e41ac89f0bb1d19e0d9cfabd0da2efa9",
+      "source_bytes": 8590,
+      "stored_bytes": 8590,
+      "stored_sha256": "e255a56407ddfe69e13d2decf6dc6b15e41ac89f0bb1d19e0d9cfabd0da2efa9",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/wannier90.2.win",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/wannier90.2.win",
+      "source_sha256": "63ea5a56ea60122fd0e1b2c056790d8f0c55e822b989673fa0dedc1239fb6660",
+      "source_bytes": 8588,
+      "stored_bytes": 8588,
+      "stored_sha256": "63ea5a56ea60122fd0e1b2c056790d8f0c55e822b989673fa0dedc1239fb6660",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/wannier90.win",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/wannier90.win",
+      "source_sha256": "b3f1eebb31c598512a42e94e6177850ddb2a2387e4498f3a17a68a7363c8a03e",
+      "source_bytes": 8588,
+      "stored_bytes": 8588,
+      "stored_sha256": "b3f1eebb31c598512a42e94e6177850ddb2a2387e4498f3a17a68a7363c8a03e",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/wannier90.wout",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/wannier90.wout",
+      "source_sha256": "04aa499e2529649bd301bb63eb9df08f21519a4e8218d3db84c658a6a2653f07",
+      "source_bytes": 16127,
+      "stored_bytes": 16127,
+      "stored_sha256": "04aa499e2529649bd301bb63eb9df08f21519a4e8218d3db84c658a6a2653f07",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/beta_flow_20261015_01/RESULT.zh.txt",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/beta_flow_20261015_01/RESULT.zh.txt",
+      "source_sha256": "b70482511c4b84ff99edd6e1f12723d50b5e2d023188e787c42248ae44b4b4d2",
+      "source_bytes": 3093,
+      "stored_bytes": 3093,
+      "stored_sha256": "b70482511c4b84ff99edd6e1f12723d50b5e2d023188e787c42248ae44b4b4d2",
+      "gzip": false,
+      "role": "postprocessing"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/beta_flow_20261015_01/candidate_Fe3_assignments.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/beta_flow_20261015_01/candidate_Fe3_assignments.json",
+      "source_sha256": "4c91723c01ceb89d68e16c334fc9918fd09e75b582f84725eae762f3a5609485",
+      "source_bytes": 23453,
+      "stored_bytes": 23453,
+      "stored_sha256": "4c91723c01ceb89d68e16c334fc9918fd09e75b582f84725eae762f3a5609485",
+      "gzip": false,
+      "role": "postprocessing"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/beta_flow_20261015_01/pbe_u_73GPa_beta1.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/beta_flow_20261015_01/pbe_u_73GPa_beta1.json",
+      "source_sha256": "51ceb1145ddd6d8bb99cdc75dd58628dcc9b8c8d56f1c50b64131ae8a499e01e",
+      "source_bytes": 1118,
+      "stored_bytes": 1118,
+      "stored_sha256": "51ceb1145ddd6d8bb99cdc75dd58628dcc9b8c8d56f1c50b64131ae8a499e01e",
+      "gzip": false,
+      "role": "postprocessing"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d1000_l1000_m-5_native_702281a0/beta_flow_20261015_01/summary.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/beta_flow_20261015_01/summary.json",
+      "source_sha256": "4489f1ecfa5c9d4b64df97aa15146bcc0d44aa607ba76f5d912fc64988e54a86",
+      "source_bytes": 21509,
+      "stored_bytes": 21509,
+      "stored_sha256": "4489f1ecfa5c9d4b64df97aa15146bcc0d44aa607ba76f5d912fc64988e54a86",
+      "gzip": false,
+      "role": "postprocessing"
+    }
+  ],
+  "omitted_from_upload": [
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/IBZKPT",
+      "sha256": "a6a9f1252b79924d96d018c7aacfd2d7080a059ea7217c0db5d38e9694bbf0e1",
+      "bytes": 5310,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/OSZICAR",
+      "sha256": "c9e206e3c9cf3aad457776de0ab2cb8626065e540952b5fbcc2791f7076263ef",
+      "bytes": 2802,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/OUTCAR",
+      "sha256": "2809e952e216f47568ad3d0701501f92a1ac6ad7ab9031fa9b6390026f5e951d",
+      "bytes": 405096,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/vasp.stderr",
+      "sha256": "a9c467fc1f3fc6487342caa39fa153461ab01cf1d723b20783ae49ca047923a7",
+      "bytes": 162,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/vasp.stdout",
+      "sha256": "a30f472af8b4681b421d8059f81c65390297c2d5d720d9a5cb98a5c5b9f256d7",
+      "bytes": 4926,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/wannier90.1.wout",
+      "sha256": "feb580de7b496fa591ab9dec667ddd5ef68a93e5e083cab21517f94a53bae4d6",
+      "bytes": 4935607,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/wannier90.2.wout",
+      "sha256": "e7c2668643f8a8bf5b6318bd571394d25f175c05b1b119a5caf954785856986f",
+      "bytes": 4386567,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01/beta_flow_20261015_01/all_results.json",
+      "sha256": "182f986ef8e8b45b42dce78d6c002854369b56e7aabf06865bbe0f099202cc3f",
+      "bytes": 197947,
+      "reason": "Large log or intermediate; retained on SAI."
+    }
+  ],
+  "archive_policy": "Match existing data/v3: inputs, EOSCAR, centres, small Wannier output and result/scan summaries; omit bulky logs.",
+  "num_wann_channels_note": "Use wannier90.1.wout and wannier90.2.wout; the unnumbered duplicate is not a third spin channel."
+}

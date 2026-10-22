@@ -1,0 +1,517 @@
+{
+  "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/CuS/iter_2000",
+  "range": [
+    0,
+    20
+  ],
+  "step": 0.1,
+  "evaluation_count": 250,
+  "native_baseline_reproduced": true,
+  "source_sha256": {
+    "POSCAR": "095b98e39c9081d3624bffb21826a322cfc2540ee86f0489140bb6a70e7d64f7",
+    "EOSCAR": "96a68367523ee70dd2201ab34dc6b2c259a18cab4794dfaa824efb0b238e65c1",
+    "wannier90.wout": "d9b613fcf53600782100cf2d3e03473078481e8490c0039abe05133cd593850b"
+  },
+  "assessment": {
+    "directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/CuS/iter_2000",
+    "technical_success": true,
+    "converged": false,
+    "electronic_converged": true,
+    "normal_end": true,
+    "exit_code": 0,
+    "channels": [
+      {
+        "file": "wannier90.wout",
+        "final_state": true,
+        "all_done": true,
+        "disentanglement_converged": true,
+        "disentanglement_exhausted": false,
+        "localization_plateau": false,
+        "last_iterations": [
+          [
+            1991,
+            -1.02e-06,
+            0.0008039736,
+            47.5533479203,
+            6468.42
+          ],
+          [
+            1992,
+            -1.59e-06,
+            0.0023673568,
+            47.5533463272,
+            6471.18
+          ],
+          [
+            1993,
+            -2.46e-07,
+            0.0009096875,
+            47.5533460816,
+            6473.93
+          ],
+          [
+            1994,
+            -2.74e-07,
+            0.0011552425,
+            47.5533458073,
+            6477.67
+          ],
+          [
+            1995,
+            -6.86e-07,
+            0.0011492189,
+            47.5533451217,
+            6480.6
+          ],
+          [
+            1996,
+            -8.83e-07,
+            0.0010758232,
+            47.5533442386,
+            6483.51
+          ],
+          [
+            1997,
+            -1.11e-06,
+            0.0010340861,
+            47.5533431329,
+            6486.38
+          ],
+          [
+            1998,
+            -8.65e-07,
+            0.0015975036,
+            47.5533422683,
+            6489.3
+          ],
+          [
+            1999,
+            -3.56e-07,
+            0.0008343403,
+            47.5533419123,
+            6492.25
+          ],
+          [
+            2000,
+            -1.86e-07,
+            0.0004905807,
+            47.5533417259,
+            6495.16
+          ]
+        ],
+        "final_spread": 47.553341726
+      }
+    ],
+    "ion_results": [
+      {
+        "atom": 1,
+        "element": "Cu",
+        "os_flow": 1
+      },
+      {
+        "atom": 2,
+        "element": "Cu",
+        "os_flow": 1
+      },
+      {
+        "atom": 3,
+        "element": "Cu",
+        "os_flow": 3
+      },
+      {
+        "atom": 4,
+        "element": "Cu",
+        "os_flow": 1
+      },
+      {
+        "atom": 5,
+        "element": "Cu",
+        "os_flow": 1
+      },
+      {
+        "atom": 6,
+        "element": "Cu",
+        "os_flow": 1
+      },
+      {
+        "atom": 7,
+        "element": "S",
+        "os_flow": -2
+      },
+      {
+        "atom": 8,
+        "element": "S",
+        "os_flow": -2
+      },
+      {
+        "atom": 9,
+        "element": "S",
+        "os_flow": -2
+      },
+      {
+        "atom": 10,
+        "element": "S",
+        "os_flow": 0
+      },
+      {
+        "atom": 11,
+        "element": "S",
+        "os_flow": -2
+      },
+      {
+        "atom": 12,
+        "element": "S",
+        "os_flow": 0
+      }
+    ],
+    "parse_error": null,
+    "plateau_criterion": "Last 10 |delta total spread| <= 1e-6 A^2; not proof of global minimum",
+    "retry_iterations": true
+  },
+  "intervals": [
+    {
+      "beta_min": 0.0,
+      "beta_max": 3.7486328125,
+      "os_flow": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        -2,
+        -2,
+        0,
+        0,
+        -2,
+        0
+      ],
+      "by_element": {
+        "Cu": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          0,
+          0,
+          -2,
+          0
+        ]
+      }
+    },
+    {
+      "beta_min": 3.748638916016,
+      "beta_max": 17.96636352539,
+      "os_flow": [
+        1,
+        1,
+        3,
+        1,
+        1,
+        1,
+        -2,
+        -2,
+        -2,
+        0,
+        -2,
+        0
+      ],
+      "by_element": {
+        "Cu": [
+          1,
+          1,
+          3,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          0,
+          -2,
+          0
+        ]
+      }
+    },
+    {
+      "beta_min": 17.966369628906,
+      "beta_max": 17.96683959961,
+      "os_flow": [
+        1,
+        1,
+        4,
+        1,
+        1,
+        1,
+        -2,
+        -2,
+        -2,
+        0,
+        -2,
+        -1
+      ],
+      "by_element": {
+        "Cu": [
+          1,
+          1,
+          4,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          0,
+          -2,
+          -1
+        ]
+      }
+    },
+    {
+      "beta_min": 17.966845703125,
+      "beta_max": 18.111950683593,
+      "os_flow": [
+        2,
+        1,
+        4,
+        1,
+        1,
+        1,
+        -2,
+        -2,
+        -2,
+        0,
+        -2,
+        -2
+      ],
+      "by_element": {
+        "Cu": [
+          2,
+          1,
+          4,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          0,
+          -2,
+          -2
+        ]
+      }
+    },
+    {
+      "beta_min": 18.111956787109,
+      "beta_max": 20.0,
+      "os_flow": [
+        2,
+        1,
+        4,
+        1,
+        3,
+        1,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2
+      ],
+      "by_element": {
+        "Cu": [
+          2,
+          1,
+          4,
+          1,
+          3,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          -2,
+          -2,
+          -2
+        ]
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "lower": 3.7486328125,
+      "upper": 3.748638916016,
+      "below": {
+        "Cu": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          0,
+          0,
+          -2,
+          0
+        ]
+      },
+      "above": {
+        "Cu": [
+          1,
+          1,
+          3,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          0,
+          -2,
+          0
+        ]
+      }
+    },
+    {
+      "lower": 17.96636352539,
+      "upper": 17.966369628906,
+      "below": {
+        "Cu": [
+          1,
+          1,
+          3,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          0,
+          -2,
+          0
+        ]
+      },
+      "above": {
+        "Cu": [
+          1,
+          1,
+          4,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          0,
+          -2,
+          -1
+        ]
+      }
+    },
+    {
+      "lower": 17.96683959961,
+      "upper": 17.966845703125,
+      "below": {
+        "Cu": [
+          1,
+          1,
+          4,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          0,
+          -2,
+          -1
+        ]
+      },
+      "above": {
+        "Cu": [
+          2,
+          1,
+          4,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          0,
+          -2,
+          -2
+        ]
+      }
+    },
+    {
+      "lower": 18.111950683593,
+      "upper": 18.111956787109,
+      "below": {
+        "Cu": [
+          2,
+          1,
+          4,
+          1,
+          1,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          0,
+          -2,
+          -2
+        ]
+      },
+      "above": {
+        "Cu": [
+          2,
+          1,
+          4,
+          1,
+          3,
+          1
+        ],
+        "S": [
+          -2,
+          -2,
+          -2,
+          -2,
+          -2,
+          -2
+        ]
+      }
+    }
+  ],
+  "elapsed_s": 10.03745814692229,
+  "limitation": "Fixed printed centres; sampled parameter sensitivity, not independent physical validation."
+}

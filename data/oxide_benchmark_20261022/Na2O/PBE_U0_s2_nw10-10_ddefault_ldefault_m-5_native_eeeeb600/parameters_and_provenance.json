@@ -1,0 +1,286 @@
+{
+  "material": "Na2O",
+  "formula_counts": {
+    "O": 1,
+    "Na": 2
+  },
+  "method": "native",
+  "source_directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O",
+  "dft_input_source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O",
+  "parameters": {
+    "GGA": null,
+    "METAGGA": null,
+    "LDAU": null,
+    "LDAUTYPE": null,
+    "LDAUL": null,
+    "LDAUU": null,
+    "LDAUJ": null,
+    "ISPIN": "2",
+    "MAGMOM": "3*0.6",
+    "NUPDOWN": null,
+    "NELECT": "20.0",
+    "ISMEAR": "-5",
+    "SIGMA": "0.05",
+    "ENCUT": "520.0",
+    "EDIFF": "2e-06",
+    "ISYM": "-1",
+    "NBANDS": "15",
+    "ISTART": "0",
+    "ICHARG": "2",
+    "NELM": "200",
+    "NSW": "0",
+    "dis_num_iter": null,
+    "num_iter": null,
+    "kmesh_tol": "0.00001",
+    "EOS_BETA": null,
+    "EOS_FLOW": "True",
+    "LWANNIER90": "True",
+    "LWANNIER90_RUN": "True"
+  },
+  "optimizer": {
+    "dis_num_iter": "default",
+    "num_iter": "default",
+    "num_wann": [
+      10,
+      10
+    ]
+  },
+  "beta_baseline": 10,
+  "beta_note": "Baseline convention; exact scan values are retained in scan files.",
+  "eoscar_present": true,
+  "eoscar_aborted": false,
+  "electronic_converged": true,
+  "normal_vasp_end": true,
+  "existing_assessment": {
+    "formula": "Na2O",
+    "index": 5,
+    "job_id": "1759745",
+    "array_id": null,
+    "started_utc": "2026-10-12T17:12:44.990294+00:00",
+    "state": "completed_computational_checks",
+    "training_accepted": false,
+    "vasp_binary": "/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/bin/vasp_std",
+    "vasp_binary_sha256": "dd36e27fca52dbfcc3539f461f7f0607a282fb855e6d4284d077d876c2bd6c89",
+    "gpu_inventory": "name, uuid, memory.total [MiB]\nTesla V100-SXM2-32GB, GPU-f28aa7a1-a587-1f4b-07e4-9873cfb2e331, 32768 MiB\n",
+    "command": [
+      "/opt/devtools/openmpi/openmpi-5.0.8-nvhpc243-pgi-avx2/bin/mpirun",
+      "-np",
+      "1",
+      "--bind-to",
+      "none",
+      "--map-by",
+      "ppr:1:node",
+      "-mca",
+      "coll_hcoll_enable",
+      "0",
+      "/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/bin/vasp_std"
+    ],
+    "returncode": 0,
+    "centres": 20,
+    "dne": 0,
+    "os_flow": [
+      -2,
+      1,
+      1
+    ],
+    "wavecar_bytes": 158616480,
+    "scientific_acceptance": false,
+    "elapsed_seconds": 625.5237906603143,
+    "finished_utc": "2026-10-12T17:23:10.514897+00:00"
+  },
+  "offline_summary": null,
+  "input_files_present": {
+    "CONTCAR": true,
+    "INCAR": true,
+    "KPOINTS": true,
+    "POSCAR": true,
+    "POTCAR": true
+  },
+  "note": "Archived output, not a scientific acceptance label. Source files are unchanged.",
+  "files": [
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/CONTCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/CONTCAR",
+      "source_sha256": "99d82222592a30b8d9f6181055490a7ef234b3835e820f91884a9e2fd5ea2bb6",
+      "source_bytes": 635,
+      "stored_bytes": 635,
+      "stored_sha256": "99d82222592a30b8d9f6181055490a7ef234b3835e820f91884a9e2fd5ea2bb6",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/EOSCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/EOSCAR",
+      "source_sha256": "d921e2dc65ba67143e4546f7dd1661c3b261c37035f2f47458891543f127e967",
+      "source_bytes": 4851,
+      "stored_bytes": 4851,
+      "stored_sha256": "d921e2dc65ba67143e4546f7dd1661c3b261c37035f2f47458891543f127e967",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/INCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/INCAR",
+      "source_sha256": "08813ee7cd72ec145fcb6de8144406e8b9bfa3b95269a41632e1188a318bf20d",
+      "source_bytes": 649,
+      "stored_bytes": 649,
+      "stored_sha256": "08813ee7cd72ec145fcb6de8144406e8b9bfa3b95269a41632e1188a318bf20d",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/KPOINTS",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/KPOINTS",
+      "source_sha256": "362c521c89f8c403e5df1f034500ef629078902296a958a9926a89d063849ba2",
+      "source_bytes": 43,
+      "stored_bytes": 43,
+      "stored_sha256": "362c521c89f8c403e5df1f034500ef629078902296a958a9926a89d063849ba2",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/POSCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/POSCAR",
+      "source_sha256": "a86444f7be3923bb68d7b63ac010d92dc04100146c9980065a84b0899af91698",
+      "source_bytes": 431,
+      "stored_bytes": 431,
+      "stored_sha256": "a86444f7be3923bb68d7b63ac010d92dc04100146c9980065a84b0899af91698",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/POTCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/POTCAR",
+      "source_sha256": "a2e26671b48dd68247af40d2995eda6aa20a44b8333550ec574299f928aff638",
+      "source_bytes": 423051,
+      "stored_bytes": 423051,
+      "stored_sha256": "a2e26671b48dd68247af40d2995eda6aa20a44b8333550ec574299f928aff638",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/calculation_status.json",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/calculation_status.json",
+      "source_sha256": "c40145d5d60bba09bc2e018605ad164de0bbe1110ff19d1ad240d293150fd37d",
+      "source_bytes": 1111,
+      "stored_bytes": 1111,
+      "stored_sha256": "c40145d5d60bba09bc2e018605ad164de0bbe1110ff19d1ad240d293150fd37d",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/centre_os_results.json",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/centre_os_results.json",
+      "source_sha256": "04610f207cddc90acdf8627d165204ca745bba630fe3bb7113cc0452247faecb",
+      "source_bytes": 6396,
+      "stored_bytes": 6396,
+      "stored_sha256": "04610f207cddc90acdf8627d165204ca745bba630fe3bb7113cc0452247faecb",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/input_provenance.json",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/input_provenance.json",
+      "source_sha256": "8c957f80eb2b8cbe4a552ace0f292a36014a950b52e85f535c64e6017eef4030",
+      "source_bytes": 4029,
+      "stored_bytes": 4029,
+      "stored_sha256": "8c957f80eb2b8cbe4a552ace0f292a36014a950b52e85f535c64e6017eef4030",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/wannier90.1.win",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/wannier90.1.win",
+      "source_sha256": "e6e926fe8fe572a8c89b4de1bff913c4e10bfef9b9b9645bc771057d171bbfcb",
+      "source_bytes": 31758,
+      "stored_bytes": 31758,
+      "stored_sha256": "e6e926fe8fe572a8c89b4de1bff913c4e10bfef9b9b9645bc771057d171bbfcb",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/wannier90.1.wout",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/wannier90.1.wout",
+      "source_sha256": "eb3f4ec130fcfab6ab35ad339174894b04fbd491eea1d2e3d0150600ed8b547b",
+      "source_bytes": 137608,
+      "stored_bytes": 137608,
+      "stored_sha256": "eb3f4ec130fcfab6ab35ad339174894b04fbd491eea1d2e3d0150600ed8b547b",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/wannier90.2.win",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/wannier90.2.win",
+      "source_sha256": "e6e926fe8fe572a8c89b4de1bff913c4e10bfef9b9b9645bc771057d171bbfcb",
+      "source_bytes": 31758,
+      "stored_bytes": 31758,
+      "stored_sha256": "e6e926fe8fe572a8c89b4de1bff913c4e10bfef9b9b9645bc771057d171bbfcb",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/wannier90.2.wout",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/wannier90.2.wout",
+      "source_sha256": "8b901e9af25213e6df1a0cb93c59fd2c3ea052680bc45efdd0b3959fa6257060",
+      "source_bytes": 137608,
+      "stored_bytes": 137608,
+      "stored_sha256": "8b901e9af25213e6df1a0cb93c59fd2c3ea052680bc45efdd0b3959fa6257060",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/wannier90.win",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/wannier90.win",
+      "source_sha256": "9c0900cd218333c0e44284b787f1d5afc336ad63027f8a8faa8ec9531541de6c",
+      "source_bytes": 31756,
+      "stored_bytes": 31756,
+      "stored_sha256": "9c0900cd218333c0e44284b787f1d5afc336ad63027f8a8faa8ec9531541de6c",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "oxide_benchmark_20261022/Na2O/PBE_U0_s2_nw10-10_ddefault_ldefault_m-5_native_eeeeb600/wannier90.wout",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/wannier90.wout",
+      "source_sha256": "28b63c1eea278ecf4a5574bb739904a444d890d8913e490d14d1e3e3d4b5acf7",
+      "source_bytes": 15647,
+      "stored_bytes": 15647,
+      "stored_sha256": "28b63c1eea278ecf4a5574bb739904a444d890d8913e490d14d1e3e3d4b5acf7",
+      "gzip": false,
+      "role": "calculation"
+    }
+  ],
+  "omitted_from_upload": [
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/IBZKPT",
+      "sha256": "16ba7ee3f19b4d8e1fbfe4ad89225836b3cf518d58f61efc8302a7bbb0ca838b",
+      "bytes": 195171,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/OSZICAR",
+      "sha256": "61363643e64d93817e0a58bccd5c76e628ba7f94ba5cebafb7861bfa83c38fb1",
+      "bytes": 1593,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/OUTCAR",
+      "sha256": "2368a3977f8eee989ff4bef871709ed92c426ad623fc7fddfba422b2b0847fd8",
+      "bytes": 846253,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/vasp.stderr",
+      "sha256": "a9c467fc1f3fc6487342caa39fa153461ab01cf1d723b20783ae49ca047923a7",
+      "bytes": 162,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_symmetry_retry/002_Na2O/vasp.stdout",
+      "sha256": "cfb7d7ad261e4fb29327ba5d836394aa6b09e55b17b63998a03fc5b5660d8730",
+      "bytes": 3373,
+      "reason": "Large log or intermediate; retained on SAI."
+    }
+  ],
+  "archive_policy": "Match existing data/v3: inputs, EOSCAR, centres, small Wannier output and result/scan summaries; omit bulky logs.",
+  "num_wann_channels_note": "Use wannier90.1.wout and wannier90.2.wout; the unnumbered duplicate is not a third spin channel."
+}

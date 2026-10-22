@@ -1,0 +1,37 @@
+{
+  "formula": "MgO",
+  "index": 0,
+  "job_id": "1758832",
+  "array_id": null,
+  "started_utc": "2026-10-12T14:54:16.224601+00:00",
+  "state": "needs_attention",
+  "training_accepted": false,
+  "vasp_binary": "/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/bin/vasp_std",
+  "vasp_binary_sha256": "dd36e27fca52dbfcc3539f461f7f0607a282fb855e6d4284d077d876c2bd6c89",
+  "gpu_inventory": "name, uuid, memory.total [MiB]\nTesla V100-SXM2-32GB, GPU-8773875e-b1a5-5777-2047-d8f215670d6b, 32768 MiB\n",
+  "command": [
+    "/opt/devtools/openmpi/openmpi-5.0.8-nvhpc243-pgi-avx2/bin/mpirun",
+    "-np",
+    "1",
+    "--bind-to",
+    "none",
+    "--map-by",
+    "ppr:1:node",
+    "-mca",
+    "coll_hcoll_enable",
+    "0",
+    "/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/bin/vasp_std"
+  ],
+  "returncode": 0,
+  "centres": 4,
+  "dne": 8.8818e-15,
+  "os_flow": [
+    2,
+    -2
+  ],
+  "wavecar_bytes": 4298560,
+  "scientific_acceptance": false,
+  "error": "Command '['sbatch', '--parsable', '--array=1-69%2', '--dependency=afterok:1758832', '/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/benchmark_leos_fixed_gpu.sbatch']' returned non-zero exit status 1.",
+  "elapsed_seconds": 38.92523167282343,
+  "finished_utc": "2026-10-12T14:54:55.149824+00:00"
+}

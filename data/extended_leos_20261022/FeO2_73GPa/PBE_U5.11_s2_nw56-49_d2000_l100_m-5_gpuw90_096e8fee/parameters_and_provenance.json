@@ -1,0 +1,471 @@
+{
+  "material": "FeO2_73GPa",
+  "formula_counts": {
+    "O": 8,
+    "Fe": 4
+  },
+  "method": "gpuw90",
+  "source_directory": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02",
+  "dft_input_source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_20261015_01",
+  "parameters": {
+    "GGA": "PE",
+    "METAGGA": null,
+    "LDAU": ".TRUE.",
+    "LDAUTYPE": "2",
+    "LDAUL": "-1 2",
+    "LDAUU": "0.0 5.11",
+    "LDAUJ": "0.0 0.0",
+    "ISPIN": "2",
+    "MAGMOM": "8*0.0 4*1.0",
+    "NUPDOWN": null,
+    "NELECT": null,
+    "ISMEAR": "-5",
+    "SIGMA": null,
+    "ENCUT": "600",
+    "EDIFF": "1E-8",
+    "ISYM": null,
+    "NBANDS": null,
+    "ISTART": "0",
+    "ICHARG": "2",
+    "NELM": "200",
+    "NSW": "0",
+    "dis_num_iter": null,
+    "num_iter": null,
+    "kmesh_tol": null,
+    "EOS_BETA": null,
+    "EOS_FLOW": null,
+    "LWANNIER90": null,
+    "LWANNIER90_RUN": null
+  },
+  "optimizer": {
+    "dis_num_iter": "2000",
+    "num_iter": "100",
+    "num_wann": [
+      56,
+      49
+    ]
+  },
+  "beta_baseline": 10,
+  "beta_note": "Baseline convention; exact scan values are retained in scan files.",
+  "eoscar_present": false,
+  "eoscar_aborted": false,
+  "electronic_converged": null,
+  "normal_vasp_end": null,
+  "existing_assessment": null,
+  "offline_summary": {
+    "job_id": "1796391",
+    "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_20261015_01",
+    "elapsed_seconds": 94.09222081676126,
+    "channels": [
+      {
+        "spin": 1,
+        "num_wann": 56,
+        "windows": {
+          "num_wann": 56,
+          "num_bands": 64,
+          "dis_win_min": null,
+          "dis_win_max": null,
+          "dis_froz_min": null,
+          "dis_froz_max": 8.8324166,
+          "dis_mix_ratio": null,
+          "dis_conv_tol": null,
+          "dis_num_iter": null,
+          "dis_conv_window": null
+        },
+        "baseline_check": {
+          "iterations": 183,
+          "converged": true,
+          "omega_I": 24.633592561454726,
+          "reference_omega_I": 24.63359256,
+          "reference_delta": 1.4547261173447623e-09,
+          "seconds": 22.141427222639322,
+          "gate_passed": true
+        },
+        "disentangle": {
+          "iterations": 183,
+          "converged": true,
+          "omega_I": 24.633592561454726,
+          "seconds": 22.141427222639322
+        },
+        "localisation": {
+          "iterations": 100,
+          "fixed_budget": true,
+          "last_three_delta_omega": [
+            -0.004841570834681619,
+            -0.004760845905202871,
+            -0.004682735875835675
+          ],
+          "tail_satisfies_1e_10": false,
+          "omega": {
+            "I": 24.633592561157,
+            "OD": 5.6896497665299925,
+            "D": 0.0023162837813128926,
+            "total": 30.325558611468303
+          },
+          "seconds": 11.384341368451715
+        },
+        "spread_min_A2": 0.2842387345487917,
+        "spread_max_A2": 0.946827029041434
+      },
+      {
+        "spin": 2,
+        "num_wann": 49,
+        "windows": {
+          "num_wann": 49,
+          "num_bands": 64,
+          "dis_win_min": null,
+          "dis_win_max": null,
+          "dis_froz_min": null,
+          "dis_froz_max": 9.5734655,
+          "dis_mix_ratio": null,
+          "dis_conv_tol": null,
+          "dis_num_iter": null,
+          "dis_conv_window": null
+        },
+        "baseline_check": {
+          "iterations": 200,
+          "converged": false,
+          "omega_I": 33.28739543267226,
+          "reference_omega_I": 33.28740439,
+          "reference_delta": 8.957327736425214e-06,
+          "seconds": 23.271922224201262,
+          "gate_passed": true
+        },
+        "disentangle": {
+          "iterations": 513,
+          "converged": true,
+          "omega_I": 33.287347779995784,
+          "seconds": 55.99896741192788
+        },
+        "localisation": {
+          "iterations": 100,
+          "fixed_budget": true,
+          "last_three_delta_omega": [
+            40.346100637557356,
+            -57.32053860657197,
+            -7.578111622812685
+          ],
+          "tail_satisfies_1e_10": false,
+          "omega": {
+            "I": 33.28734777978528,
+            "OD": 1690.398424530719,
+            "D": 5719.601341808277,
+            "total": 7443.287114118781
+          },
+          "seconds": 10.266175009310246
+        },
+        "spread_min_A2": 142.1136799849072,
+        "spread_max_A2": 161.98241975480832
+      }
+    ],
+    "native_reference_os_flow": [
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      4,
+      3,
+      5,
+      4
+    ],
+    "reference_offline_flow": {
+      "os_flow": [
+        -2,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2,
+        4,
+        3,
+        5,
+        4
+      ],
+      "assigned_integer_electrons": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        10,
+        11,
+        9,
+        10
+      ],
+      "ghost": 1,
+      "infeasible": 0,
+      "stray": 0,
+      "cost": -63778.83415316297
+    },
+    "new_offline_flow": {
+      "os_flow": [
+        0,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2,
+        -4,
+        6,
+        6,
+        6
+      ],
+      "assigned_integer_electrons": [
+        6,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        18,
+        8,
+        8,
+        8
+      ],
+      "ghost": 1,
+      "infeasible": 0,
+      "stray": 49,
+      "cost": -63708.02005974538
+    },
+    "reference_offline_matches_native": true,
+    "all_disentanglement_converged": true,
+    "all_localisation_tail_converged": false,
+    "new_nelect_wann": null,
+    "new_electron_error": null,
+    "occupation_note": "Integer flow supply=1 per spin WF; target=104 from original DFT. New fractional occupations were not recomputed.",
+    "comparison_note": "GPUw90 SD differs from native CG; centre differences cannot be attributed solely to extended disentanglement.",
+    "old_inputs_preserved": true,
+    "vasp_run": false,
+    "training_run": false
+  },
+  "input_files_present": {
+    "CONTCAR": true,
+    "INCAR": true,
+    "KPOINTS": true,
+    "POSCAR": true,
+    "POTCAR": true
+  },
+  "note": "Archived output, not a scientific acceptance label. Source files are unchanged.",
+  "files": [
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/README.zh.txt",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/README.zh.txt",
+      "source_sha256": "61e5925cb0672393cc8ba0478a4a50573d6c57eb5b05398587682a1a2b2e2317",
+      "source_bytes": 2276,
+      "stored_bytes": 2276,
+      "stored_sha256": "61e5925cb0672393cc8ba0478a4a50573d6c57eb5b05398587682a1a2b2e2317",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/RESULT.zh.txt",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/RESULT.zh.txt",
+      "source_sha256": "b6df0625a76acd013e039dae66082429653653b308ac061392e3d2343dccb4bb",
+      "source_bytes": 3408,
+      "stored_bytes": 3408,
+      "stored_sha256": "b6df0625a76acd013e039dae66082429653653b308ac061392e3d2343dccb4bb",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/centres.tsv",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/centres.tsv",
+      "source_sha256": "c9233f57c5fcf0b727526ec5b3e05ee4e7c324f79b2b3b5cee931a38f2e40dc8",
+      "source_bytes": 8880,
+      "stored_bytes": 8880,
+      "stored_sha256": "c9233f57c5fcf0b727526ec5b3e05ee4e7c324f79b2b3b5cee931a38f2e40dc8",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/exit_code.txt",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/exit_code.txt",
+      "source_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "source_bytes": 2,
+      "stored_bytes": 2,
+      "stored_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/oxidation_states.tsv",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/oxidation_states.tsv",
+      "source_sha256": "4c9d1bf854f9ef2cdbc64e9c6d57de21224c2e3a2785028aef2fbba6adb63fd1",
+      "source_bytes": 286,
+      "stored_bytes": 286,
+      "stored_sha256": "4c9d1bf854f9ef2cdbc64e9c6d57de21224c2e3a2785028aef2fbba6adb63fd1",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/provenance.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/provenance.json",
+      "source_sha256": "54b834731fb0a1a7555fad40529e73ec2158296ae8f1dbee69dd23f9c31a736f",
+      "source_bytes": 3886,
+      "stored_bytes": 3886,
+      "stored_sha256": "54b834731fb0a1a7555fad40529e73ec2158296ae8f1dbee69dd23f9c31a736f",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/reference_flow.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/reference_flow.json",
+      "source_sha256": "b45d93073cd0c3a922cc3c9c40e533e601aa5be0fbf2890238a759684b732e3a",
+      "source_bytes": 543,
+      "stored_bytes": 543,
+      "stored_sha256": "b45d93073cd0c3a922cc3c9c40e533e601aa5be0fbf2890238a759684b732e3a",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/resume_submission.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/resume_submission.json",
+      "source_sha256": "39adf75bf2190666191559a3d6cff3e226df37623667a178c71300ca670c85a1",
+      "source_bytes": 509,
+      "stored_bytes": 509,
+      "stored_sha256": "39adf75bf2190666191559a3d6cff3e226df37623667a178c71300ca670c85a1",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/spin1_baseline_check.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/spin1_baseline_check.json",
+      "source_sha256": "b97a5bf5c4242ce87536025d67137c06677b3540563a18e2a6ec2e4e56efa92e",
+      "source_bytes": 215,
+      "stored_bytes": 215,
+      "stored_sha256": "b97a5bf5c4242ce87536025d67137c06677b3540563a18e2a6ec2e4e56efa92e",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/spin1_summary.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/spin1_summary.json",
+      "source_sha256": "6b1432c737942b2610dc657b88814756b404c745d8652d0a321e933d48486b0b",
+      "source_bytes": 1195,
+      "stored_bytes": 1195,
+      "stored_sha256": "6b1432c737942b2610dc657b88814756b404c745d8652d0a321e933d48486b0b",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/spin2_baseline_check.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/spin2_baseline_check.json",
+      "source_sha256": "56d618a5eee2b1e2fbc32ad3ebfcb6f75d2be508db4c87ddb84f99b7d1f570fc",
+      "source_bytes": 214,
+      "stored_bytes": 214,
+      "stored_sha256": "56d618a5eee2b1e2fbc32ad3ebfcb6f75d2be508db4c87ddb84f99b7d1f570fc",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/spin2_summary.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/spin2_summary.json",
+      "source_sha256": "ca8e72069d2489565eb05e954b84d8dba0828d2039303c1bdc6d8cac6eda5876",
+      "source_bytes": 1180,
+      "stored_bytes": 1180,
+      "stored_sha256": "ca8e72069d2489565eb05e954b84d8dba0828d2039303c1bdc6d8cac6eda5876",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/summary.json",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/summary.json",
+      "source_sha256": "ed41a58fb51b6a4f2d819b87060bf70a241843e9407c1cd0f178b14a73e8411f",
+      "source_bytes": 4451,
+      "stored_bytes": 4451,
+      "stored_sha256": "ed41a58fb51b6a4f2d819b87060bf70a241843e9407c1cd0f178b14a73e8411f",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/source_DFT_inputs/INCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_20261015_01/INCAR",
+      "source_sha256": "f8d2e10a7ae9930ec4dc321cfadea9003b988d6e0234304de3633afe0d177d42",
+      "source_bytes": 821,
+      "stored_bytes": 821,
+      "stored_sha256": "f8d2e10a7ae9930ec4dc321cfadea9003b988d6e0234304de3633afe0d177d42",
+      "gzip": false,
+      "role": "source_DFT_inputs"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/source_DFT_inputs/KPOINTS",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_20261015_01/KPOINTS",
+      "source_sha256": "f18d26f5327587ca93fa1c9cd799dc4cee650935635dea88b910dda1c93c1486",
+      "source_bytes": 27,
+      "stored_bytes": 27,
+      "stored_sha256": "f18d26f5327587ca93fa1c9cd799dc4cee650935635dea88b910dda1c93c1486",
+      "gzip": false,
+      "role": "source_DFT_inputs"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/source_DFT_inputs/POTCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_20261015_01/POTCAR",
+      "source_sha256": "66724a049761fe7a5ff1c09bee3e5caee4597b44787f31d88144006259cd2818",
+      "source_bytes": 459213,
+      "stored_bytes": 459213,
+      "stored_sha256": "66724a049761fe7a5ff1c09bee3e5caee4597b44787f31d88144006259cd2818",
+      "gzip": false,
+      "role": "source_DFT_inputs"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/source_DFT_inputs/CONTCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_20261015_01/CONTCAR",
+      "source_sha256": "e25da1a0a05fc98ac598436df1ddc9d21f4ce573d8349eb2213aaaa9bc05fe3e",
+      "source_bytes": 1788,
+      "stored_bytes": 1788,
+      "stored_sha256": "e25da1a0a05fc98ac598436df1ddc9d21f4ce573d8349eb2213aaaa9bc05fe3e",
+      "gzip": false,
+      "role": "source_DFT_inputs"
+    },
+    {
+      "file": "extended_leos_20261022/FeO2_73GPa/PBE_U5.11_s2_nw56-49_d2000_l100_m-5_gpuw90_096e8fee/source_DFT_inputs/POSCAR",
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_20261015_01/POSCAR",
+      "source_sha256": "71b5c6a8ad6eff383a2204ac9310339117e9a3526b1ab8a2e79dcde629f32791",
+      "source_bytes": 838,
+      "stored_bytes": 838,
+      "stored_sha256": "71b5c6a8ad6eff383a2204ac9310339117e9a3526b1ab8a2e79dcde629f32791",
+      "gzip": false,
+      "role": "source_DFT_inputs"
+    }
+  ],
+  "omitted_from_upload": [
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/spin1_disentangle_history.tsv",
+      "sha256": "80614dabd4826844290e60a65e859ff6ab89defbc58016d3d22307d3586c3885",
+      "bytes": 18358,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/spin1_localisation_history.tsv",
+      "sha256": "6adede219a01dcf6b865e949a4bfe5203f6e5be9755d43f3c0d6ce5358668e8a",
+      "bytes": 7537,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/spin2_disentangle_history.tsv",
+      "sha256": "d9f0554364d77c5728c40c31728cecf6def551b0f048081483ab21d99dc0042d",
+      "bytes": 51359,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/gpuw90_dis2000_20261015_02/spin2_localisation_history.tsv",
+      "sha256": "21b842caa7b0cd286291ee0a1662ee29be33af5b038026addbe9024aca0d570c",
+      "bytes": 7537,
+      "reason": "Large log or intermediate; retained on SAI."
+    }
+  ],
+  "archive_policy": "Match existing data/v3: inputs, EOSCAR, centres, small Wannier output and result/scan summaries; omit bulky logs."
+}

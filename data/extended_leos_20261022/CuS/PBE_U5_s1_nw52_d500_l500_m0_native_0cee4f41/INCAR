@@ -1,0 +1,43 @@
+SYSTEM = CuS_PBEU5_experimental_static
+ISTART = 0
+ICHARG = 2
+GGA = PE
+ENCUT = 520
+PREC = Accurate
+LASPH = .TRUE.
+LREAL = .FALSE.
+ISPIN = 1
+ISYM = 0
+LMAXMIX = 4
+ALGO = Normal
+EDIFF = 1E-7
+NELM = 200
+NBANDS = 80
+ISMEAR = 0
+SIGMA = 0.05
+IBRION = -1
+NSW = 0
+LORBIT = 11
+NEDOS = 2001
+LWAVE = .TRUE.
+LCHARG = .TRUE.
+LAECHG = .TRUE.
+KPAR = 1
+NWRITE = 2
+
+# Dudarev correction on Cu 3d only.
+LDAU = .TRUE.
+LDAUTYPE = 2
+LDAUL = 2 -1
+LDAUU = 5.0 0.0
+LDAUJ = 0.0 0.0
+
+# Native LEOS; one round only.
+LEOS = .TRUE.
+EOS_WF_DETAIL = .TRUE.
+EOS_PROJ_WEIGHT = .TRUE.
+WANNIER90_WIN = "
+kmesh_tol = 1e-5
+dis_num_iter = 500
+num_iter = 500
+"

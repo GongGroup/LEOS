@@ -1,0 +1,50 @@
+{
+  "spin": 2,
+  "num_wann": 49,
+  "windows": {
+    "num_wann": 49,
+    "num_bands": 64,
+    "dis_win_min": null,
+    "dis_win_max": null,
+    "dis_froz_min": null,
+    "dis_froz_max": 9.5734655,
+    "dis_mix_ratio": null,
+    "dis_conv_tol": null,
+    "dis_num_iter": null,
+    "dis_conv_window": null
+  },
+  "baseline_check": {
+    "iterations": 200,
+    "converged": false,
+    "omega_I": 33.28739543267226,
+    "reference_omega_I": 33.28740439,
+    "reference_delta": 8.957327736425214e-06,
+    "seconds": 23.271922224201262,
+    "gate_passed": true
+  },
+  "disentangle": {
+    "iterations": 513,
+    "converged": true,
+    "omega_I": 33.287347779995784,
+    "seconds": 55.99896741192788
+  },
+  "localisation": {
+    "iterations": 100,
+    "fixed_budget": true,
+    "last_three_delta_omega": [
+      40.346100637557356,
+      -57.32053860657197,
+      -7.578111622812685
+    ],
+    "tail_satisfies_1e_10": false,
+    "omega": {
+      "I": 33.28734777978528,
+      "OD": 1690.398424530719,
+      "D": 5719.601341808277,
+      "total": 7443.287114118781
+    },
+    "seconds": 10.266175009310246
+  },
+  "spread_min_A2": 142.1136799849072,
+  "spread_max_A2": 161.98241975480832
+}

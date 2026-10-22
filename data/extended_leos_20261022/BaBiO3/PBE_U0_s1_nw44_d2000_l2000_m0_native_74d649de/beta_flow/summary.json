@@ -1,0 +1,275 @@
+{
+  "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/BaBiO3/iter_2000",
+  "range": [
+    0,
+    20
+  ],
+  "step": 0.1,
+  "evaluation_count": 215,
+  "native_baseline_reproduced": true,
+  "source_sha256": {
+    "POSCAR": "78e8b1ff3b6031c9b8f56b03b051f819d08b61cf22d528ca374e3185f88395e0",
+    "EOSCAR": "31847cb373406905dcdb8eb01f97d8b25a97049bbbc7d407af37f79992e5ae8a",
+    "wannier90.wout": "bd879ab7f7a5295085424dadd18f696ca6dc580303f7ba18822af326137f865a"
+  },
+  "assessment": {
+    "directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/BaBiO3/iter_2000",
+    "technical_success": true,
+    "converged": false,
+    "electronic_converged": true,
+    "normal_end": true,
+    "exit_code": 0,
+    "channels": [
+      {
+        "file": "wannier90.wout",
+        "final_state": true,
+        "all_done": true,
+        "disentanglement_converged": true,
+        "disentanglement_exhausted": false,
+        "localization_plateau": false,
+        "last_iterations": [
+          [
+            1991,
+            -2.77e-05,
+            0.004298355,
+            41.1519766106,
+            4887.49
+          ],
+          [
+            1992,
+            -4.71e-05,
+            0.0064967668,
+            41.1519295282,
+            4889.76
+          ],
+          [
+            1993,
+            -4.63e-05,
+            0.008789158,
+            41.1518832512,
+            4892.08
+          ],
+          [
+            1994,
+            -2.97e-05,
+            0.0064251572,
+            41.1518535862,
+            4894.35
+          ],
+          [
+            1995,
+            -2.33e-05,
+            0.0045718545,
+            41.1518302816,
+            4896.75
+          ],
+          [
+            1996,
+            -2.9e-05,
+            0.004931082,
+            41.1518013309,
+            4899.14
+          ],
+          [
+            1997,
+            -2.27e-05,
+            0.0053742518,
+            41.1517786364,
+            4901.4
+          ],
+          [
+            1998,
+            -1.54e-05,
+            0.0038796634,
+            41.1517632338,
+            4903.7
+          ],
+          [
+            1999,
+            -1.54e-05,
+            0.0055184817,
+            41.1517478008,
+            4906.0
+          ],
+          [
+            2000,
+            -2.32e-05,
+            0.0038906814,
+            41.1517246435,
+            4908.27
+          ]
+        ],
+        "final_spread": 41.151724643
+      }
+    ],
+    "ion_results": [
+      {
+        "atom": 1,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 2,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 3,
+        "element": "Bi",
+        "os_flow": 3
+      },
+      {
+        "atom": 4,
+        "element": "Bi",
+        "os_flow": 5
+      },
+      {
+        "atom": 5,
+        "element": "O",
+        "os_flow": -2
+      },
+      {
+        "atom": 6,
+        "element": "O",
+        "os_flow": -2
+      },
+      {
+        "atom": 7,
+        "element": "O",
+        "os_flow": -2
+      },
+      {
+        "atom": 8,
+        "element": "O",
+        "os_flow": -2
+      },
+      {
+        "atom": 9,
+        "element": "O",
+        "os_flow": -2
+      },
+      {
+        "atom": 10,
+        "element": "O",
+        "os_flow": -2
+      }
+    ],
+    "parse_error": null,
+    "plateau_criterion": "Last 10 |delta total spread| <= 1e-6 A^2; not proof of global minimum",
+    "retry_iterations": true
+  },
+  "intervals": [
+    {
+      "beta_min": 0.0,
+      "beta_max": 0.365502929687,
+      "os_flow": [
+        2,
+        2,
+        3,
+        3,
+        0,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2
+      ],
+      "by_element": {
+        "Ba": [
+          2,
+          2
+        ],
+        "Bi": [
+          3,
+          3
+        ],
+        "O": [
+          0,
+          -2,
+          -2,
+          -2,
+          -2,
+          -2
+        ]
+      }
+    },
+    {
+      "beta_min": 0.365509033202,
+      "beta_max": 20.0,
+      "os_flow": [
+        2,
+        2,
+        3,
+        5,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2,
+        -2
+      ],
+      "by_element": {
+        "Ba": [
+          2,
+          2
+        ],
+        "Bi": [
+          3,
+          5
+        ],
+        "O": [
+          -2,
+          -2,
+          -2,
+          -2,
+          -2,
+          -2
+        ]
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "lower": 0.365502929687,
+      "upper": 0.365509033202,
+      "below": {
+        "Ba": [
+          2,
+          2
+        ],
+        "Bi": [
+          3,
+          3
+        ],
+        "O": [
+          0,
+          -2,
+          -2,
+          -2,
+          -2,
+          -2
+        ]
+      },
+      "above": {
+        "Ba": [
+          2,
+          2
+        ],
+        "Bi": [
+          3,
+          5
+        ],
+        "O": [
+          -2,
+          -2,
+          -2,
+          -2,
+          -2,
+          -2
+        ]
+      }
+    }
+  ],
+  "elapsed_s": 5.718114357441664,
+  "limitation": "Fixed printed centres; sampled parameter sensitivity, not independent physical validation."
+}

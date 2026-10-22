@@ -1,0 +1,172 @@
+{
+  "case": "BaPt",
+  "range": [
+    0,
+    20
+  ],
+  "step": 0.1,
+  "refinement_tolerance": 1e-05,
+  "evaluations": 201,
+  "native_baseline_reproduced": true,
+  "mismatches": [],
+  "source_sha256": {
+    "POSCAR": "cc4984f287d0b612d7bfeeb5215d7c6d292ec360ac27f800d587f7040001b984",
+    "EOSCAR": "22b323bc37ca42faaa84735a920dc46baf524b045c6585dda037d9e5b94834e9",
+    "wannier90.wout": "4bff56a0dd6f693639bf54d611ef016878f4235e5befe1b6fc56e1810017caca"
+  },
+  "transport_sha256": "2e41a5ed0a83eb7b4598b23819a4cdcc488e2fa7c983355812f4c329175cc188",
+  "assessment": {
+    "directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/seven_native_leos_500_20261021_01/BaPt",
+    "technical_success": true,
+    "converged": false,
+    "electronic_converged": true,
+    "normal_end": true,
+    "exit_code": 0,
+    "channels": [
+      {
+        "file": "wannier90.wout",
+        "final_state": true,
+        "all_done": true,
+        "disentanglement_converged": false,
+        "disentanglement_exhausted": true,
+        "localization_plateau": false,
+        "last_iterations": [
+          [
+            491,
+            -9.21e-05,
+            0.2692884426,
+            54.8239311452,
+            41.94
+          ],
+          [
+            492,
+            -0.0003,
+            0.2898093028,
+            54.8236314768,
+            41.99
+          ],
+          [
+            493,
+            -0.00027,
+            1.2950972863,
+            54.8233612321,
+            42.05
+          ],
+          [
+            494,
+            -9.33e-05,
+            0.5716635095,
+            54.8232679619,
+            42.11
+          ],
+          [
+            495,
+            -4.51e-05,
+            0.2538533843,
+            54.8232229098,
+            42.16
+          ],
+          [
+            496,
+            -0.000512,
+            0.366488989,
+            54.8227111955,
+            42.22
+          ],
+          [
+            497,
+            -9.17e-06,
+            1.7349796575,
+            54.8227020269,
+            42.28
+          ],
+          [
+            498,
+            -8.81e-06,
+            1.9480316233,
+            54.8226932176,
+            42.33
+          ],
+          [
+            499,
+            0.000179,
+            1.9791496633,
+            54.8228723289,
+            42.39
+          ],
+          [
+            500,
+            -0.000125,
+            2.1009238361,
+            54.8227468894,
+            42.45
+          ]
+        ],
+        "final_spread": 54.822746889
+      }
+    ],
+    "ion_results": [
+      {
+        "atom": 1,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 2,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 3,
+        "element": "Pt",
+        "os_flow": -2
+      },
+      {
+        "atom": 4,
+        "element": "Pt",
+        "os_flow": -2
+      }
+    ],
+    "parse_error": null,
+    "plateau_criterion": "Last 10 |delta total spread| <= 1e-6 A^2; not proof of global minimum",
+    "retry_iterations": true
+  },
+  "intervals": [
+    {
+      "beta_min": 0.0,
+      "beta_max": 20.0,
+      "os_flow": [
+        2,
+        2,
+        -2,
+        -2
+      ],
+      "by_element": {
+        "Ba": [
+          2,
+          2
+        ],
+        "Pt": [
+          -2,
+          -2
+        ]
+      }
+    }
+  ],
+  "count_intervals": [
+    {
+      "beta_min": 0.0,
+      "beta_max": 20.0,
+      "counts": {
+        "Ba": {
+          "2": 2
+        },
+        "Pt": {
+          "-2": 2
+        }
+      }
+    }
+  ],
+  "elapsed_s": 1.5262863533571362,
+  "limitation": "Fixed printed centres; localization convergence is unchanged. Sampled intervals may miss narrow transitions; beta stability is not independent physical validation."
+}

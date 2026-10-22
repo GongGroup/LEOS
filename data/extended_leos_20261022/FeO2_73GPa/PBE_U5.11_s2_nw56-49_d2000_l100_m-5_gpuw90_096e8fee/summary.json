@@ -1,0 +1,199 @@
+{
+  "job_id": "1796391",
+  "source": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_20261015_01",
+  "elapsed_seconds": 94.09222081676126,
+  "channels": [
+    {
+      "spin": 1,
+      "num_wann": 56,
+      "windows": {
+        "num_wann": 56,
+        "num_bands": 64,
+        "dis_win_min": null,
+        "dis_win_max": null,
+        "dis_froz_min": null,
+        "dis_froz_max": 8.8324166,
+        "dis_mix_ratio": null,
+        "dis_conv_tol": null,
+        "dis_num_iter": null,
+        "dis_conv_window": null
+      },
+      "baseline_check": {
+        "iterations": 183,
+        "converged": true,
+        "omega_I": 24.633592561454726,
+        "reference_omega_I": 24.63359256,
+        "reference_delta": 1.4547261173447623e-09,
+        "seconds": 22.141427222639322,
+        "gate_passed": true
+      },
+      "disentangle": {
+        "iterations": 183,
+        "converged": true,
+        "omega_I": 24.633592561454726,
+        "seconds": 22.141427222639322
+      },
+      "localisation": {
+        "iterations": 100,
+        "fixed_budget": true,
+        "last_three_delta_omega": [
+          -0.004841570834681619,
+          -0.004760845905202871,
+          -0.004682735875835675
+        ],
+        "tail_satisfies_1e_10": false,
+        "omega": {
+          "I": 24.633592561157,
+          "OD": 5.6896497665299925,
+          "D": 0.0023162837813128926,
+          "total": 30.325558611468303
+        },
+        "seconds": 11.384341368451715
+      },
+      "spread_min_A2": 0.2842387345487917,
+      "spread_max_A2": 0.946827029041434
+    },
+    {
+      "spin": 2,
+      "num_wann": 49,
+      "windows": {
+        "num_wann": 49,
+        "num_bands": 64,
+        "dis_win_min": null,
+        "dis_win_max": null,
+        "dis_froz_min": null,
+        "dis_froz_max": 9.5734655,
+        "dis_mix_ratio": null,
+        "dis_conv_tol": null,
+        "dis_num_iter": null,
+        "dis_conv_window": null
+      },
+      "baseline_check": {
+        "iterations": 200,
+        "converged": false,
+        "omega_I": 33.28739543267226,
+        "reference_omega_I": 33.28740439,
+        "reference_delta": 8.957327736425214e-06,
+        "seconds": 23.271922224201262,
+        "gate_passed": true
+      },
+      "disentangle": {
+        "iterations": 513,
+        "converged": true,
+        "omega_I": 33.287347779995784,
+        "seconds": 55.99896741192788
+      },
+      "localisation": {
+        "iterations": 100,
+        "fixed_budget": true,
+        "last_three_delta_omega": [
+          40.346100637557356,
+          -57.32053860657197,
+          -7.578111622812685
+        ],
+        "tail_satisfies_1e_10": false,
+        "omega": {
+          "I": 33.28734777978528,
+          "OD": 1690.398424530719,
+          "D": 5719.601341808277,
+          "total": 7443.287114118781
+        },
+        "seconds": 10.266175009310246
+      },
+      "spread_min_A2": 142.1136799849072,
+      "spread_max_A2": 161.98241975480832
+    }
+  ],
+  "native_reference_os_flow": [
+    -2,
+    -2,
+    -2,
+    -2,
+    -2,
+    -2,
+    -2,
+    -2,
+    4,
+    3,
+    5,
+    4
+  ],
+  "reference_offline_flow": {
+    "os_flow": [
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      4,
+      3,
+      5,
+      4
+    ],
+    "assigned_integer_electrons": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      10,
+      11,
+      9,
+      10
+    ],
+    "ghost": 1,
+    "infeasible": 0,
+    "stray": 0,
+    "cost": -63778.83415316297
+  },
+  "new_offline_flow": {
+    "os_flow": [
+      0,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -4,
+      6,
+      6,
+      6
+    ],
+    "assigned_integer_electrons": [
+      6,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      18,
+      8,
+      8,
+      8
+    ],
+    "ghost": 1,
+    "infeasible": 0,
+    "stray": 49,
+    "cost": -63708.02005974538
+  },
+  "reference_offline_matches_native": true,
+  "all_disentanglement_converged": true,
+  "all_localisation_tail_converged": false,
+  "new_nelect_wann": null,
+  "new_electron_error": null,
+  "occupation_note": "Integer flow supply=1 per spin WF; target=104 from original DFT. New fractional occupations were not recomputed.",
+  "comparison_note": "GPUw90 SD differs from native CG; centre differences cannot be attributed solely to extended disentanglement.",
+  "old_inputs_preserved": true,
+  "vasp_run": false,
+  "training_run": false
+}

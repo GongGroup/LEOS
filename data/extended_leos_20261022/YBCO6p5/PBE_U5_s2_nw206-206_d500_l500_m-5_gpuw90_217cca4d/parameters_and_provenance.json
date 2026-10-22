@@ -1,0 +1,408 @@
+{
+  "material": "YBCO6p5",
+  "formula_counts": {
+    "Y": 4,
+    "Ba": 8,
+    "Cu": 12,
+    "O": 26
+  },
+  "method": "gpuw90",
+  "source_directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206",
+  "dft_input_source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/YBCO6p5/iter_500",
+  "parameters": {
+    "GGA": "PE",
+    "METAGGA": null,
+    "LDAU": ".TRUE.",
+    "LDAUTYPE": "2",
+    "LDAUL": "-1 -1 2 -1",
+    "LDAUU": "0 0 5 0",
+    "LDAUJ": "0 0 0 0",
+    "ISPIN": "2",
+    "MAGMOM": "0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.544 -0.544 -0.555 0.555 0.555 -0.555 -0.544 0.544 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.015 -0.015 -0.015 0.015 0.000 0.000",
+    "NUPDOWN": null,
+    "NELECT": null,
+    "ISMEAR": "-5",
+    "SIGMA": null,
+    "ENCUT": "500",
+    "EDIFF": "1E-7",
+    "ISYM": "0",
+    "NBANDS": null,
+    "ISTART": "0",
+    "ICHARG": "1",
+    "NELM": "200",
+    "NSW": "0",
+    "dis_num_iter": "500",
+    "num_iter": "500",
+    "kmesh_tol": "1e-5",
+    "EOS_BETA": null,
+    "EOS_FLOW": null,
+    "LWANNIER90": null,
+    "LWANNIER90_RUN": null
+  },
+  "optimizer": {
+    "dis_num_iter": "500",
+    "num_iter": "500",
+    "num_wann": [
+      206,
+      206
+    ]
+  },
+  "beta_baseline": 10,
+  "beta_note": "Baseline convention; exact scan values are retained in scan files.",
+  "eoscar_present": false,
+  "eoscar_aborted": false,
+  "electronic_converged": null,
+  "normal_vasp_end": null,
+  "existing_assessment": null,
+  "offline_summary": {
+    "job_id": "1888867",
+    "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/YBCO6p5/iter_500",
+    "num_wann": [
+      206,
+      206
+    ],
+    "reports": [
+      {
+        "spin": 1,
+        "num_wann": 206,
+        "frozen_max_eV": 2.749226725496,
+        "disentangle": {
+          "iterations": 500,
+          "converged": false,
+          "omega_I": 149.61364885791892,
+          "seconds": 236.05588745698333
+        },
+        "localisation": {
+          "iterations": 500,
+          "omega": {
+            "I": 149.61364882233798,
+            "OD": 38.21073391634572,
+            "D": 0.04765778078261546,
+            "total": 187.87204051946634
+          },
+          "last10_max_delta": 0.004881337467310232,
+          "plateau_1e_6": false,
+          "seconds": 210.1968054389581
+        },
+        "occupation_check": {
+          "original_spin_electrons": 206.00006997161552,
+          "expanded_spin_electrons": 206.00006997222224,
+          "max_energy_match_error_eV": 4.998789999710596e-07,
+          "mapping": "Full uniform mesh; energy-checked +/-k partners",
+          "available": true,
+          "projected_spin_electrons": 205.8009791750058,
+          "missing_spin_electrons": 0.19909079660970974
+        }
+      },
+      {
+        "spin": 2,
+        "num_wann": 206,
+        "frozen_max_eV": 2.749264744213,
+        "disentangle": {
+          "iterations": 500,
+          "converged": false,
+          "omega_I": 148.55035036821295,
+          "seconds": 235.38209084328264
+        },
+        "localisation": {
+          "iterations": 500,
+          "omega": {
+            "I": 148.550350332087,
+            "OD": 34244.34185789422,
+            "D": 113659.0003511441,
+            "total": 148051.8925593704
+          },
+          "last10_max_delta": 1471.138580506551,
+          "plateau_1e_6": false,
+          "seconds": 208.9011017875746
+        },
+        "occupation_check": {
+          "original_spin_electrons": 205.99992997161473,
+          "expanded_spin_electrons": 205.99992997222222,
+          "max_energy_match_error_eV": 4.999639999780925e-07,
+          "mapping": "Full uniform mesh; energy-checked +/-k partners",
+          "available": true,
+          "projected_spin_electrons": 205.83687604213216,
+          "missing_spin_electrons": 0.16305392948257236
+        }
+      }
+    ],
+    "native_old_os": [
+      3,
+      3,
+      3,
+      3,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      3,
+      1,
+      1,
+      2,
+      2,
+      2,
+      2,
+      3,
+      2,
+      2,
+      2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2
+    ],
+    "os_flow": [
+      3,
+      3,
+      3,
+      3,
+      -1,
+      -1,
+      0,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -2,
+      -2,
+      -2,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      0,
+      4,
+      -2,
+      -2,
+      -2,
+      -2,
+      0,
+      1,
+      -2,
+      0,
+      -2,
+      2,
+      -2,
+      1,
+      -2,
+      1,
+      0,
+      0,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2
+    ],
+    "target": 412,
+    "ghost": 0,
+    "stray": 210,
+    "infeasible": 0,
+    "elapsed_s": 1189.7805341612548,
+    "limitation": "Flow target is original DFT electron count, not projected occupation sum. Zero ghost does not prove occupied subspace completeness."
+  },
+  "input_files_present": {
+    "CONTCAR": true,
+    "INCAR": true,
+    "KPOINTS": true,
+    "POSCAR": true,
+    "POTCAR": true
+  },
+  "note": "Archived output, not a scientific acceptance label. Source files are unchanged.",
+  "files": [
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/centres.tsv",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/centres.tsv",
+      "source_sha256": "cef3147aeb9271ca8ce188a2246b37c0fc90d6e5d4cfa80300b7c10847ab418f",
+      "source_bytes": 62492,
+      "stored_bytes": 62492,
+      "stored_sha256": "cef3147aeb9271ca8ce188a2246b37c0fc90d6e5d4cfa80300b7c10847ab418f",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/exit_code.txt",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/exit_code.txt",
+      "source_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "source_bytes": 2,
+      "stored_bytes": 2,
+      "stored_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/provenance.json",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/provenance.json",
+      "source_sha256": "a140209695ea7cc3ef93e86c6302c276b0978f9996399149de9404d4f8a72030",
+      "source_bytes": 3029,
+      "stored_bytes": 3029,
+      "stored_sha256": "a140209695ea7cc3ef93e86c6302c276b0978f9996399149de9404d4f8a72030",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/spin1_summary.json",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/spin1_summary.json",
+      "source_sha256": "28370dac4d9397feeda429134e5504c9b31e144533d9b0a1a4a66caae189eeb4",
+      "source_bytes": 891,
+      "stored_bytes": 891,
+      "stored_sha256": "28370dac4d9397feeda429134e5504c9b31e144533d9b0a1a4a66caae189eeb4",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/spin1_wf_occupations.tsv",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/spin1_wf_occupations.tsv",
+      "source_sha256": "6ec92943d50d5c33a4ce5c41a91c2d4f2d1d19687676d90e89f680d907393ad1",
+      "source_bytes": 5150,
+      "stored_bytes": 5150,
+      "stored_sha256": "6ec92943d50d5c33a4ce5c41a91c2d4f2d1d19687676d90e89f680d907393ad1",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/spin2_summary.json",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/spin2_summary.json",
+      "source_sha256": "7cb63f8ac0cb417579b00c1d60ca39fbd491a8ec599d64b768917ba6d254fc73",
+      "source_bytes": 884,
+      "stored_bytes": 884,
+      "stored_sha256": "7cb63f8ac0cb417579b00c1d60ca39fbd491a8ec599d64b768917ba6d254fc73",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/spin2_wf_occupations.tsv",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/spin2_wf_occupations.tsv",
+      "source_sha256": "057ad16398bd46b2fb97d778b3c95f73ee8e4bb1dcc27daa940307dc894db49d",
+      "source_bytes": 5150,
+      "stored_bytes": 5150,
+      "stored_sha256": "057ad16398bd46b2fb97d778b3c95f73ee8e4bb1dcc27daa940307dc894db49d",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/summary.json",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/summary.json",
+      "source_sha256": "dab104b30b3a3ff2c6e6eebc84b4c1c37c024eb187ab58b56a8034e02a55780b",
+      "source_bytes": 3269,
+      "stored_bytes": 3269,
+      "stored_sha256": "dab104b30b3a3ff2c6e6eebc84b4c1c37c024eb187ab58b56a8034e02a55780b",
+      "gzip": false,
+      "role": "calculation"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/source_DFT_inputs/INCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/YBCO6p5/iter_500/INCAR",
+      "source_sha256": "fc8d276af871795303a71bd4212d0ab0f0b275528af516ddac5986606a945d16",
+      "source_bytes": 913,
+      "stored_bytes": 913,
+      "stored_sha256": "fc8d276af871795303a71bd4212d0ab0f0b275528af516ddac5986606a945d16",
+      "gzip": false,
+      "role": "source_DFT_inputs"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/source_DFT_inputs/KPOINTS",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/YBCO6p5/iter_500/KPOINTS",
+      "source_sha256": "b3e52a80a91b3eb3e967b7688f82396d6b4ae8589deb0d209055f163ffa67ef0",
+      "source_bytes": 79,
+      "stored_bytes": 79,
+      "stored_sha256": "b3e52a80a91b3eb3e967b7688f82396d6b4ae8589deb0d209055f163ffa67ef0",
+      "gzip": false,
+      "role": "source_DFT_inputs"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/source_DFT_inputs/POTCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/YBCO6p5/iter_500/POTCAR",
+      "source_sha256": "7fa5f55c0f847082efdfdb558e26a1e5454f1c97b50ac69ad4c25e5fc8f34055",
+      "source_bytes": 942403,
+      "stored_bytes": 942403,
+      "stored_sha256": "7fa5f55c0f847082efdfdb558e26a1e5454f1c97b50ac69ad4c25e5fc8f34055",
+      "gzip": false,
+      "role": "source_DFT_inputs"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/source_DFT_inputs/CONTCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/YBCO6p5/iter_500/CONTCAR",
+      "source_sha256": "0321c14570b1513b6aed90208fdb351faf175fb32c5d8227b936674e85de0dba",
+      "source_bytes": 5827,
+      "stored_bytes": 5827,
+      "stored_sha256": "0321c14570b1513b6aed90208fdb351faf175fb32c5d8227b936674e85de0dba",
+      "gzip": false,
+      "role": "source_DFT_inputs"
+    },
+    {
+      "file": "extended_leos_20261022/YBCO6p5/PBE_U5_s2_nw206-206_d500_l500_m-5_gpuw90_217cca4d/source_DFT_inputs/POSCAR",
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/six_leos_20261020_01/YBCO6p5/iter_500/POSCAR",
+      "source_sha256": "c74b1a88e1a1249c9733c4da849499ee490c7f184c7a20a648e89c2ce7ede8c8",
+      "source_bytes": 6221,
+      "stored_bytes": 6221,
+      "stored_sha256": "c74b1a88e1a1249c9733c4da849499ee490c7f184c7a20a648e89c2ce7ede8c8",
+      "gzip": false,
+      "role": "source_DFT_inputs"
+    }
+  ],
+  "omitted_from_upload": [
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/spin1_dis_history.tsv",
+      "sha256": "994289ae9e0e7e66e63ca4f4567ffbe7c54b1501458db5f2a435d37c520f9da4",
+      "bytes": 50234,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/spin1_loc_history.tsv",
+      "sha256": "1cefe922f9d2927a5db6d7b072a59d7d9f7545ec81fa693748ff68af7dfd3c0b",
+      "bytes": 37500,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/spin2_dis_history.tsv",
+      "sha256": "19c3bb1999c1ee561104eb966775e2aaee1182ca9f9a06120a2c7c182755c479",
+      "bytes": 50418,
+      "reason": "Large log or intermediate; retained on SAI."
+    },
+    {
+      "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/YBCO6p5_n206/spin2_loc_history.tsv",
+      "sha256": "737a2231dcb052adddd7085e9bbd9a004d541fd828c0e9314634e45178136977",
+      "bytes": 37500,
+      "reason": "Large log or intermediate; retained on SAI."
+    }
+  ],
+  "archive_policy": "Match existing data/v3: inputs, EOSCAR, centres, small Wannier output and result/scan summaries; omit bulky logs."
+}

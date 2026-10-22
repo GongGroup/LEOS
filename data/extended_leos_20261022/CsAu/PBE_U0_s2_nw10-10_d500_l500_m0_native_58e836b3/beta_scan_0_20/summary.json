@@ -1,0 +1,297 @@
+{
+  "case": "CsAu",
+  "range": [
+    0,
+    20
+  ],
+  "step": 0.1,
+  "refinement_tolerance": 1e-05,
+  "evaluations": 229,
+  "native_baseline_reproduced": true,
+  "mismatches": [],
+  "source_sha256": {
+    "POSCAR": "36416b85efd36b06e3d47575ee28972230ceff45c1f2ab629f251b5820fef7eb",
+    "EOSCAR": "260a87558066b3fb91c0383cdb5a904b96b1c0be7f77457354bee46d7bc4e717",
+    "wannier90.2.wout": "90e1c5905122473590c466dc3345bbf4ff589d5b60f1c9313b99432d842fad0e",
+    "wannier90.wout": "60f0310ef5de1a6cf83059246056def808951963de4a0faa0b8c699a6b5743b0",
+    "wannier90.1.wout": "e83980f1a8afdebee3fb75884cfaee8cd923da2b79183d54da3dba8bed8e9870"
+  },
+  "transport_sha256": "2e41a5ed0a83eb7b4598b23819a4cdcc488e2fa7c983355812f4c329175cc188",
+  "assessment": {
+    "directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/seven_spin2_zero_500_20261021_01/CsAu",
+    "technical_success": true,
+    "converged": false,
+    "electronic_converged": true,
+    "normal_end": true,
+    "exit_code": 0,
+    "channels": [
+      {
+        "file": "wannier90.1.wout",
+        "final_state": true,
+        "all_done": true,
+        "disentanglement_converged": true,
+        "disentanglement_exhausted": false,
+        "localization_plateau": false,
+        "last_iterations": [
+          [
+            491,
+            -1.77e-06,
+            0.0009624206,
+            13.1530787293,
+            26.89
+          ],
+          [
+            492,
+            -1.95e-06,
+            0.0010790237,
+            13.153076781,
+            26.95
+          ],
+          [
+            493,
+            -1.92e-06,
+            0.0015639228,
+            13.15307486,
+            27.0
+          ],
+          [
+            494,
+            -1.68e-06,
+            0.0010680819,
+            13.1530731834,
+            27.05
+          ],
+          [
+            495,
+            -1.21e-06,
+            0.0009244018,
+            13.1530719766,
+            27.11
+          ],
+          [
+            496,
+            -9.38e-07,
+            0.000799958,
+            13.1530710386,
+            27.16
+          ],
+          [
+            497,
+            -8.51e-07,
+            0.0007258936,
+            13.1530701875,
+            27.21
+          ],
+          [
+            498,
+            -8.98e-07,
+            0.000729866,
+            13.1530692894,
+            27.26
+          ],
+          [
+            499,
+            -8.62e-07,
+            0.0009856527,
+            13.1530684273,
+            27.32
+          ],
+          [
+            500,
+            -8.43e-07,
+            0.000733656,
+            13.1530675845,
+            27.37
+          ]
+        ],
+        "final_spread": 13.153067585
+      },
+      {
+        "file": "wannier90.2.wout",
+        "final_state": true,
+        "all_done": true,
+        "disentanglement_converged": true,
+        "disentanglement_exhausted": false,
+        "localization_plateau": false,
+        "last_iterations": [
+          [
+            491,
+            -0.0528,
+            13.6505736867,
+            474.5117839977,
+            55.08
+          ],
+          [
+            492,
+            -0.1,
+            12.8095039132,
+            474.4112862587,
+            55.13
+          ],
+          [
+            493,
+            -0.124,
+            10.36214797,
+            474.287739449,
+            55.19
+          ],
+          [
+            494,
+            -0.129,
+            12.9974810724,
+            474.1591775274,
+            55.24
+          ],
+          [
+            495,
+            -0.113,
+            17.5422105176,
+            474.0459911769,
+            55.3
+          ],
+          [
+            496,
+            -0.143,
+            20.4699703455,
+            473.9027825381,
+            55.35
+          ],
+          [
+            497,
+            -0.0275,
+            21.4359935143,
+            473.8752755743,
+            55.41
+          ],
+          [
+            498,
+            -0.0661,
+            20.4334915179,
+            473.8092132424,
+            55.46
+          ],
+          [
+            499,
+            -0.113,
+            16.8488701011,
+            473.6962521509,
+            55.52
+          ],
+          [
+            500,
+            -0.158,
+            16.1103650614,
+            473.5381833172,
+            55.57
+          ]
+        ],
+        "final_spread": 473.538183317
+      }
+    ],
+    "ion_results": [
+      {
+        "atom": 1,
+        "element": "Cs",
+        "os_flow": -1
+      },
+      {
+        "atom": 2,
+        "element": "Au",
+        "os_flow": 1
+      }
+    ],
+    "parse_error": null,
+    "plateau_criterion": "Last 10 |delta total spread| <= 1e-6 A^2; not proof of global minimum",
+    "retry_iterations": true
+  },
+  "intervals": [
+    {
+      "beta_min": 0.0,
+      "beta_max": 12.727630615234,
+      "os_flow": [
+        -1,
+        1
+      ],
+      "by_element": {
+        "Cs": [
+          -1
+        ],
+        "Au": [
+          1
+        ]
+      }
+    },
+    {
+      "beta_min": 12.72763671875,
+      "beta_max": 15.02564086914,
+      "os_flow": [
+        0,
+        0
+      ],
+      "by_element": {
+        "Cs": [
+          0
+        ],
+        "Au": [
+          0
+        ]
+      }
+    },
+    {
+      "beta_min": 15.025646972656,
+      "beta_max": 20.0,
+      "os_flow": [
+        1,
+        -1
+      ],
+      "by_element": {
+        "Cs": [
+          1
+        ],
+        "Au": [
+          -1
+        ]
+      }
+    }
+  ],
+  "count_intervals": [
+    {
+      "beta_min": 0.0,
+      "beta_max": 12.727630615234,
+      "counts": {
+        "Cs": {
+          "-1": 1
+        },
+        "Au": {
+          "1": 1
+        }
+      }
+    },
+    {
+      "beta_min": 12.72763671875,
+      "beta_max": 15.02564086914,
+      "counts": {
+        "Cs": {
+          "0": 1
+        },
+        "Au": {
+          "0": 1
+        }
+      }
+    },
+    {
+      "beta_min": 15.025646972656,
+      "beta_max": 20.0,
+      "counts": {
+        "Cs": {
+          "1": 1
+        },
+        "Au": {
+          "-1": 1
+        }
+      }
+    }
+  ],
+  "elapsed_s": 1.1863966714590788,
+  "limitation": "Fixed printed centres; localization convergence is unchanged. Sampled intervals may miss narrow transitions; beta stability is not independent physical validation."
+}

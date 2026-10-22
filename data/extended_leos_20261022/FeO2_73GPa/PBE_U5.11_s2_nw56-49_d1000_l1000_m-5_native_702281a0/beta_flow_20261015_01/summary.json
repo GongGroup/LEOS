@@ -1,0 +1,1152 @@
+{
+  "job_id": "1799336",
+  "elapsed_s": 13.977558666840196,
+  "sources": {
+    "pbe_u_73GPa": "/home/zhangyanglu/zack/leos.sample/FeO2-73Gpa/pbe_u5p11_static_20261015_02/leos_v3_1000_1000_20261015_01",
+    "FeO2_sai": "/home/zhangyanglu/zack/leos.sample/FeO2-sai/static_leos_v3_20261015_01"
+  },
+  "source_sha256": {
+    "pbe_u_73GPa": {
+      "POSCAR": "71b5c6a8ad6eff383a2204ac9310339117e9a3526b1ab8a2e79dcde629f32791",
+      "EOSCAR": "8572d7e3586bdaa78bf7e6767b2d7903a9ece45f03f909ad6e0cbb4cbb448129",
+      "wannier90.1.wout": "feb580de7b496fa591ab9dec667ddd5ef68a93e5e083cab21517f94a53bae4d6",
+      "wannier90.2.wout": "e7c2668643f8a8bf5b6318bd571394d25f175c05b1b119a5caf954785856986f"
+    },
+    "FeO2_sai": {
+      "POSCAR": "b90fd80c45a5b3bb7a126ca5965b8c8c5856bb235a420e5d9aca801f43d7097a",
+      "EOSCAR": "6ab804f27b3373a8970e98b785e91937ccaca5783ae250ac784af04e2b79ce4a",
+      "wannier90.1.wout": "a26c5c7b183c00e821bea9ef0554ad42da4eb7599fc95cd606f925af7ebb14f4",
+      "wannier90.2.wout": "b94dee1c8c6192444290545a5ae1c3d3a2f062fff253fed8bf5f7ef200f1b74a"
+    }
+  },
+  "original_inputs_unchanged": true,
+  "native_baselines_reproduced": true,
+  "protocol": "Existing printed final centres; tier1/Allen/gamma0/no-drop; beta only.",
+  "range": [
+    0,
+    10
+  ],
+  "coarse_step": 0.1,
+  "transition_bracket_tolerance": 1e-05,
+  "evaluation_count": 158,
+  "candidates": [
+    {
+      "target_Fe": 3,
+      "beta": 1.06118164,
+      "result": {
+        "beta": 1.06118164,
+        "cases": {
+          "pbe_u_73GPa": {
+            "os_flow": [
+              -1,
+              -1,
+              -2,
+              -2,
+              -1,
+              -2,
+              -1,
+              -2,
+              3,
+              3,
+              3,
+              3
+            ],
+            "assigned_electrons": [
+              7,
+              7,
+              8,
+              8,
+              7,
+              8,
+              7,
+              8,
+              11,
+              11,
+              11,
+              11
+            ],
+            "Fe": [
+              3,
+              3,
+              3,
+              3
+            ],
+            "O": [
+              -1,
+              -1,
+              -2,
+              -2,
+              -1,
+              -2,
+              -1,
+              -2
+            ],
+            "ghost": 1,
+            "target": 104,
+            "stray": 0,
+            "transport_cost": -63961.9867015309
+          },
+          "FeO2_sai": {
+            "os_flow": [
+              4,
+              -2,
+              -2
+            ],
+            "assigned_electrons": [
+              10,
+              8,
+              8
+            ],
+            "Fe": [
+              4
+            ],
+            "O": [
+              -2,
+              -2
+            ],
+            "ghost": 1,
+            "target": 26,
+            "stray": 11,
+            "transport_cost": -15963.721849963445
+          }
+        },
+        "all_Fe3": true,
+        "all_Fe2": false,
+        "control_Fe4": true
+      },
+      "sampled_beta_min": 0.0,
+      "sampled_beta_max": 2.12236328125
+    }
+  ],
+  "intervals": [
+    {
+      "sampled_beta_min": 0.0,
+      "sampled_beta_max": 2.12236328125,
+      "cases": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -1,
+            -1,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2,
+            3,
+            3,
+            3,
+            3
+          ],
+          "assigned_electrons": [
+            7,
+            7,
+            8,
+            8,
+            7,
+            8,
+            7,
+            8,
+            11,
+            11,
+            11,
+            11
+          ],
+          "Fe": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "O": [
+            -1,
+            -1,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63985.39736796018
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15969.042455970095
+        }
+      },
+      "all_Fe3": true,
+      "all_Fe2": false,
+      "control_Fe4": true
+    },
+    {
+      "sampled_beta_min": 2.122369384766,
+      "sampled_beta_max": 4.993432617187,
+      "cases": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -1,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2,
+            3,
+            3,
+            3,
+            4
+          ],
+          "assigned_electrons": [
+            8,
+            7,
+            8,
+            8,
+            7,
+            8,
+            7,
+            8,
+            11,
+            11,
+            11,
+            10
+          ],
+          "Fe": [
+            3,
+            3,
+            3,
+            4
+          ],
+          "O": [
+            -2,
+            -1,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63938.57590144722
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15958.401213348414
+        }
+      },
+      "all_Fe3": false,
+      "all_Fe2": false,
+      "control_Fe4": true
+    },
+    {
+      "sampled_beta_min": 4.993438720702,
+      "sampled_beta_max": 5.046905517577,
+      "cases": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2,
+            3,
+            3,
+            3,
+            5
+          ],
+          "assigned_electrons": [
+            8,
+            8,
+            8,
+            8,
+            7,
+            8,
+            7,
+            8,
+            11,
+            11,
+            11,
+            9
+          ],
+          "Fe": [
+            3,
+            3,
+            3,
+            5
+          ],
+          "O": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63876.6769217111
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15944.006101165467
+        }
+      },
+      "all_Fe3": false,
+      "all_Fe2": false,
+      "control_Fe4": true
+    },
+    {
+      "sampled_beta_min": 5.046911621093,
+      "sampled_beta_max": 5.194177246094,
+      "cases": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2,
+            3,
+            4,
+            3,
+            5
+          ],
+          "assigned_electrons": [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            7,
+            8,
+            11,
+            10,
+            11,
+            9
+          ],
+          "Fe": [
+            3,
+            4,
+            3,
+            5
+          ],
+          "O": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63875.550882440926
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15943.737996041618
+        }
+      },
+      "all_Fe3": false,
+      "all_Fe2": false,
+      "control_Fe4": true
+    },
+    {
+      "sampled_beta_min": 5.19418334961,
+      "sampled_beta_max": 10.0,
+      "cases": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            4,
+            4,
+            3,
+            5
+          ],
+          "assigned_electrons": [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            10,
+            10,
+            11,
+            9
+          ],
+          "Fe": [
+            4,
+            4,
+            3,
+            5
+          ],
+          "O": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63872.52344997661
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15942.999597624403
+        }
+      },
+      "all_Fe3": false,
+      "all_Fe2": false,
+      "control_Fe4": true
+    }
+  ],
+  "transitions": [
+    {
+      "beta_lower": 2.12236328125,
+      "beta_upper": 2.122369384766,
+      "below": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -1,
+            -1,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2,
+            3,
+            3,
+            3,
+            3
+          ],
+          "assigned_electrons": [
+            7,
+            7,
+            8,
+            8,
+            7,
+            8,
+            7,
+            8,
+            11,
+            11,
+            11,
+            11
+          ],
+          "Fe": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "O": [
+            -1,
+            -1,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63938.57603507409
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15958.401243950531
+        }
+      },
+      "above": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -1,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2,
+            3,
+            3,
+            3,
+            4
+          ],
+          "assigned_electrons": [
+            8,
+            7,
+            8,
+            8,
+            7,
+            8,
+            7,
+            8,
+            11,
+            11,
+            11,
+            10
+          ],
+          "Fe": [
+            3,
+            3,
+            3,
+            4
+          ],
+          "O": [
+            -2,
+            -1,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63938.57590144722
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15958.401213348414
+        }
+      }
+    },
+    {
+      "beta_lower": 4.993432617187,
+      "beta_upper": 4.993438720702,
+      "below": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -1,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2,
+            3,
+            3,
+            3,
+            4
+          ],
+          "assigned_electrons": [
+            8,
+            7,
+            8,
+            8,
+            7,
+            8,
+            7,
+            8,
+            11,
+            11,
+            11,
+            10
+          ],
+          "Fe": [
+            3,
+            3,
+            3,
+            4
+          ],
+          "O": [
+            -2,
+            -1,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63876.67705064959
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15944.006131767575
+        }
+      },
+      "above": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2,
+            3,
+            3,
+            3,
+            5
+          ],
+          "assigned_electrons": [
+            8,
+            8,
+            8,
+            8,
+            7,
+            8,
+            7,
+            8,
+            11,
+            11,
+            11,
+            9
+          ],
+          "Fe": [
+            3,
+            3,
+            3,
+            5
+          ],
+          "O": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63876.6769217111
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15944.006101165467
+        }
+      }
+    },
+    {
+      "beta_lower": 5.046905517577,
+      "beta_upper": 5.046911621093,
+      "below": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2,
+            3,
+            3,
+            3,
+            5
+          ],
+          "assigned_electrons": [
+            8,
+            8,
+            8,
+            8,
+            7,
+            8,
+            7,
+            8,
+            11,
+            11,
+            11,
+            9
+          ],
+          "Fe": [
+            3,
+            3,
+            3,
+            5
+          ],
+          "O": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63875.55100871983
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15943.738026643736
+        }
+      },
+      "above": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2,
+            3,
+            4,
+            3,
+            5
+          ],
+          "assigned_electrons": [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            7,
+            8,
+            11,
+            10,
+            11,
+            9
+          ],
+          "Fe": [
+            3,
+            4,
+            3,
+            5
+          ],
+          "O": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63875.550882440926
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15943.737996041618
+        }
+      }
+    },
+    {
+      "beta_lower": 5.194177246094,
+      "beta_upper": 5.19418334961,
+      "below": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2,
+            3,
+            4,
+            3,
+            5
+          ],
+          "assigned_electrons": [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            7,
+            8,
+            11,
+            10,
+            11,
+            9
+          ],
+          "Fe": [
+            3,
+            4,
+            3,
+            5
+          ],
+          "O": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -1,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63872.52357439895
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15942.999628226517
+        }
+      },
+      "above": {
+        "pbe_u_73GPa": {
+          "os_flow": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            4,
+            4,
+            3,
+            5
+          ],
+          "assigned_electrons": [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            10,
+            10,
+            11,
+            9
+          ],
+          "Fe": [
+            4,
+            4,
+            3,
+            5
+          ],
+          "O": [
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 104,
+          "stray": 0,
+          "transport_cost": -63872.52344997661
+        },
+        "FeO2_sai": {
+          "os_flow": [
+            4,
+            -2,
+            -2
+          ],
+          "assigned_electrons": [
+            10,
+            8,
+            8
+          ],
+          "Fe": [
+            4
+          ],
+          "O": [
+            -2,
+            -2
+          ],
+          "ghost": 1,
+          "target": 26,
+          "stray": 11,
+          "transport_cost": -15942.999597624403
+        }
+      }
+    }
+  ],
+  "limitations": "Output-coordinate replay; no DFT or Wannier updates; targets used for searching, not independent validation; intervals are sampled and transitions bracketed, not a uniqueness proof."
+}

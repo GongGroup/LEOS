@@ -1,0 +1,197 @@
+{
+  "protocol_id": "benchmark100-leos-MgO-18da14cecff4b1c2",
+  "centres_cart_A": [
+    [
+      -2.015159,
+      -1.098683,
+      -3.103668
+    ],
+    [
+      -1.520053,
+      -0.943815,
+      0.091763
+    ],
+    [
+      -0.924737,
+      1.020753,
+      -1.207563
+    ],
+    [
+      -0.692174,
+      1.022616,
+      1.249457
+    ]
+  ],
+  "centre_spins": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "occupations": [
+    2.0,
+    2.0,
+    2.0,
+    2.0
+  ],
+  "spreads": [
+    0.671,
+    0.6703,
+    0.6718,
+    0.6686
+  ],
+  "os_flow_reference": [
+    2,
+    -2
+  ],
+  "eoscar": null,
+  "source_input": {
+    "id": 7,
+    "formula": "MgO",
+    "directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases_kmesh_fix_v2/007_MgO",
+    "source_sample": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_20261012/materials/007_MgO/3L2iAlqtIe3Cr4ZSuWTF9XuSsAJy/sample.json",
+    "source_entry_id": "3L2iAlqtIe3Cr4ZSuWTF9XuSsAJy",
+    "original_incar": {
+      "PREC": "Accurate",
+      "ALGO": "All",
+      "NELM": 150,
+      "NELMIN": 3,
+      "IBRION": 2,
+      "EDIFF": 1e-06,
+      "EDIFFG": -0.03,
+      "NSW": 200,
+      "ISIF": 3,
+      "ISYM": 0,
+      "SYMPREC": 1e-06,
+      "ENCUT": 520.0,
+      "LREAL": false,
+      "ISMEAR": 0,
+      "SIGMA": 0.01,
+      "KSPACING": 0.449896,
+      "LWAVE": true,
+      "LCHARG": false,
+      "LORBIT": 11,
+      "LASPH": false,
+      "GGA": "Pe",
+      "IVDW": 12,
+      "MAGMOM": [
+        1.0,
+        1.0
+      ],
+      "ISPIN": 1,
+      "NBANDS": 8
+    },
+    "effective_incar": {
+      "ALGO": "All",
+      "EDIFF": 1e-06,
+      "EDIFFG": -0.03,
+      "ENCUT": 520.0,
+      "EOS_EVERY_N": 0,
+      "EOS_FLOW": true,
+      "EOS_PROJ_WEIGHT": true,
+      "EOS_SCDM_ONLY": false,
+      "EOS_WF_DETAIL": true,
+      "GGA": "Pe",
+      "IBRION": -1,
+      "ICHARG": 2,
+      "ISIF": 3,
+      "ISMEAR": 0,
+      "ISPIN": 1,
+      "ISTART": 0,
+      "ISYM": 0,
+      "IVDW": 12,
+      "KPAR": 1,
+      "LASPH": false,
+      "LCHARG": true,
+      "LEOS": true,
+      "LNONCOLLINEAR": false,
+      "LORBIT": 11,
+      "LREAL": false,
+      "LSCDM": true,
+      "LSORBIT": false,
+      "LWANNIER90": true,
+      "LWANNIER90_AUTO_WINDOW": true,
+      "LWANNIER90_RUN": true,
+      "LWAVE": true,
+      "MAGMOM": [
+        1.0,
+        1.0
+      ],
+      "NBANDS": 8,
+      "NELECT": 8.0,
+      "NELM": 200,
+      "NELMIN": 3,
+      "NSW": 0,
+      "PREC": "Accurate",
+      "SIGMA": 0.01,
+      "SYMPREC": 1e-06,
+      "WANNIER90_WIN": "\"\nkmesh_tol = 0.00001\n\""
+    },
+    "overrides": {
+      "NSW": 0,
+      "IBRION": -1,
+      "ISYM": 0,
+      "ISTART": 0,
+      "ICHARG": 2,
+      "LWAVE": true,
+      "LCHARG": true,
+      "ISPIN": 1,
+      "NELECT": 8.0,
+      "LSORBIT": false,
+      "LNONCOLLINEAR": false,
+      "KPAR": 1,
+      "NELM": 200,
+      "LEOS": true,
+      "LWANNIER90": true,
+      "LWANNIER90_RUN": true,
+      "LSCDM": true,
+      "LWANNIER90_AUTO_WINDOW": true,
+      "EOS_FLOW": true,
+      "EOS_WF_DETAIL": true,
+      "EOS_PROJ_WEIGHT": true,
+      "EOS_SCDM_ONLY": false,
+      "EOS_EVERY_N": 0
+    },
+    "total_charge": 0.0,
+    "potcars": [
+      {
+        "element": "Mg",
+        "variant": "Mg",
+        "path": "/home/zhangyanglu/zack/POT/Mg/POTCAR",
+        "title": "PAW_PBE Mg 13Apr2007",
+        "zval": 2.0,
+        "sha256": "91e560d99171f01a757253583d9a257ca7aab8911d7fa28ebabfbf3e6356a096"
+      },
+      {
+        "element": "O",
+        "variant": "O",
+        "path": "/home/zhangyanglu/zack/POT/O/POTCAR",
+        "title": "PAW_PBE O 08Apr2002",
+        "zval": 6.0,
+        "sha256": "8a74b9a1f5fdb3d0c3e0183c7873177abdbef07d407b310b7edcd9ed0a3eea64"
+      }
+    ],
+    "input_sha256": {
+      "POSCAR": "87efd5d9a9b1ba697dfe2f53893e0e1a6928df904e13e27bff28b83a4c322142",
+      "INCAR": "18da14cecff4b1c2bcb31eff7b597956c33e4f500249bf7fce82a1ef397fdc87",
+      "KPOINTS": "960ac771e0e8cff390958ecf1a00d55d5bddc4d2612ad7e26d0a5e57566b9d3d",
+      "POTCAR": "ef3ed234c8945ea84ce1dcaf7969285eb65c01b559ef65ba6fbac9fd5ae5f616"
+    },
+    "source_kmesh": [
+      6,
+      6,
+      6
+    ],
+    "n_atoms": 2,
+    "training_accepted": false,
+    "note": "Fresh static SCF with user-supplied PBE64 library; not identical to source DFT.",
+    "first_attempt_directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/benchmark100_leos_20261012_01/cases/007_MgO",
+    "numerical_fixes": {
+      "kmesh_tol": 1e-05,
+      "reason": "Documented b-vector shell tolerance for small cell precision differences",
+      "physical_cell_changed": false,
+      "kpoint_mesh_changed": false
+    }
+  },
+  "training_accepted": false
+}

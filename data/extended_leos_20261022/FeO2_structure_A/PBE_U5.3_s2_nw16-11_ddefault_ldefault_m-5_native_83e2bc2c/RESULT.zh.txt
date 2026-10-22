@@ -1,0 +1,37 @@
+FeO2 静态单点与 LEOS v3 结果，2026-10-15
+
+作业：1795064；SAI / 4v100n01；4V100 / improper-gpu；课题组 sjtu-gongxueqing。
+状态：COMPLETED，ExitCode=0:0，Slurm 耗时 2 分 31 秒。
+计算目录：/home/zhangyanglu/zack/leos.sample/FeO2-sai/static_leos_v3_20261015_01
+执行程序：/home/zhangyanglu/zack/app/vasp.6.4.3-leos-v3/bin/vasp_std
+OUTCAR 版本：vasp.6.4.3 19Mar24，build Oct 1 2026 16:26:15。
+原始结构、POTCAR、Gamma 8x8x5 KPOINTS 的 SHA256 与源文件完全一致。
+原 INCAR 电子结构参数保留，只有 LWAVE 输出开关由 False 改为 True；增加静态计算与 LEOS/密度输出开关，见 input_check.json。
+实际 ISYM=2，ISPIN=2，NELECT=26，ENCUT=520 eV，Fe U=5.3 eV；未修改原初始磁矩、EDIFF、展宽、LREAL 等设置。
+
+DFT：15 轮电子迭代达到原 EDIFF，正常结束；程序实测耗时 149.764 秒。
+总能 TOTEN=-18.17473625 eV；总磁化约 3.9978 μB。
+Wannier：两个自旋通道均输出 Final State 和 All done；解缠结标准满足。
+中心数：spin 1 为 16，spin 2 为 11，总计 27；由已安装 LEOS 自动协议决定。
+局域化迭代使用原程序默认设置，未因结果质量改参数追加计算；All done 不等于额外验证了中心精度。
+
+原生 EOSCAR 逐原子结果：
+1 Fe：OS(raw)=3.989，OS(int)=4，OS(flow)=4。
+2 O ：OS(raw)=-2.000，OS(int)=-2，OS(flow)=-2。
+3 O ：OS(raw)=-2.000，OS(int)=-2，OS(flow)=-2。
+总氧化态为 0。此处为本次算法输出，不是独立的实验氧化态判定。
+
+需要保留的质量诊断：
+1. Wannier 占据电子数 26.010831，|dNe|=0.010831 e，略超原生警告阈值 0.01 e，低于终止阈值 0.35 e。
+2. FLOW_GHOST=1，FLOW_INFEASIBLE=0，FLOW_N_STRAY=11。未修改供给、中心或阈值以消除这些诊断。
+3. spin 1 总展宽约 12.188571 Å²；spin 2 总展宽约 169.652212 Å²，其单中心展宽约 12.3267–17.1502 Å²。第二自旋通道较弥散，不能仅凭整数氧化态结果认定中心质量已验收。
+4. vasp.stderr 包含 ieee_invalid、ieee_divide_by_zero、ieee_underflow、ieee_inexact signaling 及 FORTRAN STOP；MPI 返回 0、OUTCAR 正常结束，仍完整保留这些数值警告，未宣称无警告。
+
+结果文件：
+EOSCAR：原生 LEOS 氧化态、中心、占据、投影信息及诊断。
+centres.tsv：27 个中心的坐标、自旋、占据数与展宽。
+oxidation_states.tsv：逐原子 OS(raw)、OS(int)、OS(flow)。
+result_summary.json：机器可读结果、检查、各文件大小与 SHA256。
+wannier90.1/2.win、.wout、.amn、.mmn、.eig、.chk：完整 Wannier 输入/输出。
+OUTCAR、vasprun.xml、DOSCAR、EIGENVAL、PROCAR、CHGCAR、CHG、AECCAR0/1/2、非空 WAVECAR：本次 DFT 结果。
+原始计算仍位于父目录，不覆盖；机器学习程序与训练集均未修改。

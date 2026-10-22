@@ -1,0 +1,45 @@
+{
+  "formula": "Lu2O3",
+  "index": 6,
+  "job_id": "1759664",
+  "array_id": null,
+  "started_utc": "2026-10-13T01:53:39.633415+00:00",
+  "state": "completed_computational_checks",
+  "training_accepted": false,
+  "input_normalizations": {
+    "removed_legacy_empty_placeholders": [
+      "METAGGA"
+    ],
+    "functional_reference": "Original PAW_PBE; no replacement functional selected"
+  },
+  "vasp_binary": "/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/bin/vasp_std",
+  "vasp_binary_sha256": "dd36e27fca52dbfcc3539f461f7f0607a282fb855e6d4284d077d876c2bd6c89",
+  "gpu_inventory": "name, uuid, memory.total [MiB]\nTesla V100-SXM2-32GB, GPU-be9b5d95-e885-b43b-e2a5-f4eafef12aad, 32768 MiB\n",
+  "command": [
+    "/opt/devtools/openmpi/openmpi-5.0.8-nvhpc243-pgi-avx2/bin/mpirun",
+    "-np",
+    "1",
+    "--bind-to",
+    "none",
+    "--map-by",
+    "ppr:1:node",
+    "-mca",
+    "coll_hcoll_enable",
+    "0",
+    "/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/bin/vasp_std"
+  ],
+  "returncode": 0,
+  "centres": 36,
+  "dne": 0.0,
+  "os_flow": [
+    -2,
+    -2,
+    -2,
+    2,
+    4
+  ],
+  "wavecar_bytes": 106476832,
+  "scientific_acceptance": false,
+  "elapsed_seconds": 486.9036560487002,
+  "finished_utc": "2026-10-13T02:01:46.537062+00:00"
+}

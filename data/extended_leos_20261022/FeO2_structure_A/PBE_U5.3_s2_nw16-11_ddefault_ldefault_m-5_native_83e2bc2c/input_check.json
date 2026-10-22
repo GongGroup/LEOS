@@ -1,0 +1,30 @@
+{
+  "source": "/home/zhangyanglu/zack/leos.sample/FeO2-sai",
+  "run_directory": "/home/zhangyanglu/zack/leos.sample/FeO2-sai/static_leos_v3_20261015_01",
+  "binary": "/home/zhangyanglu/zack/app/vasp.6.4.3-leos-v3/bin/vasp_std",
+  "binary_sha256": "26ebfa0d8c79a170a3b9f04af6b2ef1c9af40293b1a705bf6b51d8438208d9b6",
+  "input_sha256": {
+    "POSCAR": "b90fd80c45a5b3bb7a126ca5965b8c8c5856bb235a420e5d9aca801f43d7097a",
+    "POTCAR": "005b5e8ff7f672d2e6eedbb10b26d7116cc0a01b2bac906b9145e44807bc2866",
+    "KPOINTS": "8ac6fe1d02a38cc4358e155ca7d04b51d3c8b89c915752e583d6270e14fc1bd6",
+    "INCAR": "f1d216ad859392709ba806ad166adddfb332183badb657dab919ad05d7f9eabd"
+  },
+  "changed_original_fields": {
+    "LWAVE": [
+      "FALSE",
+      "TRUE"
+    ]
+  },
+  "added_fields": {
+    "NSW": "0",
+    "IBRION": "-1",
+    "LCHARG": "TRUE",
+    "LAECHG": "TRUE",
+    "LEOS": "TRUE",
+    "EOS_WF_DETAIL": "TRUE",
+    "EOS_PROJ_WEIGHT": "TRUE"
+  },
+  "original_electronic_parameters_preserved": true,
+  "wannier_protocol": "Installed LEOS v3 defaults; no supplied centres or num_wann",
+  "restart": "Fresh wavefunctions and atomic-density initialization; no old CHGCAR copied"
+}

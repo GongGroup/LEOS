@@ -1,0 +1,49 @@
+SYSTEM = FeO2 73 GPa PBE+U static, Ueff=5.11 eV
+ISTART = 0
+ICHARG = 2
+GGA = PE
+
+# Collinear low-moment initial state; moments may change during SCF.
+# Species order is O (8 atoms), Fe (4 atoms).
+ISPIN = 2
+MAGMOM = 8*0.0 4*1.0
+LSORBIT = .FALSE.
+LDAU = .TRUE.
+LDAUTYPE = 2
+LDAUL = -1 2
+LDAUU = 0.0 5.11
+LDAUJ = 0.0 0.0
+LDAUPRINT = 1
+LMAXMIX = 4
+
+# User-approved precision, shared with the PBE starting calculation.
+ENCUT = 600
+PREC = Accurate
+LREAL = .FALSE.
+LASPH = .TRUE.
+ADDGRID = .TRUE.
+ALGO = Normal
+EDIFF = 1E-8
+NELM = 200
+NELMIN = 6
+
+# Fixed experimental geometry; no volume or position optimization.
+IBRION = -1
+NSW = 0
+ISIF = 2
+ISMEAR = -5
+
+LWAVE = .TRUE.
+LCHARG = .TRUE.
+LORBIT = 11
+NEDOS = 3001
+
+# Native LEOS v3, with centre and projection details.
+LEOS = .TRUE.
+EOS_WF_DETAIL = .TRUE.
+EOS_PROJ_WEIGHT = .TRUE.
+
+WANNIER90_WIN = "
+dis_num_iter = 1000
+num_iter = 1000
+"

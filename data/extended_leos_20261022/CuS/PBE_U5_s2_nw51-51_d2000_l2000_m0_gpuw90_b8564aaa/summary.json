@@ -1,0 +1,110 @@
+{
+  "job_id": "1890608",
+  "source": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/spin_count_500_20261021_01/CuS_spin2",
+  "num_wann": [
+    51,
+    51
+  ],
+  "reports": [
+    {
+      "spin": 1,
+      "num_wann": 51,
+      "frozen_max_eV": 2.628219732904,
+      "disentangle": {
+        "iterations": 1268,
+        "converged": true,
+        "omega_I": 59.36056137269267,
+        "seconds": 930.2738798819482
+      },
+      "localisation": {
+        "iterations": 2000,
+        "omega": {
+          "I": 59.36056137316059,
+          "OD": 23.501363982473602,
+          "D": 1.8117448274706731,
+          "total": 84.67367018310487
+        },
+        "last10_max_delta": 4.851770559355373e-05,
+        "plateau_1e_6": false,
+        "seconds": 970.6676068603992
+      },
+      "occupation_check": {
+        "original_spin_electrons": 51.00000002777777,
+        "expanded_spin_electrons": 51.00000002777777,
+        "max_energy_match_error_eV": 4.999939999805747e-07,
+        "mapping": "Full uniform mesh; energy-checked +/-k partners",
+        "available": true,
+        "projected_spin_electrons": 50.236702264617435,
+        "missing_spin_electrons": 0.7632977631603381
+      }
+    },
+    {
+      "spin": 2,
+      "num_wann": 51,
+      "frozen_max_eV": 2.628219823617,
+      "disentangle": {
+        "iterations": 2000,
+        "converged": false,
+        "omega_I": 60.18354635487489,
+        "seconds": 1464.2902806634083
+      },
+      "localisation": {
+        "iterations": 2000,
+        "omega": {
+          "I": 60.1835463551742,
+          "OD": 9271.846662303991,
+          "D": 31261.77660286095,
+          "total": 40593.80681152012
+        },
+        "last10_max_delta": 270.8669458173099,
+        "plateau_1e_6": false,
+        "seconds": 962.4741176329553
+      },
+      "occupation_check": {
+        "original_spin_electrons": 51.00000000694445,
+        "expanded_spin_electrons": 51.00000000694445,
+        "max_energy_match_error_eV": 4.99988999980161e-07,
+        "mapping": "Full uniform mesh; energy-checked +/-k partners",
+        "available": true,
+        "projected_spin_electrons": 50.22714096286219,
+        "missing_spin_electrons": 0.77285904408226
+      }
+    }
+  ],
+  "native_old_os": [
+    2,
+    2,
+    1,
+    1,
+    1,
+    1,
+    -2,
+    -2,
+    0,
+    -1,
+    -1,
+    -2
+  ],
+  "os_flow": [
+    -2,
+    0,
+    -2,
+    4,
+    4,
+    -2,
+    -2,
+    -2,
+    -2,
+    2,
+    4,
+    -2
+  ],
+  "target": 102,
+  "ghost": 0,
+  "stray": 57,
+  "infeasible": 0,
+  "elapsed_s": 4581.265264569782,
+  "limitation": "Flow target is original DFT electron count, not projected occupation sum. Zero ghost does not prove occupied subspace completeness.",
+  "converged": false,
+  "comparison_job_id": "1889886"
+}

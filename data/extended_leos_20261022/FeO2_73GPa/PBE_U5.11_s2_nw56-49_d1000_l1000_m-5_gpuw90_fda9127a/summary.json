@@ -1,0 +1,156 @@
+{
+  "job_id": "1796442",
+  "elapsed_seconds": 303.7839448824525,
+  "channels": [
+    {
+      "spin": 1,
+      "num_wann": 56,
+      "disentangle": {
+        "iterations": 183,
+        "converged": true,
+        "omega_I": 24.633592561454726,
+        "seconds": 22.229695826768875
+      },
+      "localisation": {
+        "iterations": 1000,
+        "seconds": 112.7440047133714,
+        "omega": {
+          "I": 24.633592561348173,
+          "OD": 4.706913647829699,
+          "D": 0.0019375337399973223,
+          "total": 29.342443742917872
+        },
+        "last_three_delta_omega": [
+          -0.0003106945515405357,
+          -0.000310497383317454,
+          -0.00031030169373735816
+        ],
+        "tail_satisfies_1e_10": false,
+        "omega_at_step_100": 30.325558611468303,
+        "previous_100_step_omega": 30.325558611468303
+      },
+      "spread_min_A2": 0.305583930948663,
+      "spread_max_A2": 0.6975965744965009
+    },
+    {
+      "spin": 2,
+      "num_wann": 49,
+      "disentangle": {
+        "iterations": 513,
+        "converged": true,
+        "omega_I": 33.287347779995784,
+        "seconds": 55.856553215533495
+      },
+      "localisation": {
+        "iterations": 1000,
+        "seconds": 101.3684251178056,
+        "omega": {
+          "I": 33.28734777992101,
+          "OD": 1690.1669415409874,
+          "D": 5747.855836407613,
+          "total": 7471.310125728522
+        },
+        "last_three_delta_omega": [
+          -7.2703139182758605,
+          107.51364994348023,
+          -54.28342600692031
+        ],
+        "tail_satisfies_1e_10": false,
+        "omega_at_step_100": 7443.287114118781,
+        "previous_100_step_omega": 7443.287114118781
+      },
+      "spread_min_A2": 136.99309011508794,
+      "spread_max_A2": 166.98706455372698
+    }
+  ],
+  "native_reference_os_flow": [
+    -2,
+    -2,
+    -2,
+    -2,
+    -2,
+    -2,
+    -2,
+    -2,
+    4,
+    3,
+    5,
+    4
+  ],
+  "previous_offline_flow": {
+    "os_flow": [
+      0,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -4,
+      6,
+      6,
+      6
+    ],
+    "assigned_integer_electrons": [
+      6,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      18,
+      8,
+      8,
+      8
+    ],
+    "ghost": 1,
+    "infeasible": 0,
+    "stray": 49,
+    "cost": -63708.02005974538
+  },
+  "new_offline_flow": {
+    "os_flow": [
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      6,
+      6,
+      6
+    ],
+    "assigned_integer_electrons": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      16,
+      8,
+      8,
+      8
+    ],
+    "ghost": 1,
+    "infeasible": 0,
+    "stray": 49,
+    "cost": -63713.10231665116
+  },
+  "all_disentanglement_converged": true,
+  "all_localisation_tail_converged": false,
+  "new_nelect_wann": null,
+  "new_electron_error": null,
+  "occupation_note": "Same integer tier1 flow protocol; new fractional occupations/projector weights not computed.",
+  "original_inputs_preserved": true,
+  "vasp_run": false,
+  "training_run": false
+}

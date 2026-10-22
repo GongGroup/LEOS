@@ -1,0 +1,13 @@
+UO2F2 beta 敏感性结果
+固定源：SAI /home/zhangyanglu/zack/leos.sample/UO2F2/relax_ao2021_20261015/leos_v3_500_500_kmesh1e5_20261016_03
+固定结构、两个自旋各 60 个 Wannier 中心和电子态，仅改变 tier1/Allen 分配中的 beta。
+本地现有 .venv CPU 后处理，用时 33.64 秒；未重跑 DFT / Wannier，未修改原 EOSCAR。
+扫描 beta=0,0.1,...,20，共 201 点。
+所有扫描点：U13/U14/U15 均 +6；O1–O6 均 -2；F7–F12 均 -1。
+无氧化态跳变，无需细化转变边界；所有点 ghost=0、stray=0，总氧化态为 0。
+beta=10 逐原子重现原生 LEOS 结果；分配代价与原输出差约 1.4e-6。
+即使 beta=0（移除电负性加权项），在保留原容量边界与电子数约束下也得到同一氧化态。
+结论：这组固定 UO2F2 结果对本次 beta 0–20 扫描不敏感。
+限制：这是同一结构、同一 Wannier 解及原分配规则下的参数敏感性；不代表其他结构或材料均成立，也不是独立物理验证。
+数据：all_results.json（每点每原子氧化态、接收电子数、分配代价）；summary.json。
+图：beta_sensitivity.png / beta_sensitivity.pdf。

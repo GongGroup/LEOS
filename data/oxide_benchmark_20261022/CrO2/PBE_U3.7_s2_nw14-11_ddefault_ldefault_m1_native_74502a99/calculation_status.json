@@ -1,0 +1,37 @@
+{
+  "formula": "CrO2",
+  "index": 12,
+  "job_id": "1758872",
+  "array_id": "1",
+  "started_utc": "2026-10-12T15:11:30.625558+00:00",
+  "state": "completed_computational_checks",
+  "training_accepted": false,
+  "vasp_binary": "/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/bin/vasp_std",
+  "vasp_binary_sha256": "dd36e27fca52dbfcc3539f461f7f0607a282fb855e6d4284d077d876c2bd6c89",
+  "gpu_inventory": "name, uuid, memory.total [MiB]\nTesla V100-SXM2-32GB, GPU-8773875e-b1a5-5777-2047-d8f215670d6b, 32768 MiB\n",
+  "command": [
+    "/opt/devtools/openmpi/openmpi-5.0.8-nvhpc243-pgi-avx2/bin/mpirun",
+    "-np",
+    "1",
+    "--bind-to",
+    "none",
+    "--map-by",
+    "ppr:1:node",
+    "-mca",
+    "coll_hcoll_enable",
+    "0",
+    "/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/bin/vasp_std"
+  ],
+  "returncode": 0,
+  "centres": 25,
+  "dne": 0.0018494,
+  "os_flow": [
+    4,
+    -2,
+    -2
+  ],
+  "wavecar_bytes": 39018784,
+  "scientific_acceptance": false,
+  "elapsed_seconds": 389.49299089517444,
+  "finished_utc": "2026-10-12T15:18:00.118543+00:00"
+}

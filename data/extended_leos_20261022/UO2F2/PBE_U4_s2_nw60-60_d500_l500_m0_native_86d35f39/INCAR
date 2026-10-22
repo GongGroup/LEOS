@@ -1,0 +1,46 @@
+SYSTEM = UO2F2 PBE+U relaxation (Ao2021-based)
+# Paper: PBE PAW, Dudarev Ueff=4 eV on U 5f.
+GGA = PE
+LDAU = .TRUE.
+LDAUTYPE = 2
+LDAUL = -1 -1 3
+LDAUU = 0 0 4
+LDAUJ = 0 0 0
+LMAXMIX = 6
+LDAUPRINT = 1
+# Preserve the source electronic settings.
+ENCUT = 600
+PREC = Accurate
+EDIFF = 1E-6
+NELM = 200
+ALGO = Normal
+LREAL = .FALSE.
+LASPH = .TRUE.
+ADDGRID = .TRUE.
+ISMEAR = 0
+SIGMA = 0.05
+ISTART = 0
+ICHARG = 2
+# Preserve the unconstrained source spin seed.
+ISPIN = 2
+MAGMOM = 6*0 6*0 3*2
+LSORBIT = .FALSE.
+# Static calculation on the relaxed CONTCAR.
+ISYM = 0
+IBRION = -1
+ISIF = 3
+NSW = 0
+POTIM = 0.3
+EDIFFG = -0.01
+LWAVE = .TRUE.
+LCHARG = .TRUE.
+LORBIT = 11
+# Native LEOS and Wannier iteration limits.
+LEOS = .TRUE.
+EOS_WF_DETAIL = .TRUE.
+EOS_PROJ_WEIGHT = .TRUE.
+WANNIER90_WIN = "
+kmesh_tol = 1e-5
+dis_num_iter = 500
+num_iter = 500
+"

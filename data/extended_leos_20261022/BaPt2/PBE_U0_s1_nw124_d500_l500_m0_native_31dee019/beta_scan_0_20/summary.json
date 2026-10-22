@@ -1,0 +1,314 @@
+{
+  "case": "BaPt2",
+  "range": [
+    0,
+    20
+  ],
+  "step": 0.1,
+  "refinement_tolerance": 1e-05,
+  "evaluations": 201,
+  "native_baseline_reproduced": true,
+  "mismatches": [],
+  "source_sha256": {
+    "POSCAR": "2f1e393fbaa96dd8703dbc1816639245f5eb02bb102d3ca915af6d47e2d52249",
+    "EOSCAR": "109e206ee08eb544eedafdcb01c2431073ee857fcbedee4d6587cfa1726c7e93",
+    "wannier90.wout": "824d8fed82aaf2993e7c4c7475c2505380326d57061a66b8818a08f42dbf4bd1"
+  },
+  "transport_sha256": "2e41a5ed0a83eb7b4598b23819a4cdcc488e2fa7c983355812f4c329175cc188",
+  "assessment": {
+    "directory": "/org/sjtu-gongxueqing/zhangyanglu/machinelearning/seven_native_leos_500_20261021_01/BaPt2",
+    "technical_success": true,
+    "converged": false,
+    "electronic_converged": true,
+    "normal_end": true,
+    "exit_code": 0,
+    "channels": [
+      {
+        "file": "wannier90.wout",
+        "final_state": true,
+        "all_done": true,
+        "disentanglement_converged": false,
+        "disentanglement_exhausted": true,
+        "localization_plateau": false,
+        "last_iterations": [
+          [
+            491,
+            -0.000379,
+            0.0397107439,
+            284.9566922211,
+            886.42
+          ],
+          [
+            492,
+            -0.0003,
+            0.0356049214,
+            284.9563922438,
+            887.5
+          ],
+          [
+            493,
+            -0.000296,
+            0.046107263,
+            284.956095821,
+            888.6
+          ],
+          [
+            494,
+            -0.000372,
+            0.0353416568,
+            284.9557242181,
+            889.72
+          ],
+          [
+            495,
+            -0.000356,
+            0.0392927934,
+            284.9553681135,
+            890.83
+          ],
+          [
+            496,
+            -0.000229,
+            0.0329679327,
+            284.9551391775,
+            891.93
+          ],
+          [
+            497,
+            -0.000227,
+            0.0282595849,
+            284.954912194,
+            893.02
+          ],
+          [
+            498,
+            -0.000293,
+            0.0319282093,
+            284.9546192458,
+            894.1
+          ],
+          [
+            499,
+            -0.00029,
+            0.0489490472,
+            284.9543289772,
+            895.22
+          ],
+          [
+            500,
+            -0.000224,
+            0.0317362136,
+            284.9541053216,
+            896.34
+          ]
+        ],
+        "final_spread": 284.954105322
+      }
+    ],
+    "ion_results": [
+      {
+        "atom": 1,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 2,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 3,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 4,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 5,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 6,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 7,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 8,
+        "element": "Ba",
+        "os_flow": 2
+      },
+      {
+        "atom": 9,
+        "element": "Pt",
+        "os_flow": 0
+      },
+      {
+        "atom": 10,
+        "element": "Pt",
+        "os_flow": -2
+      },
+      {
+        "atom": 11,
+        "element": "Pt",
+        "os_flow": -3
+      },
+      {
+        "atom": 12,
+        "element": "Pt",
+        "os_flow": -2
+      },
+      {
+        "atom": 13,
+        "element": "Pt",
+        "os_flow": 0
+      },
+      {
+        "atom": 14,
+        "element": "Pt",
+        "os_flow": -2
+      },
+      {
+        "atom": 15,
+        "element": "Pt",
+        "os_flow": 0
+      },
+      {
+        "atom": 16,
+        "element": "Pt",
+        "os_flow": -2
+      },
+      {
+        "atom": 17,
+        "element": "Pt",
+        "os_flow": -2
+      },
+      {
+        "atom": 18,
+        "element": "Pt",
+        "os_flow": 0
+      },
+      {
+        "atom": 19,
+        "element": "Pt",
+        "os_flow": 0
+      },
+      {
+        "atom": 20,
+        "element": "Pt",
+        "os_flow": 0
+      },
+      {
+        "atom": 21,
+        "element": "Pt",
+        "os_flow": -3
+      },
+      {
+        "atom": 22,
+        "element": "Pt",
+        "os_flow": 0
+      },
+      {
+        "atom": 23,
+        "element": "Pt",
+        "os_flow": 0
+      },
+      {
+        "atom": 24,
+        "element": "Pt",
+        "os_flow": 0
+      }
+    ],
+    "parse_error": null,
+    "plateau_criterion": "Last 10 |delta total spread| <= 1e-6 A^2; not proof of global minimum",
+    "retry_iterations": true
+  },
+  "intervals": [
+    {
+      "beta_min": 0.0,
+      "beta_max": 20.0,
+      "os_flow": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        0,
+        -2,
+        -3,
+        -2,
+        0,
+        -2,
+        0,
+        -2,
+        -2,
+        0,
+        0,
+        0,
+        -3,
+        0,
+        0,
+        0
+      ],
+      "by_element": {
+        "Ba": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "Pt": [
+          0,
+          -2,
+          -3,
+          -2,
+          0,
+          -2,
+          0,
+          -2,
+          -2,
+          0,
+          0,
+          0,
+          -3,
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  ],
+  "count_intervals": [
+    {
+      "beta_min": 0.0,
+      "beta_max": 20.0,
+      "counts": {
+        "Ba": {
+          "2": 8
+        },
+        "Pt": {
+          "-3": 2,
+          "-2": 5,
+          "0": 9
+        }
+      }
+    }
+  ],
+  "elapsed_s": 40.68168472405523,
+  "limitation": "Fixed printed centres; localization convergence is unchanged. Sampled intervals may miss narrow transitions; beta stability is not independent physical validation."
+}
