@@ -85,8 +85,10 @@ na3vo4 和 reo2 在参考答案表中没有条目，因此不在计分案例中�
 | sno、ti2o3 | WRONG | 换用 romarchite（COD 9011217）与刚玉型 Ti2O3（COD 9008082）重算，cases/<体系>/v31 | 原运行与新运行都通过 |
 | rhcl_co__p_c6h5_3_2 | WRONG | 保留 | 未通过（dev 4.00） |
 | AuClB 配合物 | WRONG | 保留 | 无参考答案，不计分 |
-| hi3、lin5、csh3 | SUSPECT | 保留，按实际胞内容解读 | hi3 未通过；lin5、csh3 见 Comas-Vilà 对照集 |
+| hi3、lin5、csh3 | SUSPECT | 保留：HI3 没有固相；LiN5、CsH3 要用 Comas-Vilà 原文 SI 中的预测结构才能对照，COD 与 MP 都没有（CsH3 现有胞即 mp-1006815） | hi3 未通过；lin5、csh3 见 Comas-Vilà 对照集 |
 | cuo、ce2o3、recl4、na2cro4 | SUSPECT | 换用黑铜矿（COD 9014580）、A 型 Ce2O3（mp-2721）、β-ReCl4（COD 4123951）、Cmcm Na2CrO4（COD 2107101）重算，cases/<体系>/v31 | 原运行与新运行都通过 |
+| namno4、n2o、n4s4 | SUSPECT | 换用 AgMnO4 型 NaMnO4（mp-765753，与实验 AgMnO4 COD 2105345 同型）、按实验 Pa-3 胞搭的 P2₁3 有序 N2O、实验 S4N4（COD 9008994）重算，cases/<体系>/v31 | 原运行与新运行都通过 |
+| cs2pt | SUSPECT | 改用实验晶格（Karpov 2003，a = 5.676、c = 9.471 Å）重算，cases/cs2pt/v31；原胞即 mp-13548 | 两者都是 Cs +1、Pt −2 |
 | li2o2、re2（几何复核） | WRONG | li2o2 改用 Föppl 晶体 cases/li2o2/v3；re2 按本意的 2.40 Å 二聚体重算，cases/re2/v31 | 原运行与新运行都通过 |
 | 其余 SUSPECT | SUSPECT | 保留，数据来源中注明 | |
 
@@ -98,7 +100,7 @@ na3vo4 和 reo2 在参考答案表中没有条目，因此不在计分案例中�
 汇总表为 results/structures_fixed_manifest.tsv。
 
 **金标表（74 案例原运行）中仍有结构错误的案例：** CO、sno、ti2o3、li2o2、re2，以及
-存疑的 cuo、ce2o3、recl4、na2cro4。它们在正确结构上都已重算并通过，见 RESULTS.md
+存疑的 cuo、ce2o3、recl4、na2cro4、namno4、n2o、n4s4。它们在正确结构上都已重算并通过，见 RESULTS.md
 「结构修正版」和 results/bench74_corrected.tsv；引用基准成绩时可以两表并列。
 
 ## 几何复核（2026-10-21）
