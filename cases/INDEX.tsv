@@ -28,7 +28,8 @@ ce18o36co4ch4_is	v31-mag6	diag			data/v3/rerun_20260711/g1_methane/ce_is_mag6	ce
 ce18o36co4ch4_ts	v3	app-methane			data/v3/legacy_rerun/ce_ts	ce18o36co4ch4_ts
 ce18o36co4ch4_ts	v31-mag10	diag			data/v3/rerun_20260711/g1_methane/ce_ts_mag10	ce18o36co4ch4_ts
 ce18o36co4ch4_ts	v31-mag6	diag			data/v3/rerun_20260711/g1_methane/ce_ts_mag6	ce18o36co4ch4_ts
-ce2o3	v1	bench74	v1_oxide	ce2o3	data/v1/oxides/leos-oxide-ce2o3-0gXqJZ	ce2o3
+ce2o3	v1	bench74	v1_oxide	ce2o3	data/v1/oxides/leos-oxide-ce2o3-0gXqJZ	ce2o3~a
+ce2o3	v31	corrected			SAI: LEOS/recompute_20261021/ce2o3	ce2o3~b
 ce4o7	v3	app-ceo2			data/v3/m5c_ceo2/ce4o7	ce4o7
 ce4o8	v3	app-ceo2			data/v3/m5c_ceo2/ce4o8	ce4o8
 ceh4	structure-fixed	structure			docs/structures_fix/ceh4	ceh4
@@ -36,8 +37,9 @@ ceh4	v3	comas			data/v3/comas_gap/ceh4	ceh4
 ceo2	v1	bench74	v1_oxide	ceo2	data/v1/oxides/leos-oxide-ceo2-078CtN	ceo2
 ch2f2	structure	structure			data/structures/CH2F2	ch2f2
 ch2f2	v1	bench74	v1_mol	CH2F2	data/v1/eos_dataset/CH2F2	ch2f2
-co	structure	structure			data/structures/CO	co
-co	v1	bench74	v1_mol	CO	data/v1/eos_dataset/CO	co
+co	structure	structure			data/structures/CO	co~a
+co	v1	bench74	v1_mol	CO	data/v1/eos_dataset/CO	co~a
+co	v31	corrected			SAI: LEOS/recompute_20261021/co	co~b
 co2	structure	structure			data/structures/CO2	co2
 co2	v1	bench74	v1_mol	CO2	data/v1/eos_dataset/CO2	co2
 co2	v31	diag			data/v3/regress_v31/co2	co2
@@ -71,7 +73,8 @@ cucl4	structure	structure			data/structures/CuCl4	cucl4
 cucl4	v3	bench74	wave1	cucl4	data/v3/m4_wave1/cucl4	cucl4
 cucl4	v31-ghost	diag			data/v3/rerun_20260711/g2_ghost/cucl4	cucl4
 cui	structure	structure			data/structures/CuI	cui
-cuo	v1	bench74	v1_oxide	cuo	data/v1/oxides/leos-oxide-cuo-ADdTia	cuo
+cuo	v1	bench74	v1_oxide	cuo	data/v1/oxides/leos-oxide-cuo-ADdTia	cuo~a
+cuo	v31	corrected			SAI: LEOS/recompute_20261021/cuo	cuo~b
 fe3o4	structure	structure			data/structures/Fe3O4	fe3o4
 fe3o4	v3	bench74	wave1	fe3o4	data/v3/m4_wave1/fe3o4	fe3o4
 fe3o4	v3-recompute	test-regression			data/v3/holdout/regression/fe3o4	fe3o4
@@ -118,7 +121,8 @@ lafeo3	v1	bench74	v1_oxide	lafeo3	data/v1/oxides/leos-oxide-lafeo3-24jyYS	lafeo3
 lasweh	v3	legacy			data/v3/legacy_rerun/lasweh	lasweh
 lasweh	v31-wp	diag			data/v3/rerun_20260711/g4_projection/lasweh	lasweh
 lavo3	v1	bench74	v1_oxide	lavo3	data/v1/oxides/leos-oxide-lavo3-QHHdOM	lavo3
-li14o16	v3	app-li2o2			data/v3/m5a_li2o2/li14o16	li14o16
+li14o16	v3	app-li2o2			data/v3/m5a_li2o2/li14o16	li14o16~a
+li14o16	v31	app-li2o2			SAI: LEOS/recompute_20261021/li14o16	li14o16~b
 li15o16	polaron-sp-hse	app-li2o2			data/v3/m5a_li2o2/polaron/sp_hse	li15o16~b
 li15o16	polaron-sp-pbe	app-li2o2			data/v3/m5a_li2o2/polaron/sp_pbe	li15o16~b
 li15o16	polaron-u0	app-li2o2			data/v3/m5a_li2o2/polaron/u0	li15o16~c
@@ -129,7 +133,9 @@ li15o16	v3	app-li2o2			data/v3/m5a_li2o2/li15o16	li15o16~a
 li15o16	v3-md	app-li2o2			data/v3/m5a_li2o2/li15o16_md	li15o16~a
 li15o16	v3-md2	app-li2o2			data/v3/m5a_li2o2/li15o16_md2	li15o16~e
 li15o16	v3-u	app-li2o2			data/v3/m5a_li2o2/li15o16_U	li15o16~e
-li16o16	v3	app-li2o2			data/v3/m5a_li2o2/li16o16	li16o16
+li15o16	v31	app-li2o2			SAI: LEOS/recompute_20261021/li15o16	li15o16~f
+li16o16	v3	app-li2o2			data/v3/m5a_li2o2/li16o16	li16o16~a
+li16o16	v31	app-li2o2			SAI: LEOS/recompute_20261021/li16o16	li16o16~b
 li2mno3	md-x0.00	app-cathode			data/m5b/structures/li2mno3/x0.00 + data/m5b/prod_logs/li2mno3/x0.00	li2mno3~a
 li2mno3	md-x0.25	app-cathode			data/m5b/structures/li2mno3/x0.25 + data/m5b/prod_logs/li2mno3/x0.25	li2mno3~b
 li2mno3	md-x0.50	app-cathode			data/m5b/structures/li2mno3/x0.50 + data/m5b/prod_logs/li2mno3/x0.50	li2mno3~c
@@ -163,7 +169,8 @@ n2o	v31-wp	diag			data/v3/rerun_20260711/g4_projection/n2o	n2o
 n4s4	structure	structure			data/structures/N4S4	n4s4
 n4s4	v3	bench74	wave2	n4s4	data/v3/m4_wave2/n4s4	n4s4
 n4s4	v31-wp	diag			data/v3/rerun_20260711/g4_projection/n4s4	n4s4
-na2cro4	v1	bench74	v1_oxide	na2cro4	data/v1/oxides/leos-oxide-na2cro4-Mc60HS	na2cro4
+na2cro4	v1	bench74	v1_oxide	na2cro4	data/v1/oxides/leos-oxide-na2cro4-Mc60HS	na2cro4~a
+na2cro4	v31	corrected			SAI: LEOS/recompute_20261021/na2cro4	na2cro4~b
 na2s2	v3	test-homonuclear			data/v3/holdout/homonuclear/na2s2	na2s2
 nabf4	structure	structure			data/structures/NaBF4	nabf4
 nabf4	v3	bench74	wave2	nabf4	data/v3/m4_wave2/nabf4	nabf4
@@ -191,8 +198,10 @@ rbpb	structure	structure			data/structures/RbPb	rbpb
 rbpb	v3	bench74	wave2	rbpb	data/v3/m4_wave2/rbpb	rbpb
 rbpb	v3-recompute	test-regression			data/v3/holdout/regression/rbpb	rbpb
 rbpb	v31-wp	diag			data/v3/rerun_20260711/g4_projection/rbpb	rbpb
-re2	v1	bench74	v1_oxide	re2	data/v1/oxides/leos-oxide-re2-6NfZQD	re2
-recl4	v1	bench74	v1_oxide	recl4	data/v1/oxides/leos-oxide-recl4-BjjZ8i	recl4
+re2	v1	bench74	v1_oxide	re2	data/v1/oxides/leos-oxide-re2-6NfZQD	re2~a
+re2	v31	corrected			SAI: LEOS/recompute_20261021/re2	re2~b
+recl4	v1	bench74	v1_oxide	recl4	data/v1/oxides/leos-oxide-recl4-BjjZ8i	recl4~a
+recl4	v31	corrected			SAI: LEOS/recompute_20261021/recl4	recl4~b
 ref6	v1	bench74	v1_oxide	ref6	data/v1/oxides/leos-oxide-ref6-8qjF0p	ref6
 reo3	structure	structure			data/structures/ReO3	reo3
 reo3	v1	bench74	v1_oxide	reo3	data/v1/oxides/leos-oxide-reo3-I1cUV4	reo3
@@ -215,7 +224,8 @@ sega	v3	bench74	wave2	sega	data/v3/m4_wave2/sega	sega
 sega	v3-scdm-only	variant			data/v3/comas_gap/scdm_sega	sega
 sega	v31-wp	diag			data/v3/rerun_20260711/g4_projection/sega	sega
 sio2	v1	bench74	v1_oxide	sio2	data/v1/oxides/leos-oxide-sio2-I2r0QR	sio2
-sno	v1	bench74	v1_oxide	sno	data/v1/oxides/leos-oxide-sno-MRtar6	sno
+sno	v1	bench74	v1_oxide	sno	data/v1/oxides/leos-oxide-sno-MRtar6	sno~a
+sno	v31	corrected			SAI: LEOS/recompute_20261021/sno	sno~b
 sno2	v1	bench74	v1_oxide	sno2	data/v1/oxides/leos-oxide-sno2-2tgrWc	sno2
 srbe_oh_4	structure	structure			data/structures/SrBe(OH)4	srbe_oh_4
 srbe_oh_4	v3	bench74	wave2	srbe_oh_4	data/v3/m4_wave2/srbe_oh_4	srbe_oh_4
@@ -225,7 +235,8 @@ srh4	v3	comas			data/v3/comas_gap/srh4	srh4
 srtio3	v1	bench74	v1_oxide	srtio3	data/v1/oxides/leos-oxide-srtio3-1bVzel	srtio3
 thh4	structure-fixed	structure			docs/structures_fix/thh4	thh4
 thh4	v3	comas			data/v3/comas_gap/thh4	thh4
-ti2o3	v1	bench74	v1_oxide	ti2o3	data/v1/oxides/leos-oxide-ti2o3-CZ4Ph9	ti2o3
+ti2o3	v1	bench74	v1_oxide	ti2o3	data/v1/oxides/leos-oxide-ti2o3-CZ4Ph9	ti2o3~a
+ti2o3	v31	corrected			SAI: LEOS/recompute_20261021/ti2o3	ti2o3~b
 tio	structure	structure			data/structures/TiO	tio
 tio	v3	bench74	wave1	tio	data/v3/m4_wave1/tio	tio
 tio	v3-recompute	test-regression			data/v3/holdout/regression/tio	tio

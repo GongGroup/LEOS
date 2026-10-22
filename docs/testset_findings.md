@@ -81,11 +81,13 @@ na3vo4 和 reo2 在参考答案表中没有条目，因此不在计分案例中�
 |---|---|---|---|
 | wcl3、wcl4、wcl5、wcl6 | WRONG | 按空间群展开或换用文献结构后重算，cases/wcl*/v3 中已是新结构 | WCl3、WCl4、WCl6 通过；WCl5 未通过（Wannier 化失败） |
 | scdm_wcl4/5/6 | WRONG | 未重算（SCDM-only 对照用的副本） | 不计入 74 案例基准 |
-| CO | WRONG | 保留，按乙烯二酮解读 | 通过 |
-| sno、ti2o3 | WRONG | 保留，数据来源中注明 | 通过 |
+| CO | WRONG | 换用 α-CO（mp-11875）重算，cases/co/v31 | 原运行与新运行都通过 |
+| sno、ti2o3 | WRONG | 换用 romarchite（COD 9011217）与刚玉型 Ti2O3（COD 9008082）重算，cases/<体系>/v31 | 原运行与新运行都通过 |
 | rhcl_co__p_c6h5_3_2 | WRONG | 保留 | 未通过（dev 4.00） |
 | AuClB 配合物 | WRONG | 保留 | 无参考答案，不计分 |
 | hi3、lin5、csh3 | SUSPECT | 保留，按实际胞内容解读 | hi3 未通过；lin5、csh3 见 Comas-Vilà 对照集 |
+| cuo、ce2o3、recl4、na2cro4 | SUSPECT | 换用黑铜矿（COD 9014580）、A 型 Ce2O3（mp-2721）、β-ReCl4（COD 4123951）、Cmcm Na2CrO4（COD 2107101）重算，cases/<体系>/v31 | 原运行与新运行都通过 |
+| li2o2、re2（几何复核） | WRONG | li2o2 改用 Föppl 晶体 cases/li2o2/v3；re2 按本意的 2.40 Å 二聚体重算，cases/re2/v31 | 原运行与新运行都通过 |
 | 其余 SUSPECT | SUSPECT | 保留，数据来源中注明 | |
 
 另外，Comas-Vilà 对照集中的 MgXe 和 MH4 氢化物（mgh4、srh4、ceh4、thh4）原来
@@ -95,9 +97,9 @@ na3vo4 和 reo2 在参考答案表中没有条目，因此不在计分案例中�
 所有替换结构的来源、空间群和自检记录在 cases/<体系>/structure-fixed/SOURCE.md，
 汇总表为 results/structures_fixed_manifest.tsv。
 
-**74 案例基准中仍有 3 个结构错误的案例：CO、sno、ti2o3。** 它们的胞不是案例
-名所指的真实化合物，但组成与名称相同，参考答案对实际胞内容也成立，所以判定
-通过。引用基准成绩时需要注明这三个结构的实际情况。
+**金标表（74 案例原运行）中仍有结构错误的案例：** CO、sno、ti2o3、li2o2、re2，以及
+存疑的 cuo、ce2o3、recl4、na2cro4。它们在正确结构上都已重算并通过，见 RESULTS.md
+「结构修正版」和 results/bench74_corrected.tsv；引用基准成绩时可以两表并列。
 
 ## 几何复核（2026-10-21）
 
@@ -110,7 +112,7 @@ na3vo4 和 reo2 在参考答案表中没有条目，因此不在计分案例中�
 | re2/v1 | 缩放因子 12 作用到笛卡尔坐标上：两个 Re 相距 4.8 Å，不是 2.4 Å 的二聚体 | cases/re2/v1/OUTCAR | 74 案例中判为通过（v1_oxide） |
 | li16o16、li15o16、li14o16 的 v3，以及 li15o16/v3-md | 2×2×1 超胞的第二组 Li 放在过氧根所在列上，落在 O–O 键中点（Li–O 0.78 Å） | POSCAR；单点计算 NSW = 0 | RESULTS.md「Li2O2 脱锂」的三行表格用的是这组几何；v3-md 是在第一步后崩溃的 MD 尝试 |
 
-原核查按未缩放的坐标读 li2o2、re2，得出的键长不成立，两行已在登记表中更正。
+原核查按未缩放的坐标读 li2o2、re2，得出的键长不成立，两行已在登记表中更正。三处都已在正确几何上重算（见上文处理状态和 RESULTS.md）。
 li15o16 的 v3-u、v3-md2 和极化子系列来自从坏几何出发、做了 31 步弛豫后的结构
 （SAI: LEOS/inputs/m5a/li15o16_relax），与 Föppl 型 Li2O2 相符，几何正确。
 

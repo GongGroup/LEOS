@@ -55,7 +55,7 @@ CACHE_VERSION = 2           # bump when the layout of the cached data changes
 BASE = "nearest"            # style.py key of the per-WF greedy baseline
 
 # ---------------------------------------------------------------- inputs --
-LI2O2_RUN = "v3"            # cases/<name>/v3
+LI2O2_RUN = "v31"           # cases/<name>/v31: Foppl cells (the v3 cells put 8 Li at O-O bond midpoints)
 LI2O2_CASES = ["li16o16", "li15o16", "li14o16"]
 
 # Li15O16 with one pre-shortened peroxide unit: run name and the Hubbard U

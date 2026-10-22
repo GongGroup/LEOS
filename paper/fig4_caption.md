@@ -101,7 +101,7 @@ in the script is typed by hand.
 
 | Statement in RESULTS.md | Recomputed | Status |
 |---|---|---|
-| Li2O2: O mean -1.00 / -0.94 / -0.88 (flow), -0.25 / 0.00 / -0.88 (greedy), 6 Li at -1 in Li16O16 | -1.0000 / -0.9375 / -0.8750; -0.25 / 0.00 / -0.875; 6 Li | agrees |
+| Li2O2: O mean -1.00 / -0.94 / -0.88 for both flow and greedy (cases/<x>/v31, Foppl cells) | -1.0000 / -0.9375 / -0.8750 for both; no Li away from +1 | agrees |
 | U = 0: target O16-O20 back to 1.530 Å, -1.98; hole spread over 6 units (-1.7 to -2.0) | 1.530 Å, -1.98; the eight units are -1.73, -1.73, -1.87, -1.89, -1.89, -1.91, -1.98, -1.98 | agrees. Not stated there: O18, O22, O27, O31 have changed partners in this geometry (O18-O31 1.511 Å, O22-O27 1.516 Å), as for U = 4 eV |
 | U = 4: hole not on the target unit; two O2 pairs dissociated | target O16-O20 1.541 Å, -2.00; the short bond is O18-O31, 1.405 Å, -1.21, formed from atoms of two former units (the other two atoms form O22-O27, 1.537 Å) | agrees; RESULTS.md gives no numbers |
 | U = 6: hole on O25-O29 (1.377 Å, -1.13); 5 pairs elongated | 1.377 Å, -1.13; five former pairs at 2.14-2.33 Å | agrees. Not stated there: O20 and O21 form a new bond (1.505 Å, -1.72) and O16, O17 are left without a partner |
@@ -138,9 +138,11 @@ in the script is typed by hand.
    stay at 1.51-1.54 Å, and the step-to-geometry map is not recorded, so
    there is no bond-length signal to plot.
 4. **Panel (a), site resolution.** The flow charges of the eight O2 units
-   are [-4,-4,-2,-2,-1,-1,-1,-1] (Li16O16), [-2 x 7, -1] (Li15O16) and
-   [-3,-3,-3,-2,-1,-1,-1,0] (Li14O16). Surplus electrons: 4 / 1 / 10;
-   |dNe| = 2.8e-2 for Li15O16.
+   are [-2 x 8] (Li16O16), [-2 x 7, -1] (Li15O16) and [-2 x 6, -1, -1]
+   (Li14O16), the charge-counting pattern. Surplus electrons: 0 / 1 / 2;
+   |dNe| below 2e-10 in all three. The cells are the Foppl 2x2x1 supercells
+   of cases/<x>/v31; the earlier v3 cells had the two O columns swapped
+   (8 Li at O-O bond midpoints), see docs/testset_findings.md.
 5. **Panel (c), functional.** With U on the transition metals only, all
    holes created by delithiation are assigned to the metals and O stays at
    -2; which element is oxidised depends on the functional (RESULTS.md
