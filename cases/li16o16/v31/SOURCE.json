@@ -1,0 +1,33 @@
+{
+ "title": "li16o16 Foppl 2x2x1 (O sublattice fixed)",
+ "keep_order": true,
+ "source": "cases/li16o16/v3 POSCAR with every O z shifted by +1/2: the archived cell had the two O columns swapped, putting 8 Li at O-O bond midpoints; the shifted cell matches Foppl Li2O2 (COD 1514084) 2x2x1, Li-O 1.995 A, O-O 1.554 A",
+ "edits": "O z += 1/2 (mod 1); lattice and Li positions unchanged; same Li removed as in the archived run",
+ "replaces": "v3 (Li at O-O bond midpoints)",
+ "input_sha256": "e122a27528fb481ff7c0f101655b198814dc3dcbd18377c6afb8e7b22bc8b36a",
+ "natoms": 32,
+ "species": [
+  "Li",
+  "O"
+ ],
+ "counts": [
+  16,
+  16
+ ],
+ "potcar": [
+  "Li",
+  "O"
+ ],
+ "kmesh": [
+  2,
+  2,
+  2
+ ],
+ "spacegroup": "P6_3/mmc (194)",
+ "abc": [
+  6.366,
+  6.366,
+  7.726
+ ],
+ "poscar_sha256": "463a71020e4e2fa7ec0a305d50d0124f39010f49fdf5213ab00cf5d75a06ffdf"
+}

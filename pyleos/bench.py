@@ -2,7 +2,7 @@
 """Benchmarks: the 74-case table, the clean set and the held-out test sets.
 
   python3 -m pyleos bench full  --out FILE [--beta B] [--gamma G]
-                                [--tier2 T] [--only-wp] [--no-reliability] [--greedy]
+                                [--tier2 T] [--only-wp] [--no-reliability] [--greedy] [--corrected]
   python3 -m pyleos bench clean [--split all|dev] [--method PLUGIN.py]
                                 [--json FILE] [--compare BASELINE.json] [--out FILE] [--greedy]
   python3 -m pyleos bench test  --set regression|homonuclear|both
@@ -15,6 +15,8 @@ full   Transport OS + two-level reliability R on the 74 cases (four sets:
        scores, plus a summary of how R_elem separates passing from failing
        cases. results/bench74_golden.tsv is this output; CI diffs columns 1-4
        against it. --out is required so a routine run cannot overwrite it.
+       --corrected scores the cases of sets/corrected.json on their
+       structure-corrected runs (results/bench74_corrected.tsv).
 
 clean  Element-mean dev plus per-atom accuracy on the cases selected in
        sets/clean_set.json. Element values come from reference_os.json,
@@ -124,11 +126,20 @@ def main_full(argv=None):
                          "instead of the transport assignment (same cases, "
                          "same dev criterion; R columns are meaningless "
                          "here and emitted as '-')")
+    ap.add_argument("--corrected", action="store_true",
+                    help="score the cases listed in sets/corrected.json on their "
+                         "structure-corrected runs instead (adds a run column; "
+                         "never compare this output with the golden table)")
     args = ap.parse_args(argv)
 
     rows = []
     t_start = time.time()
     cases = list(collect())
+    if args.corrected:
+        fix = json.loads((SETS / "corrected.json").read_text())["cases"]
+        cases = [(b, n, ROOT / "cases" / fix[f"{b}/{n}"]["run"] if f"{b}/{n}" in fix else d, ref)
+                 for b, n, d, ref in cases]
+    run_of = {(b, n): str(d.relative_to(ROOT / "cases")) for b, n, d, _ in cases}
     for i, (batch, name, d, ref_map) in enumerate(cases):
         t0 = time.time()
         print(f"[{i+1:2d}/{len(cases)}] {name} ...", end=" ")
@@ -148,7 +159,7 @@ def main_full(argv=None):
                                               tier2=args.tier2)
         except Exception as exc:
             print(f"ERROR {str(exc)[:50]}")
-            rows.append((batch, name, "ERROR", "", "", "", "", ""))
+            rows.append((batch, name, "ERROR", "", "", "", "", "") + ((run_of[(batch, name)],) if args.corrected else ()))
             continue
         os_vals = case.eoscar.greedy_os if args.greedy else res.os_int
         means = element_means(case.structure.elements, os_vals)
@@ -162,13 +173,15 @@ def main_full(argv=None):
                      f"{res.case_conf_elem:.1f}" if has_r else "-",
                      f"{res.case_conf:.1f}" if has_r else "-",
                      len(res.stray) if res is not None else "-",
-                     res.ghost if res is not None else "-"))
+                     res.ghost if res is not None else "-")
+                    + ((run_of[(batch, name)],) if args.corrected else ()))
         print(f"{status} dev={rows[-1][3]} R_elem={rows[-1][4]} "
               f"({time.time()-t0:.1f}s)")
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w") as fh:
-        fh.write("batch\tcase\tstatus\tdev\tR_elem\tR_site\tn_stray\tn_ghost\n")
+        fh.write("batch\tcase\tstatus\tdev\tR_elem\tR_site\tn_stray\tn_ghost"
+                 + ("\trun" if args.corrected else "") + "\n")
         for r in rows:
             fh.write("\t".join(str(x) for x in r) + "\n")
 

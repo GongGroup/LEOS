@@ -17,7 +17,7 @@ cases/<体系>/<运行>/
 |---|---|
 | case | 体系目录名：化学式小写，括号换成下划线，例如 cr_co_6、srbe_oh_4 |
 | run | 运行目录名，见下表 |
-| role | 用途：bench74（74 案例基准）、comas（Comas-Vilà 对照集）、test-regression / test-homonuclear（留出测试集）、clean-override（clean 集改用的重算）、app-li2o2 / app-ceo2 / app-fe3o4 / app-cathode / app-methane（应用）、legacy（旧程序失败体系的重算）、variant（同一体系的另一种设置）、diag（诊断与重算）、structure（只有结构）、v1-failed（没有产出 EOSCAR） |
+| role | 用途：bench74（74 案例基准）、comas（Comas-Vilà 对照集）、test-regression / test-homonuclear（留出测试集）、clean-override（clean 集改用的重算）、app-li2o2 / app-ceo2 / app-fe3o4 / app-cathode / app-methane（应用）、legacy（旧程序失败体系的重算）、corrected（换成正确结构后的重算，见 pyleos/sets/corrected.json）、variant（同一体系的另一种设置）、diag（诊断与重算）、structure（只有结构）、v1-failed（没有产出 EOSCAR） |
 | bench_set | 74 案例基准中的分组：v1_mol、v1_oxide、wave1、wave2；与金标表 batch 列一致 |
 | ref_key | 该案例在 pyleos/sets/reference_os.json 中的键 |
 | origin | 改成本布局之前的路径，旧文档、旧日志里的路径可按它对回 |
@@ -54,6 +54,8 @@ POSCAR 用笛卡尔坐标时 VASP 会把坐标也乘以第二行的缩放因子�
 | v3-ispin2、v3-relaxed、v3-u、v3-md、v3-md2、v3-verwey | v3 的变体：自旋极化、弛豫晶格、+U、MD 快照、Verwey 相 |
 | polaron-* | Li15O16 极化子测试（U 值、PBE/HSE 单点） |
 | v31、v31-wp、v31-ghost、v31-mag*、v31-nowin、v31-abort2、v31-4gpu | v3.1 补丁的重算与诊断：带 #WP 投影块、ghost A/B、磁矩初值、不写 win、中止复现、4 GPU |
+
+结构修正重算（SAI: LEOS/recompute_20261021，VASP 6.4.3 + LEOS v3.1 GPU 版，波次 INCAR 模板加原运行的磁矩与 +U）也用 v31 命名，目录里另有 SOURCE.json，记录结构来源、编辑和 sha256。
 | w90-library、w90-offline | wannier90 库模式与离线模式的对照 |
 | md-x0.00 等 | 富锂正极 MD：初始结构 POSCAR、生产日志 md.log、验收 verdict.json |
 | structure、structure-hand、structure-fixed | 只有结构：原始结构与 Bader 分析、手搭结构、替换后的正确结构（含 SOURCE.md） |
