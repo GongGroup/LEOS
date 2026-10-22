@@ -83,14 +83,19 @@ hi3），其余案例两种方法结论相同。第二波中这两个数字是 1
 数据：运输为 results/bench74_golden.tsv，贪心为 results/bench74_greedy.tsv，
 两表由同一脚本、按同一 dev 定义产出。
 
-**结构修正版。** 74 案例中有 9 个计分案例的结构是错的或几何是坏的：CO（实为乙烯
-二酮）、SnO（假想岩盐相）、Ti2O3（金红石挖氧）、CuO（假想岩盐相）、Ce2O3（手搭
-理想胞）、ReCl4 与 Na2CrO4（孤立团簇）、li2o2 与 re2（POSCAR 缩放因子放大了笛卡尔
-坐标）。把它们换成 COD 或 Materials Project 的正确结构重算后（cases/<体系>/v31，
-li2o2 用同核键测试集中的 Föppl 晶体 cases/li2o2/v3；替换清单 pyleos/sets/corrected.json），
-9 个案例仍全部通过，运输 64/72 不变（results/bench74_corrected.tsv，
-`python3 -m pyleos bench full --corrected --out ...`）。金标表仍是原运行，CI 比对的
-是金标表。RhCl(CO)(PPh3)2 和 AuClB 配合物没有可用的正确结构，未替换。
+**结构修正版。** 74 案例中有 12 个计分案例的结构是错的、几何是坏的或明显不是所指的
+相：CO（实为乙烯二酮）、SnO（假想岩盐相）、Ti2O3（金红石挖氧）、CuO（假想岩盐相）、
+Ce2O3（手搭理想胞）、ReCl4、Na2CrO4 与 NaMnO4（孤立团簇）、N2O（比实验相致密 14% 的
+有序模型）、S4N4（无色散校正的 PBE 胞，体积大 25%）、li2o2 与 re2（POSCAR 缩放因子
+放大了笛卡尔坐标）。把它们换成 COD 或 Materials Project 的结构，N2O 用按实验 Pa-3 胞
+搭的 P2₁3 有序近似，重算后（cases/<体系>/v31，li2o2 用同核键测试集中的 Föppl 晶体
+cases/li2o2/v3；替换清单 pyleos/sets/corrected.json），12 个案例仍全部通过，运输
+64/72 不变（results/bench74_corrected.tsv，`python3 -m pyleos bench full --corrected
+--out ...`）。金标表仍是原运行，CI 比对的是金标表。
+
+未替换的四个：RhCl(CO)(PPh3)2 的正确晶体只在需要许可的 CSD 中，现有胞是 SO2 加合物；
+AuClB 配合物的胞是转录损坏的结构，不存在这个化学式的真实化合物；HI3 没有固相；中性
+CuCl4 不存在。后三个也没有参考答案或参考答案对实际胞不成立。
 
 复现（约 25 秒）：
 
@@ -248,7 +253,7 @@ v3-scdm-only 运行，是 SCDM-only 快速模式，不计入对照。两种方�
 | 多原子阴离子 | CsF3：F −1/3；CsF5：F −0.2；CsH3：H −1/3；LiN5：N −0.2 | 电荷分摊在多个原子上，可用片段。CsH3 胞内的 H 是两个孤立的等边 H3 三角形（H–H 1.24 Å），原文是线性 H3；LiN5 胞内是线性 N3 加拉长的 N2，原文是五唑环（见 testset_findings.md）。这两例不是在同一结构上比较 |
 | 稀有气体阴离子 | MgXe（200 GPa）：Mg +2，Xe −2 | 与文献的 Xe 阴离子结论一致；晶格由状态方程推定，误差约 ±1.5% |
 
-30 个 comas_gap 计算中有 12 个带 stray 警告（括号内为 stray 数）：ba3si4
+Comas 对照集的 30 个计算中有 12 个带 stray 警告（括号内为 stray 数）：ba3si4
 （36）、xeo3_b（9）、ceh4（8）、thh4（8）、k_hp（6）、mgxe（5）、
 ybafe2o5_b（4）、csh3（3）、mgh4（3）、sch4（3）、lin5（1）、xeo3_a（1）。
 

@@ -325,7 +325,7 @@ HgF4 依据 PDOS（p.7083）。
   cases/<体系>/structure-fixed/ 中的高压精确相（MgXe 与 Mg/Sr/Ce/Th 四个氢化物）。
   每个结构的来源与体检结论登记在 docs/testset_registry.tsv；其中 cs2pt、
   csh3、lin5 标为 SUSPECT。
-- 判定设置：β = 10，Allen 电负性。comas_gap 下 30 个目录在默认代价
+- 判定设置：β = 10，Allen 电负性。Comas 对照集的 30 个运行（INDEX.tsv 中 role=comas）在默认代价
   （几何 + 电负性）和投影辅助判定（TAU、PMARGIN 取默认值）下给出相同的
   元素平均值。10 个重合体系取 74 案例基准的默认代价结果。
 
@@ -337,32 +337,32 @@ OK 表示 dev = 0.00，即各元素平均氧化态等于基准参考答案，表
 pyleos/sets/reference_os.json。
 
 | 编号 | 体系 | 原文判定（页码） | LEOS 判定 | LEOS 数据 |
-|---|---|---|---|---|
-| 1 | CrO3 | Cr +6，R = 71（p.7078–7079） | Cr+6 / O−2，OK | reliability_74.tsv |
-| 2–4 | KMgF3、NaBF4、SrBe(OH)4 | 与 IUPAC 一致，R 均为最大值（p.7079） | K+1/Mg+2/F−1、Na+1/B+3/F−1、Sr+2/Be+2/O−2/H+1，均 OK | reliability_74.tsv |
-| 5–6 | Cs3AuO、Rb3AuO | 与 IUPAC 一致，R = 100；Rb3AuO 为金属，AOM 改用 Bloch 态（p.7079） | Cs+1/Au−1/O−2、Rb+1/Au−1/O−2，均 OK | reliability_74.tsv |
-| 7 | Ca3AuN | Au −3，R = 60.4，未找到 NNA（p.7079） | Ca₂(+2)、Ca(0)、Au(−1)、N(−3)；对基准参考答案记 FAIL | reliability_74.tsv |
-| 8 | K（高压） | 2 个 NNA 各分 2 个电子，K +1，R 低（p.7079） | K 平均 0，游离电子记账伴 stray | comas_gap/k_hp |
-| 9 | GaSe | 按原子划分 R = 50，平摊后 Ga +2；Ga–Ga 片段 R = 77.7（p.7080） | Ga+2 / Se−2，OK | reliability_74.tsv 的 sega 行 |
-| 10 | Ba3Si4 | Si4 作片段：Ba +2、Si4 −6，R = 100（p.7080） | Ba+2 / Si−1.5，Si4⁶⁻ 蝴蝶簇 | comas_gap/ba3si4 |
-| 11 | Cs2Pt | Pt −2，判定无争议（p.7080） | Cs+1 / Pt−2 | comas_gap/cs2pt |
+|---|---|---|---| --- |
+| 1 | CrO3 | Cr +6，R = 71（p.7078–7079） | Cr+6 / O−2，OK | bench74_golden.tsv |
+| 2–4 | KMgF3、NaBF4、SrBe(OH)4 | 与 IUPAC 一致，R 均为最大值（p.7079） | K+1/Mg+2/F−1、Na+1/B+3/F−1、Sr+2/Be+2/O−2/H+1，均 OK | bench74_golden.tsv |
+| 5–6 | Cs3AuO、Rb3AuO | 与 IUPAC 一致，R = 100；Rb3AuO 为金属，AOM 改用 Bloch 态（p.7079） | Cs+1/Au−1/O−2、Rb+1/Au−1/O−2，均 OK | bench74_golden.tsv |
+| 7 | Ca3AuN | Au −3，R = 60.4，未找到 NNA（p.7079） | Ca₂(+2)、Ca(0)、Au(−1)、N(−3)；对基准参考答案记 FAIL | bench74_golden.tsv |
+| 8 | K（高压） | 2 个 NNA 各分 2 个电子，K +1，R 低（p.7079） | K 平均 0，游离电子记账伴 stray | cases/k_hp/v3 |
+| 9 | GaSe | 按原子划分 R = 50，平摊后 Ga +2；Ga–Ga 片段 R = 77.7（p.7080） | Ga+2 / Se−2，OK | bench74_golden.tsv 的 sega 行 |
+| 10 | Ba3Si4 | Si4 作片段：Ba +2、Si4 −6，R = 100（p.7080） | Ba+2 / Si−1.5，Si4⁶⁻ 蝴蝶簇 | cases/ba3si4/v3 |
+| 11 | Cs2Pt | Pt −2，判定无争议（p.7080） | Cs+1 / Pt−2 | cases/cs2pt/v3（实验晶格重算：cases/cs2pt/v31） |
 | 12 | WCl4 | W +4，R = 92.6（p.7080） | W+4 / Cl−1，OK | bench74_golden.tsv；cases/wcl4/v3 |
-| 13 | Rb2CuCl4 | Cu +2，β 通道 R = 75.4（p.7080–7081） | Rb+1/Cu+2/Cl−1，OK | reliability_74.tsv |
-| 14–15 | YBaFe2O5 两相 | 低温相 Fe1 +3、Fe2 +2，R = 55.6；高温相两个 Fe 平摊为 +2.5，R = 61.3（p.7081） | 两相 Y+3 / Ba+2 / Fe+2.5 / O−2；元素级一致，位点电荷序另论 | comas_gap/ybafe2o5_a、_b |
-| 16–18 | MgH4、CaH4、SrH4 | M +2，Hb −1；Ha–Ha 作片段时为中性 H2，比按原子划分更明确（p.7081） | M+2 + 2H⁻ + H2；H2 单元内部为位点简并 | comas_gap/mgh4、cah4、srh4 |
-| 19–20 | ScH4、YH4 | M +3，Hb −1；最后的电子平摊给等价的 Ha，各 −½（p.7081–7082） | M+3 + 3H⁻ + ½H2 | comas_gap/sch4、yh4 |
-| 21–23 | ZrH4、CeH4、ThH4 | M +4，四个 H 均为 −1；按原子划分 R 更高，ZrH4 为 75.4（p.7082） | M+4 + 4H⁻ | comas_gap/zrh4、ceh4、thh4 |
-| 24–25 | XeO | 100 GPa：Xe +2，R = 74.6；200 GPa：Xe1 +4、Xe2 0，R = 73.3（p.7082） | 两相 +2 | comas_gap/xeo_a、xeo_b |
-| 26–27 | XeO2 | 150 GPa：Xe +4，R = 77.6；200 GPa：Xe +4，R = 58.7（p.7082） | 两相 +4 | comas_gap/xeo2_a、xeo2_b |
-| 28 | XeO3（130 GPa） | 按原子划分：Xe +4、O1 −2、O2 0，R = 60.9；把 O2 作片段得混合价 Xe +5，但 R 更低（p.7082–7083） | +5，伴 stray | comas_gap/xeo3_a |
-| 29 | XeO3（150 GPa） | Xe1 +6、Xe2 +4，R = 51.2，作者认为本质上模糊（p.7083） | +6 | comas_gap/xeo3_b |
-| 30–32 | XeF2、XeF3、XeF4 | +2；XeF3 为 XeF2 与 XeF4 分子的混合，Xe1 +2、Xe2 +4；+4。R 在 89–98 之间（p.7083） | XeF2 +2 / XeF3 +3 / XeF4 +4。XeF3 的 +3 是元素平均，逐位点为 +2 和 +4 | comas_gap/xef2、xef3、xef4 |
-| 33 | MgXe | Mg +2、Xe −2，R = 59.6（p.7083） | Mg+2 / Xe−2（200 GPa）；晶格为状态方程推定值，误差约 ±1.5% | comas_gap/mgxe |
-| 34–36 | HgF4 | 三个结构同为 I4/m，均为 Hg +4；R 随压力升高，34 号为 56.3（p.7083） | hgf4_a、hgf4_c 为 +4；hgf4_b 的 Hg 平均 +3（+2 到 +4） | comas_gap/hgf4_a、_b、_c |
-| 37 | CsH3 | H3 作片段为 −1；按原子划分时中心 H 为 +1，R = 68（p.7083） | H−1/3；结构存疑，见表后说明 | comas_gap/csh3 |
-| 38 | CsF3 | F3 作片段为 −1；按原子划分 R = 66（p.7083） | F−1/3，即 F3⁻ | comas_gap/csf3 |
-| 39 | CsF5 | F5 作片段为 −1；按原子划分为 Cs +1、F −1、F2 0（p.7084） | F−0.2，即 F5⁻ | comas_gap/csf5 |
-| 40 | LiN5 | 五个 N 占据数几乎相同，R = 50，无法判定（p.7084） | N−0.2；结构存疑，见表后说明 | comas_gap/lin5 |
+| 13 | Rb2CuCl4 | Cu +2，β 通道 R = 75.4（p.7080–7081） | Rb+1/Cu+2/Cl−1，OK | bench74_golden.tsv |
+| 14–15 | YBaFe2O5 两相 | 低温相 Fe1 +3、Fe2 +2，R = 55.6；高温相两个 Fe 平摊为 +2.5，R = 61.3（p.7081） | 两相 Y+3 / Ba+2 / Fe+2.5 / O−2；元素级一致，位点电荷序另论 | cases/ybafe2o5_a/v3、cases/ybafe2o5_b/v3 |
+| 16–18 | MgH4、CaH4、SrH4 | M +2，Hb −1；Ha–Ha 作片段时为中性 H2，比按原子划分更明确（p.7081） | M+2 + 2H⁻ + H2；H2 单元内部为位点简并 | cases/mgh4/v3、cases/cah4/v3、cases/srh4/v3 |
+| 19–20 | ScH4、YH4 | M +3，Hb −1；最后的电子平摊给等价的 Ha，各 −½（p.7081–7082） | M+3 + 3H⁻ + ½H2 | cases/sch4/v3、cases/yh4/v3 |
+| 21–23 | ZrH4、CeH4、ThH4 | M +4，四个 H 均为 −1；按原子划分 R 更高，ZrH4 为 75.4（p.7082） | M+4 + 4H⁻ | cases/zrh4/v3、cases/ceh4/v3、cases/thh4/v3 |
+| 24–25 | XeO | 100 GPa：Xe +2，R = 74.6；200 GPa：Xe1 +4、Xe2 0，R = 73.3（p.7082） | 两相 +2 | cases/xeo_a/v3、cases/xeo_b/v3 |
+| 26–27 | XeO2 | 150 GPa：Xe +4，R = 77.6；200 GPa：Xe +4，R = 58.7（p.7082） | 两相 +4 | cases/xeo2_a/v3、cases/xeo2_b/v3 |
+| 28 | XeO3（130 GPa） | 按原子划分：Xe +4、O1 −2、O2 0，R = 60.9；把 O2 作片段得混合价 Xe +5，但 R 更低（p.7082–7083） | +5，伴 stray | cases/xeo3_a/v3 |
+| 29 | XeO3（150 GPa） | Xe1 +6、Xe2 +4，R = 51.2，作者认为本质上模糊（p.7083） | +6 | cases/xeo3_b/v3 |
+| 30–32 | XeF2、XeF3、XeF4 | +2；XeF3 为 XeF2 与 XeF4 分子的混合，Xe1 +2、Xe2 +4；+4。R 在 89–98 之间（p.7083） | XeF2 +2 / XeF3 +3 / XeF4 +4。XeF3 的 +3 是元素平均，逐位点为 +2 和 +4 | cases/xef2/v3、cases/xef3/v3、cases/xef4/v3 |
+| 33 | MgXe | Mg +2、Xe −2，R = 59.6（p.7083） | Mg+2 / Xe−2（200 GPa）；晶格为状态方程推定值，误差约 ±1.5% | cases/mgxe/v3 |
+| 34–36 | HgF4 | 三个结构同为 I4/m，均为 Hg +4；R 随压力升高，34 号为 56.3（p.7083） | hgf4_a、hgf4_c 为 +4；hgf4_b 的 Hg 平均 +3（+2 到 +4） | cases/hgf4_a/v3、cases/hgf4_b/v3、cases/hgf4_c/v3 |
+| 37 | CsH3 | H3 作片段为 −1；按原子划分时中心 H 为 +1，R = 68（p.7083） | H−1/3；结构存疑，见表后说明 | cases/csh3/v3 |
+| 38 | CsF3 | F3 作片段为 −1；按原子划分 R = 66（p.7083） | F−1/3，即 F3⁻ | cases/csf3/v3 |
+| 39 | CsF5 | F5 作片段为 −1；按原子划分为 Cs +1、F −1、F2 0（p.7084） | F−0.2，即 F5⁻ | cases/csf5/v3 |
+| 40 | LiN5 | 五个 N 占据数几乎相同，R = 50，无法判定（p.7084） | N−0.2；结构存疑，见表后说明 | cases/lin5/v3 |
 
 ### 一致与不同
 
@@ -394,7 +394,7 @@ pyleos/sets/reference_os.json。
   的等边三角形 H3；LiN5 胞中是线性叠氮 N3 单元加拉长的 N2，不是五唑环
   （docs/testset_registry.tsv、docs/testset_findings.md）。这两行的数值
   不是同一结构上的比较。
-- 用 pyleos 复算 comas_gap 下 30 个完整 MLWF 目录，12 个带 stray 警告，
+- 用 pyleos 复算 Comas 对照集的 30 个完整 MLWF 运行，12 个带 stray 警告，
   按 stray 个数：ba3si4 36、xeo3_b 9、ceh4 8、thh4 8、k_hp 6、mgxe 5、
   ybafe2o5_b 4、csh3 3、mgh4 3、sch4 3、lin5 1、xeo3_a 1。
 
