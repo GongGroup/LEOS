@@ -1,0 +1,64 @@
+R2SCAN + Ueff=5 eV：YBCO6.5 / YBCO7
+核对日期：2026-10-26
+
+结果目录（相对于本文件所在目录）
+YBCO6.5：YBCO6p5/R2SCAN_U5_s2_nw207-207_d500_l500_m0_native_613d7c1d
+YBCO7：YBCO7/R2SCAN_U5_s2_nw214-214_d500_l500_m0_native_94f90055
+
+计算参数
+METAGGA=R2SCAN；Cu Ueff=5 eV；ISPIN=2；ISMEAR=0；SIGMA=0.05 eV。
+解纠缠上限500步，局域化上限500步；kmesh_tol=1e-5。
+保留原磁矩设置；目录名m0表示ISMEAR=0，不表示MAGMOM=0。
+结构沿用来源POSCAR；POSCAR标题中保留的PBE+U5字样不是本轮泛函设置。
+YBCO6.5：自动num_wann=207+207，LEOS作业1889961。
+YBCO7：自动num_wann=214+214，LEOS作业1889962。
+
+默认beta=10的OS(flow)整数分配（数量按计算晶胞）
+位置/元素             YBCO6.5                    YBCO7
+Y                     +3 x 4                     +3 x 4
+Ba                    +2 x 8                     +2 x 8
+链层Cu (#13-16)       +1 x 3，+3 x 1             +2 x 2，+4 x 2
+下平面Cu (#17-20)     +2 x 3，+3 x 1             +2 x 4
+上平面Cu (#21-24)     +2 x 3，+3 x 1             +2 x 4
+O                     -2 x 26                    -2 x 28
+原子编号为POSCAR从1开始编号。
+YBCO6.5：#14、#19、#23为Cu+3；#13、#15、#16为Cu+1。
+YBCO7：#13、#15为Cu+4；其余Cu均为+2。
+
+beta扫描0-20（固定本轮输出中心，不重新计算电子态或Wannier）
+YBCO6.5：226次评估；YBCO7：257次评估。
+beta=10的离线回放均逐原子复现原生结果。
+YBCO6.5 beta区间          Cu统计                      O统计
+0-0.80197144              +1 x 3，+2 x 8，+3 x 1      -2 x 24，-1 x 2
+0.80197754-0.82349243      +1 x 3，+2 x 7，+3 x 2      -2 x 25，-1 x 1
+0.82349854-20             +1 x 3，+2 x 6，+3 x 3      -2 x 26
+YBCO7 beta区间            Cu统计                      O统计
+0-0.74249268              +2 x 12                     -2 x 25，-1 x 2，0 x 1
+0.74249878-0.85960693      +2 x 11，+3 x 1             -2 x 25，-1 x 3
+0.85961304-1.09072876      +2 x 10，+3 x 2             -2 x 26，-1 x 2
+1.09073486-1.33394775      +2 x 10，+3 x 1，+4 x 1     -2 x 27，-1 x 1
+1.33395386-20             +2 x 10，+4 x 2             -2 x 28
+Y和Ba在扫描中分别保持+3和+2。
+边界间的小间隔为转变位置数值括区，不代表漏掉一段已知结果。
+扫描步长0.1，转变细化精度1e-5；可能遗漏很窄的区间。
+
+结果适用范围
+两项作业均正常结束、电子自洽收敛并生成EOSCAR。
+YBCO6.5解纠缠收敛，两个通道局域化仍变化；最终总展宽150.602435/152.122839 A^2。
+YBCO7两个通道解纠缠达到步数上限，局域化仍变化；最终总展宽156.946039/159.243766 A^2。
+因此归档的是500步首轮结果，不能视为Wannier充分收敛后的定论。
+调低beta导致Cu价态降低时，部分氧也变成-1或0；beta稳定不等于独立物理验证。
+
+SAI原生LEOS结果根目录
+/org/sjtu-gongxueqing/zhangyanglu/machinelearning/YBCO_R2SCANU5_leos_500_20261021_01
+子目录：YBCO6p5、YBCO7。
+原始静态电子态来源
+/org/sjtu-gongxueqing/zhangyanglu/machinelearning/YBCO_R2SCANU5_static_20261021/O6p5
+/org/sjtu-gongxueqing/zhangyanglu/machinelearning/YBCO_R2SCANU5_static_20261021/O7
+
+EOSCAR SHA256（2026-10-26已与SAI原件逐份核对）
+YBCO6.5 d3dbb1ea4d46765b4b99dc2aa35b481f9dab2998eb05b6655a79e96f6b365098
+YBCO7   d69bbd88cb8469d9a02106e82e8e6be63a7fd9be62e1be42e0e52e4c198f480d
+
+每份原始结果的EOSCAR、INCAR、POSCAR、KPOINTS、POTCAR、CONTCAR以及
+beta_scan_0_20/summary.json均在上述参数目录内；大日志继续保留在SAI。
