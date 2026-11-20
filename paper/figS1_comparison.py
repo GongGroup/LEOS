@@ -163,7 +163,7 @@ SPREAD_CASES = [
     ("k_hp/v3", "K"),
 ]
 
-# Spot values quoted in docs/RESULTS.md, section 4 (lines 258-296); used only
+# Spot values quoted in docs/RESULTS.md, section 4 (lines 257-295); used only
 # to cross-check the numbers computed here, never plotted.
 RESULTS_MD_MEANS = {
     ("ba3si4", "Si"): -1.5, ("cs2pt", "Pt"): -2, ("k_hp", "K"): 0,
