@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `RhCl(CO){P(C6H5)3}2-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 75
-- 拆分盆的原子数: 40
+# Bader charge report
+- Data file: `RhCl(CO){P(C6H5)3}2-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 75
+- Atoms with split basins: 40
 
-## 全局统计
-总净电荷 +0.0010 e；得电子的原子累积 -11.0440 e，失电子的原子累积 +11.0450 e；总体分布标准差 0.6342 e。
+## Totals
+Net charge +0.0010 e; atoms that gained electrons sum to -11.0440 e, atoms that lost electrons to +11.0450 e; standard deviation over all atoms 0.6342 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | H1 | H | +0.094 | 7 |
@@ -86,7 +86,7 @@
 | 74 | Cl74 | Cl | -0.479 | 78, 94, 115, 122, 126, 127, 131, 139, 150 |
 | 75 | Rh75 | Rh | +0.396 | 108 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | C | 37 | -4.968 | -0.134 | -1.078 | +0.530 | +0.302 |
@@ -97,5 +97,5 @@
 | Rh | 1 | +0.396 | +0.396 | +0.396 | +0.396 | +0.000 |
 | S | 1 | +3.238 | +3.238 | +3.238 | +3.238 | +0.000 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

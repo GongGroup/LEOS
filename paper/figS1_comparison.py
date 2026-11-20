@@ -57,7 +57,7 @@ NAME = "figS1_comparison"
 # LITERATURE VALUES - the only hand-typed numbers in this script.
 #
 # Source: G. Comas-Vila et al., J. Chem. Theory Comput. 2025, 21, 7075-7086,
-# as transcribed in docs/comas_vila_2025_notes.md, table "逐类对照".
+# as transcribed in docs/comas_vila_2025_notes.md, table "Comparison by class".
 # "N<k>" is line k of that file; "p." is the journal page given there (each
 # value was also re-read in docs/refs/Comas-Vilà ... 2025 ... .pdf).
 #
@@ -163,7 +163,7 @@ SPREAD_CASES = [
     ("k_hp/v3", "K"),
 ]
 
-# Spot values quoted in docs/RESULTS.md, section 4 (lines 231-244); used only
+# Spot values quoted in docs/RESULTS.md, section 4 (lines 258-296); used only
 # to cross-check the numbers computed here, never plotted.
 RESULTS_MD_MEANS = {
     ("ba3si4", "Si"): -1.5, ("cs2pt", "Pt"): -2, ("k_hp", "K"): 0,

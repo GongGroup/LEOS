@@ -1,19 +1,21 @@
-# LEOS VASP 补丁
+# LEOS VASP patch
 
-`leos_v3.patch` 是对原版 VASP 6.4.3 的单个 diff，改动 4 个文件：
-`src/.objects`、`src/eos.F`（新增）、`src/main.F`、`src/mlwf.F`。打上补丁后，
-VASP 在计算末尾调用 wannier90 库做 Wannier 化，并输出 EOSCAR 文件。当前
-版本为 v3.1 加 SCDM 分块组装（见"版本记录"）。
+`leos_v3.patch` is a single diff against stock VASP 6.4.3. It changes 4 files:
+`src/.objects`, `src/eos.F` (new), `src/main.F`, `src/mlwf.F`. With the patch, VASP
+calls the wannier90 library at the end of the calculation to wannierise, and writes
+the EOSCAR file. The current version is v3.1 plus the SCDM blocked assembly (see
+"Version history").
 
-## 安装
+## Installation
 
-前提：wannier90 3.1 的**串行版**静态库（见"运行注意"第一条）。
+Prerequisite: the **serial** static library of wannier90 3.1 (see the first item of
+"Running notes").
 
 ```bash
-tar xzf vasp.6.4.3.tgz && cd vasp.6.4.3/..   # 顶层目录名必须是 vasp.6.4.3
+tar xzf vasp.6.4.3.tgz && cd vasp.6.4.3/..   # top-level directory must be named vasp.6.4.3
 patch -p1 < leos_v3.patch
 cd vasp.6.4.3
-# makefile.include 中加入：
+# add to makefile.include:
 #   CPP_OPTIONS += -DVASP2WANNIER90
 #   WANNIER90_ROOT ?= /path/to/wannier90-3.1.0
 #   LLIBS += -L$(WANNIER90_ROOT)/lib -lwannier
@@ -21,35 +23,36 @@ cd vasp.6.4.3
 make DEPS=1 -j8 std gam
 ```
 
-SAI 集群上的构建环境：nvhpc 24.3 + openmpi 5.0.8 + fftw 3.3.10（module
-`nvhpc/24.3-pgi-tuned`、`openmpi/5.0.8-nvhpc24.3-pgi-auto`、`fftw/3.3.10`），
-一次完整编译约 5–11 分钟。
+Build environment on the SAI cluster: nvhpc 24.3 + openmpi 5.0.8 + fftw 3.3.10
+(modules `nvhpc/24.3-pgi-tuned`, `openmpi/5.0.8-nvhpc24.3-pgi-auto`, `fftw/3.3.10`);
+a full build takes about 5–11 minutes.
 
-## INCAR 参数
+## INCAR tags
 
-最小设置是 `LEOS = .TRUE.`。打开后，下面四个 VASP 参数如果 INCAR 里没写，
-会被自动设为 `.TRUE.`：`LWANNIER90`、`LWANNIER90_RUN`、`LSCDM`、
-`LWANNIER90_AUTO_WINDOW`。`NUM_WANN` 不写时按每个自旋的占据带数自动设定。
+The minimal setting is `LEOS = .TRUE.`. With it on, the following four VASP tags are
+set to `.TRUE.` automatically unless INCAR gives them: `LWANNIER90`,
+`LWANNIER90_RUN`, `LSCDM`, `LWANNIER90_AUTO_WINDOW`. When `NUM_WANN` is not given,
+it is set automatically from the number of occupied bands of each spin.
 
-| 参数 | 默认 | 作用 |
+| Tag | Default | Effect |
 |---|---|---|
-| LEOS | .FALSE. | 总开关 |
-| EOS_FLOW | .TRUE. | 在 VASP 内做最小费用流分配，结果写入 EOSCAR 的 OS(flow) 列（β = 10，Allen 电负性，与 pyleos 默认设置相同） |
-| EOS_WF_DETAIL | .TRUE. | 写出 #WF 块：每个 WF 的中心、spread、占据数。pyleos 依赖它 |
-| EOS_PROJ_WEIGHT | .TRUE. | 写出 #WP 块：每个 WF 在各原子 PAW 投影上的权重，供投影辅助判定使用 |
-| EOS_EVERY_N | 0 | 0：只在最后一步分析（含单点计算）；1：每步分析；N > 1：每 N 步和最后一步分析 |
-| EOS_NELECT_WARN | 0.01 | Wannier 电子数与 NELECT 之差超过此值时警告 |
-| EOS_NELECT_ABORT | 0.35 | 差值超过此值时写出诊断版 EOSCAR 并中止 |
-| EOS_SCDM_ONLY | .FALSE. | 跳过 wannier90 的迭代局域化，只用 SCDM 初猜的中心（快速筛查用） |
-| EOS_WARM_START | .TRUE. | EOS_EVERY_N > 0 时，把上一个分析步的 WF 中心作为引导中心传给 wannier90 |
-| EOS_ENEG_TOL | 0.05 | 贪心分配：电负性差小于此值时视为相同 |
-| EOS_ONSITE_CUT | 0.35 | 贪心分配：WF 中心离原子小于此距离（Å）时判为该原子的孤对 |
-| EOS_O_MAX | 8.0 | 贪心分配：O 最多接收的电子数 |
-| EOS_ENEG_PAULING | .FALSE. | 贪心分配改用 Pauling 电负性 |
+| LEOS | .FALSE. | Master switch |
+| EOS_FLOW | .TRUE. | Do the minimum-cost flow assignment inside VASP and write the result to the OS(flow) column of EOSCAR (β = 10, Allen electronegativity, same as the pyleos defaults) |
+| EOS_WF_DETAIL | .TRUE. | Write the #WF block: centre, spread and occupation of every WF. pyleos depends on it |
+| EOS_PROJ_WEIGHT | .TRUE. | Write the #WP block: weight of every WF on the PAW projectors of each atom, used by projection-assisted arbitration |
+| EOS_EVERY_N | 0 | 0: analyse only at the last step (single-point calculations included); 1: analyse every step; N > 1: analyse every N steps and at the last step |
+| EOS_NELECT_WARN | 0.01 | Warn when the Wannier electron count differs from NELECT by more than this |
+| EOS_NELECT_ABORT | 0.35 | When the difference exceeds this, write a diagnostic EOSCAR and abort |
+| EOS_SCDM_ONLY | .FALSE. | Skip the iterative localisation of wannier90 and use only the centres of the SCDM initial guess (for fast screening) |
+| EOS_WARM_START | .TRUE. | When EOS_EVERY_N > 0, pass the WF centres of the previous analysed step to wannier90 as guiding centres |
+| EOS_ENEG_TOL | 0.05 | Greedy assignment: electronegativities that differ by less than this count as equal |
+| EOS_ONSITE_CUT | 0.35 | Greedy assignment: a WF centre closer to an atom than this distance (Å) is a lone pair of that atom |
+| EOS_O_MAX | 8.0 | Greedy assignment: the most electrons O may receive |
+| EOS_ENEG_PAULING | .FALSE. | Greedy assignment uses Pauling electronegativities instead |
 
-后四个参数只影响 EOSCAR 中的贪心列 OS(int)，不影响 OS(flow)。
+The last four tags affect only the greedy column OS(int) of EOSCAR, not OS(flow).
 
-一个可用的单点 INCAR（cases/as4s4/v3/INCAR）：
+A working single-point INCAR (cases/as4s4/v3/INCAR):
 
 ```
 PREC = Accurate
@@ -69,163 +72,195 @@ EOS_WF_DETAIL = .TRUE.
 EOS_PROJ_WEIGHT = .TRUE.
 ```
 
-## 运行注意
+## Running notes
 
-### wannier90 库与离线 wannier90
+### The wannier90 library and offline wannier90
 
-- **库模式必须链接串行版 libwannier.a。** 补丁的调用方式是只有主进程进入
-  wannier90 库，其他进程在库外等待。链接 MPI 版库时，库内部会再发起集体
-  通信，与库外等待的进程互相等待，在解纠缠第一步死锁：所有进程 100% CPU
-  空转，没有 .werr 文件。很多站点预编译的库是 MPI 版（如 Chinahpc
-  /data/app 下全部版本）。检查方法：`nm libwannier.a | grep -ci mpi_`，
-  结果非零就是 MPI 版，需要用 `COMMS=`（留空）重新编译串行版。
-- **离线运行的 wannier90.x 用 MPI + 线程化 MKL 构建。** 上一条限制只针对库
-  模式。make.inc 要点：`F90=ifort`、`COMMS=mpi`、`MPIF90=mpiifort`，LIBS
-  用 `-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5`。运行时设
-  `MKL_NUM_THREADS=<n> MKL_DYNAMIC=FALSE`。两个自旋并发运行时每进程 2 线程
-  最快（数据见 docs/RESULTS.md"效率"）。gnu + OpenMPI 5 编译的 wannier90 在多
-  进程下会崩溃，要用 ifort + Intel MPI + MKL。SAI 集群上的现成构建在 LEOS
-  目录下的 `w90_offline/build/wannier90-3.1.0-impi-thread/`；离线流程的说明
-  在 `w90_offline/README.md`。
+- **Library mode must link the serial libwannier.a.** The patch lets only the master
+  process enter the wannier90 library; the other processes wait outside. With an MPI
+  build of the library, the library starts collective communication of its own,
+  which waits on the processes outside while they wait on it: a deadlock at the
+  first disentanglement step, with every process spinning at 100% CPU and no .werr
+  file. Many sites ship precompiled MPI builds (for example every version under
+  /data/app on Chinahpc). To check: `nm libwannier.a | grep -ci mpi_`; a non-zero
+  result means an MPI build, and the serial library must be rebuilt with `COMMS=`
+  (left empty).
+- **Build the offline wannier90.x with MPI + threaded MKL.** The restriction above
+  applies to library mode only. Key make.inc settings: `F90=ifort`, `COMMS=mpi`,
+  `MPIF90=mpiifort`, and LIBS with
+  `-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5`. At run time set
+  `MKL_NUM_THREADS=<n> MKL_DYNAMIC=FALSE`. When the two spins run concurrently,
+  2 threads per process is fastest (data under "Efficiency" in docs/RESULTS.md).
+  wannier90 built with gnu + OpenMPI 5 crashes with several processes; use ifort +
+  Intel MPI + MKL. The ready build on the SAI cluster is
+  `w90_offline/build/wannier90-3.1.0-impi-thread/` under the LEOS directory; the
+  offline workflow is described in `w90_offline/README.md`.
 
-### 常见失败
+### Common failures
 
-- **NELECT mismatch too large。** 原因几乎都是解纠缠缺少冻结窗口。设置
-  `LWANNIER90_AUTO_WINDOW = .TRUE.`（配合 LSCDM），不要手写 wannier90.win。
-  中止时补丁会写出诊断版 EOSCAR（带 `# LEOS_ABORTED` 标记），其中 `#NLD`
-  块列出丢失最多的（自旋，k 点，能带）。如果丢失集中在占据带顶部、分散在
-  所有 k 点上，就是缺冻结窗口。
-- **`kmesh_get_bvector: Not enough bvectors found`。** 体心或倾斜的小晶胞，
-  以及某些分子晶体的大晶胞，在特定 k 网格下会通不过 wannier90 的 b 向量检查。
-  依次尝试：换成偶数或与晶胞形状匹配的网格；或在 INCAR 中加
-  `WANNIER90_WIN = "\nkmesh_tol = 0.00001\n"`（把默认的 1e-6 放宽到 1e-5；
-  这个多行字符串也可以同时写入 dis_num_iter 等其他参数）。不要改用 Gamma-only
-  来回避：Gamma 模式下局域化行为不同，会产生大量 stray。
-- **#WP 数据。** 2026-07-11 修复（提交 e0ad691）之前，所有多进程运行产出的
-  #WP 块都是错的：带并行时先取模方再跨进程求和，丢掉了交叉项。这些数据要用
-  修复后的版本重新计算。另外，**GPU（nvhpc）版和 CPU（Intel）版产出的 #WP
-  有系统性差异**，每原子聚合值相差约一倍，原因未查明，所以不同平台的 #WP
-  不能混用；需要 #WP 的计算统一在一个平台上完成。
+- **NELECT mismatch too large.** The cause is almost always a missing frozen window
+  in the disentanglement. Set `LWANNIER90_AUTO_WINDOW = .TRUE.` (together with
+  LSCDM); do not write wannier90.win by hand. On abort the patch writes a diagnostic
+  EOSCAR (marked `# LEOS_ABORTED`) whose `#NLD` block lists the (spin, k-point,
+  band) entries with the largest loss. If the loss is concentrated at the top of the
+  occupied bands and spread over all k-points, the frozen window is missing.
+- **`kmesh_get_bvector: Not enough bvectors found`.** Small body-centred or oblique
+  cells, and the large cells of some molecular crystals, fail the b-vector check of
+  wannier90 on particular k-meshes. Try in turn: an even mesh or one that matches
+  the cell shape; or add `WANNIER90_WIN = "\nkmesh_tol = 0.00001\n"` to INCAR (this
+  relaxes the default 1e-6 to 1e-5; the multi-line string can also carry other
+  parameters such as dis_num_iter). Do not switch to Gamma-only to avoid the error:
+  localisation behaves differently in Gamma mode and produces many stray WFs.
+- **#WP data.** Before the fix of 2026-07-11 (commit e0ad691), the #WP blocks of all
+  multi-process runs are wrong: with band parallelisation the squared modulus was
+  taken before the sum over processes, which dropped the cross terms. Such data must
+  be recomputed with the fixed version. In addition, **the #WP of the GPU (nvhpc)
+  build and of the CPU (Intel) build differ systematically**: per-atom aggregates
+  differ by about a factor of two, for a reason not yet found. #WP from different
+  platforms must therefore not be mixed; calculations that need #WP are all done on
+  one platform.
 
-### 内存与 SCF
+### Memory and SCF
 
-- **KPAR 与内存（GPU 版）。** KPAR 不会把波函数按 k 点分开存放，每个进程
-  的内存占用反而与 KPAR / 进程数成正比。进程少时 KPAR > 1 会耗尽主机内存：
-  Ce 体系在 4 GPU、KPAR = 2 下启动即内存不足。4 GPU / 62.5 GB 时用
-  KPAR = 1；8 GPU / 125 GB 时 KPAR = 2 可用。
-- **磁性体系写全 MAGMOM。** 可以避免 NBANDS 被默认规则调高（Ce 体系从 332
-  降到 308），也让 SCF 更快收敛。
-- **Ce18O36Co4CH4 末态的实测配置。** KPAR = 1、NBANDS = 308、写全 MAGMOM，
-  4 GPU 上用时 5 小时 24 分钟，内存峰值 49.2 GB（配额的 79%）。两个自旋的
-  解纠缠各 100 步收敛（自旋共享冻结窗口时，第二自旋跑满 1000 步、耗时
-  1743 秒仍未收敛）；按自旋设置的 num_wann 为 255 / 246；dNe 由 0.193 降到
-  0.0008，ghost 由 6 降到 1。
-- **Ce 体系的 SCF 设置（四组对比，Ce 初态）。** ALGO = ALL 是必需的，换成
-  Davidson 会在 176 步内发散到 −10⁷ eV 量级。ALGO = ALL 下混合参数影响很小：
-  保守设置 545 步、默认混合 526 步、温和 Kerker 511 步，相差 3–6%。有效的
-  加速只有写全 MAGMOM 初值（末态从 539 步降到 454 步，少 16%）。像与像之间
-  复用波函数尚未测试（issue #18）。
+- **KPAR and memory (GPU build).** KPAR does not store the wavefunctions separately
+  per k-point; instead the memory of each process is proportional to KPAR / number
+  of processes. With few processes, KPAR > 1 exhausts the host memory: a Ce system
+  on 4 GPUs with KPAR = 2 runs out of memory at start-up. Use KPAR = 1 with 4 GPUs /
+  62.5 GB; KPAR = 2 works with 8 GPUs / 125 GB.
+- **Give the full MAGMOM for magnetic systems.** This keeps the default rule from
+  raising NBANDS (from 332 down to 308 for the Ce system) and makes the SCF converge
+  faster.
+- **Measured configuration for the Ce18O36Co4CH4 final state.** KPAR = 1,
+  NBANDS = 308, full MAGMOM: 5 hours 24 minutes on 4 GPUs, peak memory 49.2 GB (79%
+  of the quota). The disentanglement of each spin converges in 100 steps (with a
+  frozen window shared by the spins, the second spin ran the full 1000 steps, 1743
+  seconds, without converging); the per-spin num_wann is 255 / 246; dNe falls from
+  0.193 to 0.0008 and ghost from 6 to 1.
+- **SCF settings for the Ce system (four settings compared, Ce initial state).**
+  ALGO = ALL is required; Davidson diverges to the order of −10⁷ eV within 176
+  steps. Under ALGO = ALL the mixing parameters matter little: 545 steps with
+  conservative settings, 526 with default mixing, 511 with mild Kerker, a difference
+  of 3–6%. The only effective speed-up is a full initial MAGMOM (final state: from
+  539 steps down to 454, 16% fewer). Reusing wavefunctions between images is not yet
+  tested (issue #18).
 
-### SLURM 作业
+### SLURM jobs
 
-- **相对路径。** `--output=print-out` 这类相对路径以提交时所在目录为准，作业
-  的工作目录也是。从家目录提交别人的脚本时，VASP 会在家目录找 INCAR 并立即
-  退出，错误信息在 ~/print-out 里。提交前先 cd 到算例目录，或在脚本中使用
-  绝对路径并显式 cd。
-- **资源参数写在脚本里。** SAI 集群的检查钩子匹配的是提交命令行：在命令行上
-  给 `--cpus-per-task` 的作业会在 2 秒内被 root 取消，连输出文件都不生成；
-  同样的值写在脚本的 `#SBATCH` 行里则正常。`--export=ALL,VAR=x` 不受影响。
-- **重新编译二进制。** 如果有排队中的作业引用同一个二进制路径，在删除旧
-  目录到编译完成之间，它们可能被调度运行并立即失败（已在运行的作业不受影响）。
-  重新编译前先用 squeue 检查，或部署到新路径。
+- **Relative paths.** A relative path such as `--output=print-out` is resolved
+  against the directory of submission, and so is the working directory of the job.
+  If you submit someone else's script from the home directory, VASP looks for INCAR
+  there and exits at once, with the error message in ~/print-out. cd to the case
+  directory before submitting, or use absolute paths and an explicit cd in the
+  script.
+- **Put resource options in the script.** The check hook of the SAI cluster matches
+  the submission command line: a job given `--cpus-per-task` on the command line is
+  cancelled by root within 2 seconds, without even an output file; the same value in
+  a `#SBATCH` line of the script works. `--export=ALL,VAR=x` is not affected.
+- **Rebuilding the binary.** If queued jobs refer to the same binary path, they may
+  be scheduled between the removal of the old directory and the end of the build,
+  and fail at once (running jobs are not affected). Check with squeue before
+  rebuilding, or deploy to a new path.
 
-### 开发注意
+### Development notes
 
-- VASP 内 MPI 求和函数 M_sum_z8 / M_sum_d8 的计数参数 n 是 INTEGER(qi8)，
-  调用时必须写 `SIZE(x, KIND=qi8)`。写成 `SIZE(x)`（32 位）时高位是栈上的
-  垃圾值，会导致堆越界和 SIGKILL，而且串行运行不会出现，很难排查。
+- The count argument n of the VASP MPI sum routines M_sum_z8 / M_sum_d8 is
+  INTEGER(qi8); call them with `SIZE(x, KIND=qi8)`. With `SIZE(x)` (32-bit) the high
+  bits are stack garbage, which causes heap overruns and SIGKILL; it does not show
+  in serial runs and is hard to trace.
 
-## 集群部署
+## Cluster deployment
 
-SAI 集群上的补丁版 VASP 在
+The patched VASP on the SAI cluster is in
 `/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/bin/`
-（vasp_std、vasp_gam），由提交 e0ad691 时的 leos_v3.patch 编译。之后加入的
-SCDM 分块组装（提交 54eec66）只改变速度、不改变结果，还没有重新部署。
+(vasp_std, vasp_gam), built from leos_v3.patch at commit e0ad691. The SCDM blocked
+assembly added later (commit 54eec66) changes only speed, not results, and is not
+yet redeployed.
 
-软链接 `/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/leos_current` 和
-LEOS 目录下的旧作业脚本仍指向家目录迁移前的路径
-`/home/sjtu-gongxueqing/zhangxianyang/`，使用前要改成
-`/org/sjtu-gongxueqing/zhangxianyang/temp/org/`。
+The symlink `/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/leos_current` and the
+old job scripts under the LEOS directory still point to the path from before the
+home-directory migration, `/home/sjtu-gongxueqing/zhangxianyang/`; change it to
+`/org/sjtu-gongxueqing/zhangxianyang/temp/org/` before use.
 
-## 版本记录
+## Version history
 
-### v3.1 之后
+### After v3.1
 
-| 改动 | 内容 |
+| Change | Content |
 |---|---|
-| SCDM 分块组装（提交 54eec66，issue #17） | SCDM 收集轨道时按约 16 个能带一组组装，用一次集体通信代替逐能带的广播和归约。每个缓冲元素只有一个非零贡献，结果逐位不变 |
+| SCDM blocked assembly (commit 54eec66, issue #17) | When SCDM gathers the orbitals, bands are assembled in groups of about 16, and one collective communication replaces the per-band broadcast and reduction. Each buffer element has a single non-zero contribution, so results are bit-identical |
 
 ### v3 → v3.1
 
-| 改动 | 内容 |
+| Change | Content |
 |---|---|
-| 中止前写诊断版 EOSCAR | 电子丢失超过 EOS_NELECT_ABORT 时，先写出带 `# LEOS_ABORTED` 标记和完整丢失记录的 EOSCAR 再跳过。pyleos 读到时给出说明；轨迹中个别帧中止不影响其他帧 |
-| 弥散型丢失定位 `#NLD` | 缺冻结窗口时，占据带会在所有 k 点上连续泄漏，这是最常见的丢失方式。`#NLD` 块记录丢失位置；MUMNOX 实测 1348 条记录，4.35 个电子定位到"自旋 1 第 117 带、自旋 2 第 124 带，分散在全部 k 点"。窗口型丢失的 `#NL` 块也写入 EOSCAR |
-| 按自旋设置 num_wann | 磁性体系的少数自旋不再产生 ghost（VIRCEF 第二自旋的 ghost 归零，Ce 恢复为 +3）。同时按自旋设置自动冻结窗口；若改写 .win 副本失败，退回共享值；INCAR 显式给出的 NUM_WANN 保持原有含义 |
-| SCDM 不再双缓冲 | 0 号进程不再同时持有两份全网格矩阵（Ce 体系该段内存增量约 8 GB），结果逐位相同 |
-| M/A 矩阵及时释放 | 非主进程归约后即释放 M（每进程 −0.9 GB）；wannier90 结束后释放 M/A（每进程常驻 −1 GB）；A 只在 SCDM 路径下释放，不影响 LOCPROJ、elphon |
-| 原位最小费用流：OS(flow) 列 | EOSCAR 逐原子表最后一列为 VASP 内完成的最小费用流分配（β = 10，Allen 电负性，镧系用与 pyleos 相同的电负性表），开关 EOS_FLOW 默认开。与 pyleos 逐原子相同：7 个测试的 Python 对照代价逐位相同，CO2、VIRCEF 实机验证 |
-| #WP 带组归约修正（提交 e0ad691） | 多进程带并行时，先把各带组的复数分量跨组求和，再取模方。串行结果逐位不变；修正后串行与多进程的每原子聚合值相差 2×10⁻⁴（收敛噪声量级），两个集群回归通过 |
-| 批跑与离线流程 | 见 pyleos/README.md 的 batch.py 一节和 tools/offline_w90_prep.py |
+| Diagnostic EOSCAR before abort | When the electron loss exceeds EOS_NELECT_ABORT, an EOSCAR with the `# LEOS_ABORTED` mark and the full loss record is written before skipping. pyleos explains it when it reads one; single aborted frames of a trajectory do not affect the other frames |
+| Locating diffuse loss: `#NLD` | Without a frozen window the occupied bands leak continuously at all k-points; this is the most common kind of loss. The `#NLD` block records where the loss is; MUMNOX gives 1348 records, and 4.35 electrons are located at "spin 1 band 117, spin 2 band 124, spread over all k-points". The `#NL` block for window-type loss is also written to EOSCAR |
+| Per-spin num_wann | The minority spin of magnetic systems no longer produces ghosts (the ghost of the second spin of VIRCEF goes to zero and Ce returns to +3). The automatic frozen window is also set per spin; if rewriting the .win copy fails, the shared value is used; a NUM_WANN given explicitly in INCAR keeps its former meaning |
+| SCDM no longer double-buffers | Process 0 no longer holds two full-grid matrices at once (for the Ce system that memory increment was about 8 GB); results are bit-identical |
+| M/A matrices freed early | Non-master processes free M right after the reduction (−0.9 GB per process); M/A are freed after wannier90 finishes (−1 GB resident per process); A is freed only on the SCDM path, so LOCPROJ and elphon are not affected |
+| In situ minimum-cost flow: the OS(flow) column | The last column of the per-atom table of EOSCAR is the minimum-cost flow assignment done inside VASP (β = 10, Allen electronegativity, lanthanides with the same electronegativity table as pyleos); the switch EOS_FLOW is on by default. Identical to pyleos atom by atom: in 7 tests the cost is bit-identical to the Python reference, and CO2 and VIRCEF are verified in real runs |
+| #WP band-group reduction fix (commit e0ad691) | With multi-process band parallelisation, the complex components of the band groups are summed across groups first, and the squared modulus is taken afterwards. Serial results are bit-identical; after the fix the per-atom aggregates of serial and multi-process runs differ by 2×10⁻⁴ (the level of convergence noise); the regression passes on two clusters |
+| Batch runs and offline workflow | See "batch.py: cluster batch runs" in pyleos/README.md, and tools/offline_w90_prep.py |
 
 ### v2 → v3
 
-| 改动 | 内容 |
+| Change | Content |
 |---|---|
-| 删除匈牙利分配分支 | 设计缺陷（阴离子拿不到多于中性时的电子），从未被使用 |
-| 按（自旋，k 点，能带）诊断电子丢失 | 不只报告总数，可以定位 |
-| EOSCAR 的 #WF 块 | 每个 WF 的中心、spread、占据数，是 pyleos 的输入 |
-| #WP 投影权重块 | 投影辅助判定的数据来源 |
-| EOS_SCDM_ONLY | 快速筛查模式；CO2 上 wannier90 耗时 2 秒 → 0.023 秒，氧化态不变 |
-| 轨迹模式接线 | 原来主程序写死 `IF (NSTEP == 1)`，EOS_EVERY_N 从未生效；现在按 EOS_DO_THIS_STEP 逐步分析（只开 LWANNIER90 的用户仍只在第一步运行），并修复了每步无条件 MLWF_FREE 的悬空引用 |
-| 热启动 | 上一步的 WF 中心作为引导中心 |
-| 其他 | 周期回卷公式、自动窗口容差、编译警告 |
+| Hungarian assignment branch removed | Design flaw (an anion cannot receive more electrons than the neutral atom); never used |
+| Electron-loss diagnosis by (spin, k-point, band) | Reports not only the total; the loss can be located |
+| #WF block of EOSCAR | Centre, spread and occupation of every WF; the input of pyleos |
+| #WP projection-weight block | Data source of projection-assisted arbitration |
+| EOS_SCDM_ONLY | Fast screening mode; on CO2 the wannier90 time is 2 s → 0.023 s, oxidation states unchanged |
+| Trajectory mode wired in | The main program had `IF (NSTEP == 1)` hard-coded, so EOS_EVERY_N never took effect; analysis now runs step by step under EOS_DO_THIS_STEP (for users who set only LWANNIER90 it still runs at the first step only), and the dangling reference from the unconditional MLWF_FREE at every step is fixed |
+| Warm start | WF centres of the previous step as guiding centres |
+| Other | Periodic wrap-around formula, automatic-window tolerance, compiler warnings |
 
-## 验证记录
+## Verification record
 
-### v3（2026-07-07，SAI 集群）
+### v3 (2026-07-07, SAI cluster)
 
-1. 来源：原版 6.4.3 与生产树 `vasp.6.4.3_leos_v2`（剥离 CCQN 后）的 diff。
-   生产树是 M4/M5 全部数据的出处，因此以它为准。
-2. 闭环：原版 + leos_v3.patch 与剥离后的生产树逐字节一致；生产树与剥离版
-   的差异恰好是 CCQN 的文件集，没有混入 LEOS 内容。
-3. 编译：在打过补丁的原版树上全新编译通过（作业 594329，约 11 分钟）。
-4. 回归：CO2 和 TiO2 的同一输入分别用生产二进制和新编译二进制计算，EOSCAR
-   整数氧化态完全相同，数值字段在 1e-6 内一致（差异是不同编译产物之间的浮点
-   末位差别），#WP、#WF 块齐全。
+1. Source: the diff between stock 6.4.3 and the production tree `vasp.6.4.3_leos_v2`
+   (after stripping CCQN). The production tree is the source of all M4/M5 data, so
+   it is the reference.
+2. Closure: stock + leos_v3.patch is byte-identical to the stripped production tree;
+   the difference between the production tree and the stripped version is exactly
+   the CCQN file set, with no LEOS content mixed in.
+3. Build: a fresh build on the patched stock tree passes (job 594329, about 11
+   minutes).
+4. Regression: the same CO2 and TiO2 inputs were run with the production binary and
+   with the new binary; the integer oxidation states in EOSCAR are identical and the
+   numeric fields agree within 1e-6 (the differences are last-digit floating-point
+   differences between builds); the #WP and #WF blocks are complete.
 
-合并时的发现：
+Findings during the merge:
 
-- 生产树上曾叠加过另一个项目（CCQN-TS）的补丁，leos_v3.patch 已剥离。
-- 生产树中有一处未入库的修改 `IF (LEOS) LSCDM = .TRUE.`，已收入
-  leos_v3.patch。
-- 仓库中旧版 leos.patch（v2）的 main.F 轨迹部分是开发中的旧版本，缺少只开
-  LWANNIER90 时的 NSTEP == 1 保护，与生产实际不符。
+- The production tree once also carried the patch of another project (CCQN-TS);
+  leos_v3.patch has it stripped.
+- The production tree had one uncommitted change, `IF (LEOS) LSCDM = .TRUE.`; it is
+  now in leos_v3.patch.
+- The trajectory part of main.F in the old leos.patch (v2) in the repository is an
+  old development version; it lacks the NSTEP == 1 protection for runs that set only
+  LWANNIER90, and does not match production.
 
-### v3.1（2026-07-10，SAI 集群）
+### v3.1 (2026-07-10, SAI cluster)
 
-1. 编译：原版树 + 本补丁三次编译通过（作业 612186、612454、612747，各约
-   5–11 分钟）。改动经过两轮代码评审，记录在 git 历史中。
-2. 回归：CO2 整数氧化态完全相同，数值字段差异在 1e-14 量级（判据仍为"整数
-   相同、数值 1e-6 内"；GPU 版在不同节点之间有浮点末位差异，做不到逐字节
-   相同）。VIRCEF 第二自旋 ghost 由 2 降到 0，Ce 恢复 +3。MUMNOX 在无窗口和
-   错误窗口两种设置下分别验证了 `#NLD` 和中止行为。
-3. 内存：Ce18O36Co4（63 原子，ISPIN = 2）在 4 GPU、KPAR = 1、NBANDS = 308
-   下 VASP 总内存 41 GB（62.5 GB 配额的 66%）。
-4. 回归数据：cases/INDEX.tsv 中 run 为 v31、v31-4gpu、v31-abort2 的运行。
+1. Build: stock tree + this patch built successfully three times (jobs 612186,
+   612454, 612747, about 5–11 minutes each). The changes went through two rounds of
+   code review, recorded in the git history.
+2. Regression: the CO2 integer oxidation states are identical and the numeric fields
+   differ at the 1e-14 level (the criterion remains "integers identical, numbers
+   within 1e-6"; the GPU build has last-digit floating-point differences between
+   nodes and cannot be byte-identical). For VIRCEF the ghost of the second spin
+   falls from 2 to 0 and Ce returns to +3. MUMNOX verified `#NLD` and the abort
+   behaviour under two settings, no window and a wrong window, respectively.
+3. Memory: Ce18O36Co4 (63 atoms, ISPIN = 2) on 4 GPUs with KPAR = 1 and
+   NBANDS = 308 uses 41 GB of VASP memory in total (66% of the 62.5 GB quota).
+4. Regression data: the runs named v31, v31-4gpu and v31-abort2 in cases/INDEX.tsv.
 
-## 归档文件
+## Archived files
 
-- `leos.patch`：v2 补丁，仅存档。其中 main.F 部分是旧版本（见上），不要使用。
-- `v3/`：v2 → v3 的增量材料（eos.F 全量替换和 main.F / mlwf.F 注入脚本），
-  已并入 leos_v3.patch，见 [v3/README.md](v3/README.md)。
+- `leos.patch`: the v2 patch, archive only. Its main.F part is an old version (see
+  above); do not use it.
+- `v3/`: the v2 → v3 incremental material (full replacement of eos.F and injection
+  scripts for main.F / mlwf.F), merged into leos_v3.patch; see
+  [v3/README.md](v3/README.md).

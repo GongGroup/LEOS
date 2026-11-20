@@ -127,7 +127,7 @@ QUOTED = {"n_ok": 64, "n_not": 8, "med_ok": 83.0, "med_not": 25.55,
 # Copied unchanged from figS1_comparison.py.
 #
 # Source: G. Comas-Vila et al., J. Chem. Theory Comput. 2025, 21, 7075-7086,
-# as transcribed in docs/comas_vila_2025_notes.md, table "逐类对照".
+# as transcribed in docs/comas_vila_2025_notes.md, table "Comparison by class".
 # "N<k>" is line k of that file; "p." is the journal page given there (each
 # value was also re-read in docs/refs/Comas-Vilà ... 2025 ... .pdf).
 #
@@ -291,16 +291,20 @@ def verdict_counts(table, batches):
 def docs_numbers():
     """Pass counts quoted in docs/RESULTS.md (for the cross-check only)."""
     text = RESULTS_MD.read_text(encoding="utf-8")
-    keys = {"历史回归集": "Legacy set", "扩展第一波": "Extension 1",
-            "扩展第二波": "Extension 2", "合计": "All"}
+    keys = {"Legacy regression set": "Legacy set",
+            "Extension wave 1": "Extension 1",
+            "Extension wave 2": "Extension 2", "Total": "All"}
     out = {}
-    for zh, en in keys.items():
-        m = re.search(rf"\|\s*{zh}（(\d+)）\s*\|\s*(\d+)[^|]*\|\s*(\d+)", text)
+    for row, en in keys.items():
+        m = re.search(rf"\|\s*{row} \((\d+)\)\s*\|\s*(\d+)[^|]*\|\s*(\d+)",
+                      text)
         if m:
             out[en] = tuple(int(x) for x in m.groups())
-    m = re.search(r"(\d+)\s*个案例只有运输通过，(\d+)\s*个只有贪心通过", text)
+    m = re.search(r"(\d+)\s+cases\s+pass\s+only\s+with\s+the\s+flow,\s+(\d+)\s+"
+                  r"pass\s+only\s+with\s+greedy", text)
     out["only"] = tuple(int(x) for x in m.groups()) if m else None
-    m = re.search(r"第二波中这两个数字是\s*(\d+)\s*和\s*(\d+)", text)
+    m = re.search(r"Within\s+wave\s+2\s+these\s+two\s+numbers\s+are\s+(\d+)\s+and\s+"
+                  r"(\d+)", text)
     out["only_wave2"] = tuple(int(x) for x in m.groups()) if m else None
     return out
 

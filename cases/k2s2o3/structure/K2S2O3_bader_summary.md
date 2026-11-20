@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `K2S2O3-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 56
-- 拆分盆的原子数: 0
+# Bader charge report
+- Data file: `K2S2O3-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 56
+- Atoms with split basins: 0
 
-## 全局统计
-总净电荷 -0.0040 e；得电子的原子累积 -37.3600 e，失电子的原子累积 +37.3560 e；总体分布标准差 1.5105 e。
+## Totals
+Net charge -0.0040 e; atoms that gained electrons sum to -37.3600 e, atoms that lost electrons to +37.3560 e; standard deviation over all atoms 1.5105 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | O1 | O | -1.352 | 56 |
@@ -67,12 +67,12 @@
 | 55 | K55 | K | +0.870 | 40 |
 | 56 | K56 | K | +0.871 | 12 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | K | 16 | +13.892 | +0.868 | +0.863 | +0.871 | +0.003 |
 | O | 24 | -32.446 | -1.352 | -1.365 | -1.345 | +0.007 |
 | S | 16 | +18.550 | +1.159 | -0.618 | +2.941 | +1.774 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

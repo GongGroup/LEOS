@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `SeGa-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 16
-- 拆分盆的原子数: 0
+# Bader charge report
+- Data file: `SeGa-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 16
+- Atoms with split basins: 0
 
-## 全局统计
-总净电荷 -0.0020 e；得电子的原子累积 -5.0520 e，失电子的原子累积 +5.0500 e；总体分布标准差 0.6315 e。
+## Totals
+Net charge -0.0020 e; atoms that gained electrons sum to -5.0520 e, atoms that lost electrons to +5.0500 e; standard deviation over all atoms 0.6315 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | Ga1 | Ga | +0.653 | 2 |
@@ -27,11 +27,11 @@
 | 15 | Se15 | Se | -0.631 | 8 |
 | 16 | Se16 | Se | -0.634 | 13 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Ga | 8 | +5.050 | +0.631 | +0.610 | +0.653 | +0.016 |
 | Se | 8 | -5.052 | -0.631 | -0.634 | -0.629 | +0.002 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

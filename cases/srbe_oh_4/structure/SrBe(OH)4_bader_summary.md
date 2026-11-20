@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `SrBe(OH)4-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 160
-- 拆分盆的原子数: 0
+# Bader charge report
+- Data file: `SrBe(OH)4-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 160
+- Atoms with split basins: 0
 
-## 全局统计
-总净电荷 +0.0160 e；得电子的原子累积 -91.4160 e，失电子的原子累积 +91.4320 e；总体分布标准差 1.2327 e。
+## Totals
+Net charge +0.0160 e; atoms that gained electrons sum to -91.4160 e, atoms that lost electrons to +91.4320 e; standard deviation over all atoms 1.2327 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | H1 | H | +0.588 | 139 |
@@ -171,7 +171,7 @@
 | 159 | Sr159 | Sr | +1.665 | 102 |
 | 160 | Sr160 | Sr | +1.642 | 28 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Be | 16 | +27.312 | +1.707 | +1.707 | +1.707 | +0.000 |
@@ -179,5 +179,5 @@
 | O | 64 | -91.416 | -1.428 | -1.435 | -1.422 | +0.006 |
 | Sr | 16 | +26.456 | +1.653 | +1.642 | +1.665 | +0.012 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

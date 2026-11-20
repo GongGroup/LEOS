@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `TiO2-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 12
-- 拆分盆的原子数: 0
+# Bader charge report
+- Data file: `TiO2-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 12
+- Atoms with split basins: 0
 
-## 全局统计
-总净电荷 -0.0040 e；得电子的原子累积 -7.6800 e，失电子的原子累积 +7.6760 e；总体分布标准差 1.3572 e。
+## Totals
+Net charge -0.0040 e; atoms that gained electrons sum to -7.6800 e, atoms that lost electrons to +7.6760 e; standard deviation over all atoms 1.3572 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | Ti1 | Ti | +1.919 | 9 |
@@ -23,11 +23,11 @@
 | 11 | O11 | O | -0.960 | 7 |
 | 12 | O12 | O | -0.960 | 12 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | O | 8 | -7.680 | -0.960 | -0.960 | -0.960 | +0.000 |
 | Ti | 4 | +7.676 | +1.919 | +1.919 | +1.919 | +0.000 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

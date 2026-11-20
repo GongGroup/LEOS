@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `Cs3AuO-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 10
-- 拆分盆的原子数: 0
+# Bader charge report
+- Data file: `Cs3AuO-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 10
+- Atoms with split basins: 0
 
-## 全局统计
-总净电荷 -0.0000 e；得电子的原子累积 -4.3300 e，失电子的原子累积 +4.3300 e；总体分布标准差 0.9011 e。
+## Totals
+Net charge -0.0000 e; atoms that gained electrons sum to -4.3300 e, atoms that lost electrons to +4.3300 e; standard deviation over all atoms 0.9011 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | O1 | O | -1.360 | 1 |
@@ -21,12 +21,12 @@
 | 9 | Au9 | Au | -0.805 | 7 |
 | 10 | Au10 | Au | -0.805 | 8 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Au | 2 | -1.610 | -0.805 | -0.805 | -0.805 | +0.000 |
 | Cs | 6 | +4.330 | +0.722 | +0.720 | +0.724 | +0.002 |
 | O | 2 | -2.720 | -1.360 | -1.360 | -1.360 | +0.000 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

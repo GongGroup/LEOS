@@ -80,10 +80,10 @@ def build_config(args: argparse.Namespace) -> RunConfig:
     workspace_root = Path(__file__).resolve().parent.parent
     xsd_path = Path(args.xsd).resolve()
     if not xsd_path.exists():
-        raise FileNotFoundError(f"找不到 XSD 文件: {xsd_path}")
+        raise FileNotFoundError(f"XSD file not found: {xsd_path}")
     avf_path = Path(args.avf).resolve() if args.avf else autodetect_avf(xsd_path)
     if args.avf and not avf_path.exists():
-        raise FileNotFoundError(f"找不到 AVF 文件: {avf_path}")
+        raise FileNotFoundError(f"AVF file not found: {avf_path}")
     material_name = args.material or guess_material_name(xsd_path)
     root_dir = Path(args.root).resolve() if args.root else workspace_root / "EOS"
     material_dir = root_dir / material_name
@@ -123,21 +123,21 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Organize downloaded Bader files into EOS and generate Markdown summaries."
     )
-    parser.add_argument("--xsd", required=True, help="刚下载的 XSD 文件路径。")
-    parser.add_argument("--avf", help="对应的 AVF.dat 路径；若省略将尝试在同目录中自动查找。")
-    parser.add_argument("--material", help="手动指定物质文件夹名称，默认依据 XSD 文件名猜测。")
+    parser.add_argument("--xsd", required=True, help="The downloaded XSD file.")
+    parser.add_argument("--avf", help="The matching AVF.dat; if omitted, it is looked for in the same directory.")
+    parser.add_argument("--material", help="Name of the material directory (default: guessed from the XSD file name).")
     parser.add_argument(
         "--root",
         default=str(default_root),
-        help="物质子目录的根路径，默认写入当前仓库下的 EOS 目录。",
+        help="Root of the material directories (default: the EOS directory of this repository).",
     )
     parser.add_argument(
         "--summary-dir",
-        help="若提供则单独指定汇总 Markdown 输出目录；默认写入对应物质目录。",
+        help="Directory for the Markdown summary (default: the material directory).",
     )
     args = parser.parse_args()
     summary_path = run(args)
-    print(f"整理完成，汇总写入: {summary_path}")
+    print(f"Done; summary written to {summary_path}")
 
 
 if __name__ == "__main__":

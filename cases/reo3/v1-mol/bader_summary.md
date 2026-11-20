@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `ReO3-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 4
-- 拆分盆的原子数: 2
+# Bader charge report
+- Data file: `ReO3-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 4
+- Atoms with split basins: 2
 
-## 全局统计
-总净电荷 +0.0000 e；得电子的原子累积 -2.7100 e，失电子的原子累积 +2.7100 e；总体分布标准差 1.5646 e。
+## Totals
+Net charge +0.0000 e; atoms that gained electrons sum to -2.7100 e, atoms that lost electrons to +2.7100 e; standard deviation over all atoms 1.5646 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | O1 | O | -0.904 | 5, 6, 7 |
@@ -15,11 +15,11 @@
 | 3 | O3 | O | -0.903 | 2 |
 | 4 | Re4 | Re | +2.710 | 1 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | O | 3 | -2.710 | -0.903 | -0.904 | -0.903 | +0.000 |
 | Re | 1 | +2.710 | +2.710 | +2.710 | +2.710 | +0.000 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

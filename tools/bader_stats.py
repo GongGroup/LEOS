@@ -164,14 +164,14 @@ def summarize_charges(charges: Iterable[float]) -> str:
     """Return a short textual summary (total, positive/negative balance, std dev)."""
     charges = list(charges)
     if not charges:
-        return "未检测到可用的净电荷数据。"
+        return "No usable net-charge data found."
     total = sum(charges)
     positive = sum(c for c in charges if c > 0)
     negative = sum(c for c in charges if c < 0)
     dispersion = pstdev(charges) if len(charges) > 1 else 0.0
     return (
-        f"总净电荷 {total:+.4f} e；得电子的原子累积 {negative:+.4f} e，"
-        f"失电子的原子累积 {positive:+.4f} e；总体分布标准差 {dispersion:.4f} e。"
+        f"Net charge {total:+.4f} e; atoms that gained electrons sum to {negative:+.4f} e, "
+        f"atoms that lost electrons to {positive:+.4f} e; standard deviation over all atoms {dispersion:.4f} e."
     )
 
 
@@ -184,23 +184,23 @@ def run(args: argparse.Namespace) -> None:
     element_table = build_element_table(atoms)
 
     report_lines = [
-        f"# Bader 统计报告",
-        f"- 数据文件: `{xsd_path.name}`",
-        f"- AVF 映射: `{avf_path.name if avf_path else '无'}`",
-        f"- 原子总数: {len(atoms)}",
-        f"- 拆分盆的原子数: {sum(1 for vols in basin_map.values() if len(vols) > 1)}",
+        f"# Bader charge report",
+        f"- Data file: `{xsd_path.name}`",
+        f"- AVF map: `{avf_path.name if avf_path else 'none'}`",
+        f"- Atoms: {len(atoms)}",
+        f"- Atoms with split basins: {sum(1 for vols in basin_map.values() if len(vols) > 1)}",
         "",
-        "## 全局统计",
+        "## Totals",
         summarize_charges(charges),
         "",
-        "## 原子层级统计",
+        "## Per atom",
         atom_table,
         "",
-        "## 元素层级统计",
+        "## Per element",
         element_table,
         "",
-        "## 注释",
-        "- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。",
+        "## Notes",
+        "- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.",
     ]
     report = "\n".join(report_lines).strip() + "\n"
 
@@ -208,22 +208,22 @@ def run(args: argparse.Namespace) -> None:
     output_path.write_text(report, encoding="utf-8")
     if not args.quiet:
         print(report)
-        print(f"\n已写入报告: {output_path}")
+        print(f"\nReport written: {output_path}")
 
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Quick statistics + oxidation-state estimates from Bader data.")
-    parser.add_argument("--xsd", required=True, help="Materials Studio XSD 文件路径，需包含 <Atom3d> Charge 属性。")
-    parser.add_argument("--avf", help="AVF.dat 文件路径（可选，用于展示体积编号）。")
+    parser.add_argument("--xsd", required=True, help="Materials Studio XSD file; its <Atom3d> entries must carry the Charge attribute.")
+    parser.add_argument("--avf", help="AVF.dat file (optional; adds the volume IDs).")
     parser.add_argument(
         "--out",
         default="bader_summary.md",
-        help="输出 Markdown 报告路径，默认写入 bader_summary.md。",
+        help="Markdown report to write (default: bader_summary.md).",
     )
     parser.add_argument(
         "--quiet",
         action="store_true",
-        help="仅写文件，不在终端输出表格。",
+        help="Write the file only; print no tables.",
     )
     args = parser.parse_args(argv)
     run(args)
