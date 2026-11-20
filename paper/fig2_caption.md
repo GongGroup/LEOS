@@ -288,8 +288,8 @@ with the printed provenance; the *β* scan repeated on the present data tree
    `docs/RESULTS.md`, section 7, and shown in panel (e). The reason given
    there (the scan was run before the tungsten chloride structures were
    replaced) is not recorded in any file under `results/`; it was checked in the
-   git history: the scan file dates from commit `cad142d` (2026-07-12) and has
-   not changed since, and `git diff cad142d 077f1d8 --
+   git history: the scan file dates from commit `0a550e2` (2026-07-12) and has
+   not changed since, and `git diff 0a550e2 8199aaf --
    data/v3/reliability_74.tsv` (the path of `results/bench74_golden.tsv` in
    those commits) changes the four tungsten chloride rows only
    (wcl4 FAIL 2.00 → OK, wcl6 FAIL 5.00 → OK, wcl5 FAIL 3.50 → FAIL 4.67,
