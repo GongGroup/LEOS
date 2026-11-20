@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `(Cu5I7)2--charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 12
-- 拆分盆的原子数: 2
+# Bader charge report
+- Data file: `(Cu5I7)2--charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 12
+- Atoms with split basins: 2
 
-## 全局统计
-总净电荷 -2.0000 e；得电子的原子累积 -3.3390 e，失电子的原子累积 +1.3390 e；总体分布标准差 0.3760 e。
+## Totals
+Net charge -2.0000 e; atoms that gained electrons sum to -3.3390 e, atoms that lost electrons to +1.3390 e; standard deviation over all atoms 0.3760 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | Cu1 | Cu | +0.246 | 12 |
@@ -23,11 +23,11 @@
 | 11 | I11 | I | -0.540 | 1, 3, 15, 16 |
 | 12 | I12 | I | -0.545 | 7, 14 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Cu | 5 | +1.339 | +0.268 | +0.246 | +0.296 | +0.018 |
 | I | 7 | -3.339 | -0.477 | -0.563 | -0.310 | +0.105 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

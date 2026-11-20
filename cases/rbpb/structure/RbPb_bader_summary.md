@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `RbPb-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 64
-- 拆分盆的原子数: 0
+# Bader charge report
+- Data file: `RbPb-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 64
+- Atoms with split basins: 0
 
-## 全局统计
-总净电荷 -0.0000 e；得电子的原子累积 -21.2480 e，失电子的原子累积 +21.2480 e；总体分布标准差 0.6641 e。
+## Totals
+Net charge -0.0000 e; atoms that gained electrons sum to -21.2480 e, atoms that lost electrons to +21.2480 e; standard deviation over all atoms 0.6641 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | Rb1 | Rb | +0.651 | 36 |
@@ -75,11 +75,11 @@
 | 63 | Pb63 | Pb | -0.663 | 57 |
 | 64 | Pb64 | Pb | -0.663 | 28 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Pb | 32 | -21.248 | -0.664 | -0.665 | -0.663 | +0.001 |
 | Rb | 32 | +21.248 | +0.664 | +0.651 | +0.676 | +0.012 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

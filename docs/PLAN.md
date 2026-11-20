@@ -1,120 +1,144 @@
-# LEOS 项目计划
+# LEOS project plan
 
-本文说明 LEOS 要解决的问题、方法、主要设计决定和工程约定。测试与应用
-结果见 [RESULTS.md](RESULTS.md)，术语见 [CONTEXT.md](../CONTEXT.md)。
+This document states the problem LEOS solves, the method, the main design decisions
+and the engineering conventions. Test and application results are in
+[RESULTS.md](RESULTS.md); terms are defined in [CONTEXT.md](../CONTEXT.md).
 
-## 1. 问题
+## 1. Problem
 
-氧化态是给原子记账的整数：假想把每条化学键的电子全部判给电负性更大的
-一端，再数每个原子比中性时多或少几个电子。例如 CO2 中 O 的电负性比 C
-大，C–O 键的电子都记在 O 上，于是 C 为 +4，O 为 −2。氧化态是一种约定，
-不是可测量的物理量，但它是描述氧化还原和成键的通用语言。
+An oxidation state is an integer that keeps the electron account of an atom: assign
+all electrons of every chemical bond to the more electronegative end, then count how
+many electrons each atom has gained or lost relative to the neutral atom. In CO2, O
+is more electronegative than C, so the electrons of the C–O bonds all count for O:
+C is +4 and O is −2. The oxidation state is a convention, not a measurable physical
+quantity, but it is the common language for redox and bonding.
 
-DFT 给出的电子密度是连续分布的，并不属于某个特定原子。要从 DFT 结果自动
-得到每个原子的氧化态，就必须回答"每一份电子算谁的"。
+The electron density from DFT is continuous and belongs to no particular atom. To
+get the oxidation state of every atom automatically from a DFT result, one must
+decide which atom each portion of the electrons counts for.
 
-LEOS（Lattice Effective Oxidation States）的做法分两步：
+LEOS (Lattice Effective Oxidation States) does this in two steps:
 
-1. **Wannier 化**：在 VASP 计算中把占据态变换成一组局域的 Wannier 函数
-   （WF）。每个 WF 是一团局域电子，有中心坐标和 spread（空间展宽）。闭壳层
-   计算中每个 WF 装 2 个电子；自旋极化计算中每个自旋通道的 WF 装 1 个。
-2. **分配**：决定每个 WF 的电子归哪个原子，再按电子数算出氧化态。直观上，
-   WF 中心紧贴某个原子时通常是它的孤对电子；落在两个原子之间时是一条共价
-   键，按电负性判给一端。
+1. **Wannierisation**: inside the VASP calculation, transform the occupied states
+   into a set of localised Wannier functions (WFs). Each WF is a localised packet of
+   electrons with centre coordinates and a spread (spatial extent). In a
+   closed-shell calculation each WF holds 2 electrons; in a spin-polarised
+   calculation each WF of each spin channel holds 1.
+2. **Assignment**: decide which atom receives the electrons of each WF, then compute
+   the oxidation states from the electron counts. Intuitively, a WF whose centre
+   sits on an atom is usually a lone pair of that atom; a WF between two atoms is a
+   covalent bond and goes to one end according to electronegativity.
 
-代码分两部分：
+The code has two parts:
 
-- **VASP 补丁**（patch/leos_v3.patch，Fortran）：在 VASP 6.4.3 内调用
-  wannier90 库完成 Wannier 化（SCDM 初猜），把每个 WF 的中心、spread、
-  占据数和投影权重写进 EOSCAR 文件，并在 VASP 内直接完成分配。
-- **pyleos**（Python 标准库，无第三方依赖）：读 EOSCAR，重新做分配，
-  给出诊断信息和可靠性指标。
+- **VASP patch** (patch/leos_v3.patch, Fortran): calls the wannier90 library inside
+  VASP 6.4.3 to wannierise (SCDM initial guess), writes the centre, spread,
+  occupation and projection weights of every WF to the EOSCAR file, and does the
+  assignment inside VASP.
+- **pyleos** (Python standard library, no third-party dependency): reads EOSCAR,
+  redoes the assignment, and gives diagnostics and the reliability index.
 
-两部分的分配算法相同，结果逐原子一致。算法先在 pyleos 中定型，再移植到
-Fortran。
+Both parts use the same assignment algorithm and their results agree atom by atom.
+The algorithm is settled in pyleos first, then ported to Fortran.
 
-另有独立工具 gpuw90（PyTorch）：在 GPU 上重新实现 wannier90 的解纠缠和
-局域化，用于加速 Wannier 化，见 [gpuw90/README.md](../gpuw90/README.md)。
+A separate tool, gpuw90 (PyTorch), reimplements the disentanglement and localisation
+of wannier90 on the GPU to speed up the wannierisation; see
+[gpuw90/README.md](../gpuw90/README.md).
 
-## 2. 方法
+## 2. Method
 
-### 把分配写成最小费用流
+### Assignment as a minimum-cost flow
 
-最直接的分配方法是贪心：每个 WF 独立找最近的原子（或考虑电负性）。它的
-问题是各个 WF 互不知情，许多 WF 都"最近于"同一个原子时就会全部堆给它，
-得出物理上不可能的结果（见"关键决定"一节中的 As4S4 例子）。
+The most direct assignment is greedy: each WF independently picks the nearest atom
+(or also weighs electronegativity). Its flaw is that the WFs know nothing of each
+other: when many WFs are all "nearest" to the same atom, they all pile onto it and
+the result is physically impossible (see the As4S4 example under "Key decisions").
 
-LEOS 把所有 WF 一起分配，写成运输问题（最小费用流）：
+LEOS assigns all WFs together, as a minimum-cost flow:
 
-- 每个 WF 有固定数量的电子要分出去（闭壳层 2 个，自旋极化 1 个）；
-- 每个原子能接收的电子数有下限和上限；
-- 把一个 WF 的电子给某个原子有代价；
-- 求总代价最小的分配。
+- each WF has a fixed number of electrons to hand out (2 closed-shell, 1
+  spin-polarised);
+- each atom has a lower and an upper limit on the electrons it can receive;
+- giving the electrons of a WF to an atom has a cost;
+- the assignment with the lowest total cost is sought.
 
-因为电子数和容量都是整数，最小费用流的最优解自动是整数分配，氧化态不需要
-四舍五入。实现见 pyleos/transport.py。
+Electron counts and capacities are integers, so the optimum of the minimum-cost flow
+is automatically an integer assignment and the oxidation states need no rounding.
+The implementation is in pyleos/transport.py.
 
-### 代价
+### Cost
 
-默认代价只用几何和电负性：
+The default cost uses only geometry and electronegativity:
 
-    代价(WF, 原子) = d² + β · (1 − χ / χmax)
+    cost(WF, atom) = d² + β · (1 − χ / χmax)
 
-d 是 WF 中心到原子的距离（Å），χ 是原子的电负性，χmax 是体系中最大的电负性，
-β 默认 10。电负性默认用 Allen 标度（pyleos/capacity.py），可以用
-`--eneg pauling` 改为 Pauling 标度。β 的选择见 RESULTS.md"参数选择"。
+d is the distance from the WF centre to the atom (Å), χ the electronegativity of the
+atom, χmax the largest electronegativity in the system; β is 10 by default. The
+default electronegativity scale is Allen (pyleos/capacity.py); `--eneg pauling`
+switches to Pauling. For the choice of β see "Parameter choices" in RESULTS.md.
 
-### 容量
+### Capacity
 
-每个原子接收的电子数限制在 [n_min, n_max] 之间，按价层的物理极限设定
-（pyleos/capacity.py 中的 OS_BOUNDS），例如 O 最多 8 个价电子，所以 O 的
-氧化态不会低于 −2。半芯电子（如 Na 的 2s2p）必须记满，由 n_min 保证。
+The number of electrons an atom receives is limited to [n_min, n_max], set by the
+physical limits of the valence shell (OS_BOUNDS in pyleos/capacity.py). For example,
+O holds at most 8 valence electrons, so its oxidation state cannot go below −2.
+Semicore electrons (such as Na 2s2p) must be counted in full; n_min ensures this.
 
-### 总电子数上限
+### Cap on the electron total
 
-分配的总电子数不超过 DFT 的真实电子数 NELECT。这同时处理两种记账问题：
+The total number of electrons assigned does not exceed NELECT, the true electron
+count of the DFT calculation. This handles two accounting problems at once:
 
-- **ghost**：WF 数多于占据的电子对时（金属或分数占据），多出来的 WF 没有
-  电子可装。总量上限使求解器丢掉代价最高的那部分，不会多算电子。
-- **电子丢失**：部分电子没有进入 Wannier 子空间时，同一上限使分配按实际
-  到手的电子数进行。
+- **ghost**: when there are more WFs than occupied electron pairs (metals or
+  fractional occupations), the surplus WFs have no electrons to hold. The cap makes
+  the solver drop the most expensive part, so no electrons are over-counted.
+- **electron loss**: when some electrons did not enter the Wannier subspace, the
+  same cap makes the assignment use the number of electrons actually present.
 
-### 投影辅助判定（可选）
+### Projection-assisted arbitration (optional)
 
-EOSCAR 的 #WP 块记录了每个 WF 在各原子 PAW 投影上的权重。投影辅助判定只在
-某个 WF 的前两个候选原子代价差小于 TAU、且投影权重领先超过 PMARGIN 时，才按
-投影改判。(TAU, PMARGIN) = (1.0, 0.20)，定义在 pyleos/transport.py 的
-ARBITER_TAU 和 ARBITER_PMARGIN。默认不开启；参数扫描和适用范围见
-RESULTS.md"参数选择"。
+The #WP block of EOSCAR records the weight of each WF on the PAW projectors of each
+atom. Projection-assisted arbitration reassigns a WF according to the projection
+only when the costs of its two best candidate atoms differ by less than TAU and the
+projection weight leads by more than PMARGIN. (TAU, PMARGIN) = (1.0, 0.20), defined
+as ARBITER_TAU and ARBITER_PMARGIN in pyleos/transport.py. It is off by default; the
+parameter scan and the range of validity are under "Parameter choices" in
+RESULTS.md.
 
-使用方式：库函数 `assign_case(case, tier2="arbiter")`，或
-`python3 -m pyleos bench full --tier2 arbiter`。**cli.py 的 `--gamma` 用的是另一种
-线性叠加模式（`tier2="linear"`），不是这里说的投影辅助判定。**
+Use: the library call `assign_case(case, tier2="arbiter")`, or
+`python3 -m pyleos bench full --tier2 arbiter`. **`--gamma` of cli.py uses a
+different mode, a linear mix (`tier2="linear"`), not the projection-assisted
+arbitration described here.**
 
-### 片段
+### Fragments
 
-`--fragment 2,3,4` 把一组原子合成一个整体接收电子（容量相加，代价取离 WF
-最近的成员），输出整体的氧化态。用于离域阴离子（如 I3⁻）和金属簇（如 Au12、
-Co4），这些情况下"每个 WF 归一两个原子"的图像不成立。当有电子对的两个候选
-原子代价几乎相同时，pyleos 会提示考虑片段。
+`--fragment 2,3,4` merges a group of atoms into one unit that receives electrons
+(capacities add; the cost is that of the member nearest to the WF) and reports the
+oxidation state of the unit. Use it for delocalised anions (such as I3⁻) and metal
+clusters (such as Au12, Co4), where the picture "each WF belongs to one or two
+atoms" does not hold. When the two candidate atoms of an electron pair have almost
+the same cost, pyleos suggests a fragment.
 
-### 可靠性指标 R
+### Reliability index R
 
-解出最优分配后，对每个原子问：强制它多拿或少拿 1 个电子，全局重新求解要多
-付多少代价 m。这里是完整重解，其他 WF 可以跟着重排。m 按 R = 100·m/(m+1)
-归一化到 0–100，R 越高，当前归属越稳定。
+After the optimal assignment is found, ask for each atom: if it is forced to take 1
+electron more or fewer, how much extra cost m does a global re-solve pay? This is a
+full re-solve; the other WFs may rearrange. m is normalised to 0–100 by
+R = 100·m/(m+1); the higher R, the more stable the current assignment.
 
-- **R_site**：取所有原子的最小值。同核键两端、等价位点之间换电子也算在内，
-  所以有位点简并时 R_site 接近 0。
-- **R_elem**：只计改变某元素总电子数的扰动，同元素原子之间换电子不算。它
-  对应 dev 所检查的元素平均氧化态。
+- **R_site**: the minimum over all atoms. Exchanges of electrons across a
+  homonuclear bond or between equivalent sites count too, so with site degeneracy
+  R_site is close to 0.
+- **R_elem**: counts only perturbations that change the total electron count of an
+  element; exchanges between atoms of the same element do not count. It corresponds
+  to the element-mean oxidation state that dev checks.
 
-R 是 Comas-Vilà 2025 中 R(%) 指标的对应物。半芯电子的下限是硬约束，不参与
-R 的扰动。
+R is the counterpart of the R(%) index of Comas-Vilà 2025. The lower limit for
+semicore electrons is a hard constraint and takes no part in the perturbations of R.
 
-## 3. 怎么读结果
+## 3. Reading the output
 
-### pyleos 输出
+### pyleos output
 
 ```bash
 python3 pyleos/cli.py case cases/as4s4/v3 -v
@@ -134,155 +158,187 @@ note: 8 electron pair(s) sit at a near-tie between hosts (...) - ... consider --
    S           -2..-2 (-2.00)             -6..-2 (-4.00)
 ```
 
-- `ne`：分到该原子的价电子数；`OS_flow`：运输结果；`OS_greedy`：贪心结果；
-  `R`：该原子的可靠性指标。
-- 最后的表是每种元素的最小值、最大值和平均值。
-- `note` 行提示近平局的电子对，即可以考虑片段的地方。这里是 8 条 As–As 键。
+- `ne`: valence electrons assigned to the atom; `OS_flow`: result of the flow;
+  `OS_greedy`: greedy result; `R`: reliability index of the atom.
+- The last table gives the minimum, maximum and mean of each element.
+- The `note` line flags near-tied electron pairs, the places where a fragment may be
+  considered. Here they are 8 As–As bonds.
 
-### EOSCAR 中的两列
+### The two columns of EOSCAR
 
-EOSCAR 逐原子表中，`OS(int)` 列是贪心结果，`OS(flow)` 列是运输结果（v3.1
-补丁起才有）。直接看 EOSCAR 时，要看 `OS(flow)`；`OS(int)` 可能出现超出物理
-范围的值。没有 `OS(flow)` 列的旧 EOSCAR 用 pyleos 分析。
+In the per-atom table of EOSCAR, the `OS(int)` column is the greedy result and the
+`OS(flow)` column is the result of the flow (present from patch v3.1 on). When
+reading EOSCAR directly, use `OS(flow)`; `OS(int)` can show values outside the
+physical range. Analyse an old EOSCAR that has no `OS(flow)` column with pyleos.
 
-### 质量警告
+### Quality warnings
 
-| 警告 | 含义 | 判据 | 怎么处理 |
+| Warning | Meaning | Criterion | What to do |
 |---|---|---|---|
-| stray | WF 没有定域好，中心不带化学信息 | spread > 3 Å²，或中心离所有原子都超过 1.6 Å | 元素平均通常仍可用，单个原子不可信；重做 Wannier 化（更多迭代或更好初值） |
-| ghost | WF 数多于占据的电子对 | WF 总容量超过 NELECT 的部分 | 已由总电子数上限自动处理；但 ghost > 0 时电正性金属的价态可能被高估 1–2（见 RESULTS.md"ghost 对金属价态的系统偏差"） |
-| dNe | Wannier 表示中的电子数与 DFT 不符 | 健康计算低于 1e-6 | 有电子没进入 Wannier 子空间；EOSCAR 的诊断块会指出丢在哪个自旋、k 点和能带 |
+| stray | The WF is not well localised; its centre carries no chemical information | spread > 3 Å², or centre more than 1.6 Å from every atom | Element means are usually still usable, single atoms are not; redo the wannierisation (more iterations or a better initial guess) |
+| ghost | More WFs than occupied electron pairs | The part of the total WF capacity that exceeds NELECT | Handled automatically by the cap on the electron total; but with ghost > 0 the oxidation state of electropositive metals may be overestimated by 1–2 (see "Systematic bias of ghosts on metal oxidation states" in RESULTS.md) |
+| dNe | The electron count of the Wannier representation differs from DFT | Below 1e-6 in a healthy calculation | Some electrons did not enter the Wannier subspace; the diagnostic block of EOSCAR shows in which spin, k-point and band they are lost |
 
-### 怎么用 R
+### Using R
 
-- **R 低表示解不唯一，不表示算错。** 典型情况是等价原子之间的简并，例如
-  As4S4 的 As–As 键（R_site 1.8）或 Co4 团簇内的 Co（4–22）。这时应看元素
-  平均或片段总价。
-- **R 高不保证正确。** 输入本身有错（错误结构、Wannier 化失败）时，解可以
-  既稳定又错误。判断可信度要把 R 和三个质量警告一起看。
+- **Low R means the solution is not unique, not that it is wrong.** The typical case
+  is degeneracy between equivalent atoms, such as the As–As bonds of As4S4 (R_site
+  1.8) or the Co atoms inside the Co4 cluster (4–22). Then read the element mean or
+  the total oxidation state of the fragment.
+- **High R does not guarantee a correct result.** When the input itself is wrong
+  (wrong structure, failed wannierisation), the solution can be both stable and
+  wrong. Judge reliability from R together with the three quality warnings.
 
-## 4. 关键决定
+## 4. Key decisions
 
-### 用全局分配取代贪心
+### Global assignment replaces greedy
 
-项目开始时的实现（cases/*/v1 的数据由它产生）用贪心分配。检查中发现三个
-问题：
+The implementation at the start of the project (it produced the data in cases/*/v1)
+used greedy assignment. A review found three problems:
 
-1. **贪心会给出不可能的结果。** As4S4 中一个 S 被分到 14 个电子，而 S 价层
-   最多容纳 8 个。旧代码用 EOS_O_MAX 防止 O 超过 8 个电子，但只保护 O，
-   其他元素没有。按元素逐个加限制的办法做不完。
-2. **另一个分配分支（匈牙利算法）不可用。** 它给每个原子按中性原子的电子对数
-   设槽位，阴离子因此永远拿不到多于中性时的电子（O²⁻ 需要 4 对，槽位只有
-   3 对）。198 个历史算例的输入都没有启用过它，已删除。
-3. **声称的功能没有接上。** 分子动力学逐帧分析（EOS_EVERY_N）在主程序里被
-   写死为只在第一步运行；代码注释说遵循 IUPAC 2014 规则，用的却是 Pauling
-   电负性，而 IUPAC 报告配套的是 Allen 标度。
+1. **Greedy can give impossible results.** In As4S4 one S received 14 electrons,
+   while the valence shell of S holds at most 8. The old code used EOS_O_MAX to keep
+   O from exceeding 8 electrons, but this protected only O and no other element.
+   Adding limits element by element never ends.
+2. **The other assignment branch (Hungarian algorithm) was unusable.** It gave each
+   atom as many slots as the neutral atom has electron pairs, so an anion could
+   never receive more electrons than the neutral atom (O²⁻ needs 4 pairs; there
+   were only 3 slots). None of the inputs of the 198 legacy calculations ever
+   enabled it; it has been deleted.
+3. **Advertised features were not wired in.** Frame-by-frame analysis of molecular
+   dynamics (EOS_EVERY_N) was hard-coded in the main program to run only at the
+   first step; the code comments claimed to follow the IUPAC 2014 rules but used
+   Pauling electronegativities, whereas the IUPAC report goes with the Allen scale.
 
-三个问题的根源是每个 WF 独立决策，所以改为所有 WF 一起做最小费用流分配。
-容量上限一次解决所有元素的超额问题。
+The root of all three is that each WF decides on its own, so all WFs are now
+assigned together by a minimum-cost flow. The capacity upper limits solve the excess
+problem for all elements at once.
 
-### 主要贡献定位为"运输形式化"
+### The main contribution is the minimum-cost-flow formulation
 
-用 Wannier 中心判定氧化态已有先例：Jiang、Levchenko、Rappe 2012 首先提出；
-Gimferrer、Salvador 2020 系统分析了"最近原子"判据的失效，但没有给出修正；
-Comas-Vilà 2025 用 QTAIM 原子重叠矩阵做了固体版本。把电子归属写成带容量
-约束的全局运输问题，检索不到先例。因此论文的主要贡献是这个形式化，以及
-它对已知失效模式的修正。
+Assigning oxidation states from Wannier centres has precedents: Jiang, Levchenko
+and Rappe 2012 proposed it first; Gimferrer and Salvador 2020 analysed the failures
+of the "nearest atom" criterion systematically but gave no fix; Comas-Vilà 2025 made
+a version for solids with QTAIM atomic overlap matrices. No precedent was found for
+writing the electron assignment as a global minimum-cost flow with capacity
+constraints. The main contribution of the paper is therefore this formulation and
+its correction of the known failure modes.
 
-### 两条实现路径
+### Two implementation paths
 
-VASP 补丁内部完成分配（服务分子动力学逐帧分析），pyleos 做离线分析、
-诊断和统计。分配问题只有几十到几百个变量，Python 求解只需毫秒；Python
-侧开发和测试比 Fortran 快得多。算法先在 pyleos 中定型，再移植到补丁。
+The VASP patch does the assignment internally (for frame-by-frame analysis of
+molecular dynamics); pyleos does offline analysis, diagnostics and statistics. The
+assignment problem has only tens to hundreds of variables, and Python solves it in
+milliseconds; development and testing are much faster in Python than in Fortran.
+Hence pyleos first, then the patch.
 
-### 默认代价只用几何和电负性
+### The default cost uses only geometry and electronegativity
 
-可选的代价有三档：几何加电负性；再加投影权重；完整的原子重叠矩阵。第三档
-就是 Comas-Vilà 的方法，计算量大，放弃了 LEOS 的成本优势，不采用。投影权重
-作为可选的辅助判定，不进默认设置；所有默认结果只依赖几何和电负性，没有可调
-的经验参数（β 除外）。
+The cost can be built at three tiers: geometry plus electronegativity; the same plus
+projection weights; the full atomic overlap matrix. The third tier is the method of
+Comas-Vilà; it is expensive and gives up the cost advantage of LEOS, so it is not
+adopted. Projection weights serve as an optional arbitration and are not in the
+default; all default results depend only on geometry and electronegativity, with no
+adjustable empirical parameter (except β).
 
-### 容量按物理极限设定
+### Capacities follow physical limits
 
-容量上下限按价层的物理极限设，而不是按"化学上常见的氧化态范围"。用常见范围
-做约束等于用答案约束答案，还会把高压相、罕见价态这类结果排除掉。物理极限
-只排除不可能的情况。
+The capacity limits are set by the physical limits of the valence shell, not by "the
+chemically common range of oxidation states". Constraining with the common range
+would constrain the answer with the answer, and would exclude results such as
+high-pressure phases and rare oxidation states. Physical limits exclude only the
+impossible.
 
-### 电负性用 Allen 标度
+### Allen electronegativity scale
 
-IUPAC 2014/2016 氧化态技术报告配套的是 Allen 标度。
+The IUPAC 2014/2016 technical report on oxidation state goes with the Allen scale.
 
 ### β = 10
 
-β 在 8–12 之间结果不变，取中间值 10。β 太小（如 3）时 X–H 键会被判错且
-没有警告。扫描数据见 RESULTS.md"参数选择"。
+Results do not change for β in 8–12; the middle value 10 is taken. With β too small
+(such as 3), X–H bonds are assigned wrongly without any warning. For the scan data
+see "Parameter choices" in RESULTS.md.
 
-### 投影辅助判定用阈值规则
+### Projection-assisted arbitration uses a threshold rule
 
-只在几何判定接近持平时才让投影改判，几何明确的归属不会被改变。线性叠加投影
-权重的方式对参数敏感，且投影本身偏向重原子。详见 RESULTS.md"参数选择"。
+The projection may change an assignment only when the geometric decision is nearly
+tied; assignments that geometry makes clear are never changed. Mixing the projection
+weights in linearly is sensitive to the parameters, and the projection itself is
+biased towards heavy atoms. For details see "Parameter choices" in RESULTS.md.
 
-### 热启动保留为选项
+### Warm start is kept as an option
 
-轨迹相邻帧结构相近，可以把上一帧的 Wannier 中心作为引导中心写进下一帧的
-wannier90 输入。功能已实现，但在 SCDM 初猜流程中没有加速效果（RESULTS.md
-"效率"），保留给不用 SCDM 初猜的场景。
+Adjacent frames of a trajectory have similar structures, so the Wannier centres of
+the previous frame can be written into the wannier90 input of the next frame as
+guiding centres. The feature is implemented but gives no speed-up in the workflow
+with the SCDM initial guess ("Efficiency" in RESULTS.md); it is kept for workflows
+without the SCDM initial guess.
 
-### 应用体系的选择
+### Choice of application systems
 
-- **Li2O2 脱锂**：充电时变价的是 O 而不是金属。DFT+U+V 占据矩阵方法只能
-  跟踪 d/f 金属位点，无法处理这种阴离子氧化还原。
-- **CeO2 氧空位**：空位留下的 2 个电子使两个 Ce⁴⁺ 变成 Ce³⁺，同时检验 4f
-  电子的 Wannier 化。
-- **富锂正极 + 机器学习势**：Li2MnO3（有序，3d）、Li2RuO3（有序，4d）、
-  NMC（SQS 无序）。MACE 预训练模型只用来采样构型，价态全部由 DFT 单点判定。
+- **Li2O2 delithiation**: on charging, O changes oxidation state, not the metal. The
+  DFT+U+V occupation-matrix method can only track d/f metal sites and cannot handle
+  this anionic redox.
+- **CeO2 oxygen vacancy**: the 2 electrons left by the vacancy turn two Ce⁴⁺ into
+  Ce³⁺; this also tests the wannierisation of 4f electrons.
+- **Li-rich cathodes + machine-learning potential**: Li2MnO3 (ordered, 3d), Li2RuO3
+  (ordered, 4d), NMC (SQS disordered). The pretrained MACE model is used only to
+  sample configurations; all oxidation states are assigned from DFT single points.
 
-## 5. 论文与文献
+## 5. Paper and literature
 
-论文两条主线：
+The paper has two main lines:
 
-1. 氧化态判定的运输形式化（全局最优、整数解、容量约束）；
-2. 快速的大规模 Wannier 流程（原位判定、SCDM-only 筛查、离线 wannier90、
-   gpuw90）。
+1. the minimum-cost-flow formulation of oxidation-state assignment (global optimum,
+   integer solution, capacity constraints);
+2. a fast, large-scale Wannier workflow (in situ assignment, SCDM-only screening,
+   offline wannier90, gpuw90).
 
-贪心只作为对照基线；主要对比对象是 Comas-Vilà 2025。
+Greedy serves only as the baseline; the main comparison is with Comas-Vilà 2025.
 
-| 文献 | 内容 | 与 LEOS 的关系 |
+| Reference | Content | Relation to LEOS |
 |---|---|---|
-| Comas-Vilà et al., JCTC 2025 | QTAIM 原子域 + 原子重叠矩阵，四个程序串联；R(%) 可靠性指标；40 个固体测试集；"EOS"这个名字的出处 | LEOS 不做空间积分，在一次 VASP 运行内完成，能做轨迹（原文未报告计时，无法直接比较速度）；R 和片段功能都有对应实现；40 个固体已全部计算。详见 [comas_vila_2025_notes.md](comas_vila_2025_notes.md) |
-| Gimferrer, Comas-Vilà, Salvador, Molecules 2020 | 系统论证"定域轨道中心 + 最近原子"判据会把 O–H、N–H 键判成氢化物 | SrBe(OH)4 等案例的修正对应这类失效 |
-| Marzari 组, npj Comput. Mater. 2025 | 用 DFT+U+V 占据矩阵沿分子动力学追踪氧化态 | 与 LEOS 的轨迹功能重叠，但只能处理 Hubbard 位点（d/f 金属），不能处理 O |
+| Comas-Vilà et al., JCTC 2025 | QTAIM atomic domains + atomic overlap matrices, four programs in a chain; the R(%) reliability index; a test set of 40 solids; the origin of the name "EOS" | LEOS does no spatial integration, finishes within one VASP run and can do trajectories (the paper reports no timings, so speed cannot be compared directly); R and fragments both have counterparts; all 40 solids have been computed. See [comas_vila_2025_notes.md](comas_vila_2025_notes.md) |
+| Gimferrer, Comas-Vilà, Salvador, Molecules 2020 | Shows systematically that the criterion "centre of a localised orbital + nearest atom" assigns O–H and N–H bonds as hydrides | The corrections of cases such as SrBe(OH)4 address this kind of failure |
+| Marzari group, npj Comput. Mater. 2025 | Tracks oxidation states along molecular dynamics with DFT+U+V occupation matrices | Overlaps with the trajectory feature of LEOS, but handles only Hubbard sites (d/f metals), not O |
 
-参考文献 PDF 放在 docs/refs/，受版权保护，不入 git。
+Reference PDFs are in docs/refs/; they are copyrighted and not in git.
 
-**术语注意。** "transport" 对凝聚态读者的第一联想是电子输运（电导、迁移率），
-与运筹学的运输问题无关。论文中首次出现时要写成 "minimum-cost-flow /
-optimal-assignment formulation"，或写明 "optimal transport (in the
-operations-research sense)"。
+**A note on terminology.** To condensed-matter readers "transport" first suggests
+electron transport (conductivity, mobility), which has nothing to do with the
+transportation problem of operations research. At first mention in the paper write
+"minimum-cost-flow / optimal-assignment formulation", or state "optimal transport
+(in the operations-research sense)".
 
-## 6. 待办
+## 6. To do
 
-待办只记在 GitHub issue：https://github.com/GongGroup/EOS/issues
+To-do items are kept only as GitHub issues: https://github.com/GongGroup/LEOS/issues
 
-## 7. 工程约定
+## 7. Engineering conventions
 
-- **数据布局。** 集群保存完整运行目录（含波函数等大文件）。本地只收小文本：
-  计算按体系放在 cases/<体系>/<运行>/（EOSCAR、输入文件、wout），每个运行在
-  cases/INDEX.tsv 登记一行；汇总表平铺在 results/。不按批次分目录。
-  .gitignore 拦截大文件和赝势。
-- **集群位置。** 计算在 SAI 集群（ssh 别名 sai）上完成。2026-07-25 家目录
-  迁移后，项目目录在 `/org/sjtu-gongxueqing/zhangxianyang/temp/org/LEOS/`
-  （目录说明见其中的 README.txt），补丁版 VASP 在
-  `/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/`。
-  该目录下的旧作业脚本、日志和软链接仍指向迁移前的
-  `/home/sjtu-gongxueqing/zhangxianyang/`，重用前要替换路径。旧文档中的
-  `~/<name>` 指 LEOS 目录下的 `<name>`。
-- **只写现状。** 文档只写当前正确的结果，不写演进过程。已完成阶段的计划、
-  审查报告不在工作区保留副本，需要时用 git log / git show 查看。
-- **待办只在 issue。** 文档里不写待办。
-- **数字有出处。** 文档中的每个结果数字都要能对应到 results/ 或 cases/ 下的文件，并注明
-  产出命令或统计方式（例如计时是否包含 R 的计算）。要改数字，先改或重新生成
-  数据文件，再改文档。
-- **基准参考表。** results/bench74_golden.tsv 是 CI 逐案例比较的对象。改变
-  判定结果的改动，要先重新生成这个表，逐案例解释差异，再改文档中的数字。
-- **快照文档标状态。** 体检报告这类记录某一时刻结论的文档，开头注明当前状态。
+- **Data layout.** The cluster keeps the full run directories (including large files
+  such as wavefunctions). The local copy holds only small text files: calculations
+  are stored by system in `cases/<system>/<run>/` (EOSCAR, input files, wout), and
+  every run has one row in cases/INDEX.tsv; summary tables lie flat in results/. No
+  directories per batch. .gitignore blocks large files and pseudopotentials.
+- **Cluster location.** Calculations run on the SAI cluster (ssh alias sai). Since
+  the home-directory migration of 2026-07-25 the project directory is
+  `/org/sjtu-gongxueqing/zhangxianyang/temp/org/LEOS/` (its README.txt describes
+  the directory), and the patched VASP is in
+  `/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/`.
+  Old job scripts, logs and symlinks under that directory still point to the
+  pre-migration `/home/sjtu-gongxueqing/zhangxianyang/`; replace the paths before
+  reusing them. In old documents `~/<name>` means `<name>` under the LEOS directory.
+- **Current state only.** Documents state only the currently correct results, not
+  how they evolved. Plans and review reports of finished stages are not kept in the
+  working tree; use git log / git show when needed.
+- **To-do items only in issues.** Documents contain no to-do items.
+- **Numbers have a source.** Every result number in a document must map to a file
+  under results/ or cases/, with the command that produced it or how it is counted
+  (for example, whether a timing includes the computation of R). To change a number,
+  first change or regenerate the data file, then the document.
+- **Golden table.** results/bench74_golden.tsv is what CI compares case by case. A
+  change that alters assignment results must first regenerate this table and explain
+  the differences case by case, then update the numbers in the documents.
+- **Snapshot documents state their status.** A document that records the conclusions
+  of one moment, such as a health-check report, states its current status at the top.

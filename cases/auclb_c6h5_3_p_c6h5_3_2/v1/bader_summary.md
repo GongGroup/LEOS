@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `AuClB(C6H5)3{P(C6H5)3}2-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 79
-- 拆分盆的原子数: 45
+# Bader charge report
+- Data file: `AuClB(C6H5)3{P(C6H5)3}2-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 79
+- Atoms with split basins: 45
 
-## 全局统计
-总净电荷 -0.0030 e；得电子的原子累积 -14.3570 e，失电子的原子累积 +14.3540 e；总体分布标准差 0.6444 e。
+## Totals
+Net charge -0.0030 e; atoms that gained electrons sum to -14.3570 e, atoms that lost electrons to +14.3540 e; standard deviation over all atoms 0.6444 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | H1 | H | +0.058 | 110 |
@@ -90,7 +90,7 @@
 | 78 | Cl78 | Cl | -0.512 | 19, 38, 45, 62, 71, 100, 102, 146, 154 |
 | 79 | Au79 | Au | -0.082 | 73, 104, 109, 132, 160, 171, 173, 174 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Au | 1 | -0.082 | -0.082 | -0.082 | -0.082 | +0.000 |
@@ -100,5 +100,5 @@
 | H | 32 | +2.324 | +0.073 | +0.015 | +0.165 | +0.034 |
 | P | 2 | +3.988 | +1.994 | +1.673 | +2.315 | +0.321 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

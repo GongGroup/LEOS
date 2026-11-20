@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `N4S4-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 32
-- 拆分盆的原子数: 0
+# Bader charge report
+- Data file: `N4S4-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 32
+- Atoms with split basins: 0
 
-## 全局统计
-总净电荷 +0.0080 e；得电子的原子累积 -18.9600 e，失电子的原子累积 +18.9680 e；总体分布标准差 1.1853 e。
+## Totals
+Net charge +0.0080 e; atoms that gained electrons sum to -18.9600 e, atoms that lost electrons to +18.9680 e; standard deviation over all atoms 1.1853 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | N1 | N | -1.195 | 31 |
@@ -43,11 +43,11 @@
 | 31 | S31 | S | +1.188 | 21 |
 | 32 | S32 | S | +1.188 | 10 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | N | 16 | -18.960 | -1.185 | -1.195 | -1.174 | +0.010 |
 | S | 16 | +18.968 | +1.185 | +1.183 | +1.188 | +0.002 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

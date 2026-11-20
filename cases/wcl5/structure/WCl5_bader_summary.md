@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `WCl5-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 11
-- 拆分盆的原子数: 10
+# Bader charge report
+- Data file: `WCl5-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 11
+- Atoms with split basins: 10
 
-## 全局统计
-总净电荷 +0.0010 e；得电子的原子累积 -2.6840 e，失电子的原子累积 +2.6850 e；总体分布标准差 0.6906 e。
+## Totals
+Net charge +0.0010 e; atoms that gained electrons sum to -2.6840 e, atoms that lost electrons to +2.6850 e; standard deviation over all atoms 0.6906 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | Cl1 | Cl | -0.197 | 1, 8, 10, 11, 12 |
@@ -22,11 +22,11 @@
 | 10 | W10 | W | +0.455 | 20 |
 | 11 | W11 | W | -0.407 | 33, 34, 57, 58, 76 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Cl | 9 | -0.047 | -0.005 | -0.569 | +1.975 | +0.736 |
 | W | 2 | +0.048 | +0.024 | -0.407 | +0.455 | +0.431 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

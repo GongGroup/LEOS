@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `Cr(CO)6-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 52
-- 拆分盆的原子数: 0
+# Bader charge report
+- Data file: `Cr(CO)6-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 52
+- Atoms with split basins: 0
 
-## 全局统计
-总净电荷 -0.0080 e；得电子的原子累积 -26.4920 e，失电子的原子累积 +26.4840 e；总体分布标准差 1.0220 e。
+## Totals
+Net charge -0.0080 e; atoms that gained electrons sum to -26.4920 e, atoms that lost electrons to +26.4840 e; standard deviation over all atoms 1.0220 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | C1 | C | +0.939 | 26 |
@@ -63,12 +63,12 @@
 | 51 | Cr51 | Cr | +1.011 | 43 |
 | 52 | Cr52 | Cr | +1.011 | 13 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | C | 24 | +22.440 | +0.935 | +0.909 | +0.947 | +0.013 |
 | Cr | 4 | +4.044 | +1.011 | +1.011 | +1.011 | +0.000 |
 | O | 24 | -26.492 | -1.104 | -1.107 | -1.095 | +0.004 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

@@ -1,21 +1,34 @@
-# WCL5 — 单斜 C2/m W2Cl10 二聚体分子晶体完整胞(72 原子)
+# WCL5: monoclinic C2/m W2Cl10 dimer molecular crystal, complete cell (72 atoms)
 
-- 相:WCl5 固态 = W2Cl10 共棱双八面体二聚体,单斜 C2/m (No. 12);实验测定
-  Cotton & Rice, *Acta Cryst.* **B34**, 2833 (1978):a=17.438, b=17.706, c=6.063 Å,
-  β=95.51°(= ICSD 2398;AFLOW 条目 Cl10W2_ICSD_2398 的原始胞与之完全一致)。
-- **原子数勘误**:该胞 Z=12 个 WCl5(6 个 W2Cl10 二聚体)= **72 原子**(W12Cl60),
-  不是登记表/任务书所写的 48。独立验证:现有胞体积 1981 Å^3 / 72 = 27.5 Å^3/原子,
-  与 WCl6 现有胞的 27.3 Å^3/原子一致;若按 48 原子则 41 Å^3/原子,不是合理密度。
-  不对称单元 = 2 W + 9 Cl = 11 个位点,恰是现有 POSCAR 中的 11 行(当年转录把
-  不对称单元当成了全胞)。
-- 晶格:沿用测试集现有胞(a=17.779, b=17.980, c=6.231 Å, β=96.08°,登记表判定正确)。
-- 原子坐标:取 AFLOW ICSD_WEB 条目 Cl10W2_ICSD_2398 的弛豫结构(36 原子单斜 C 心初基胞),
-  数值变换到 C2/m 惯用胞(72 原子)后,把分数坐标放入现有晶格。
-  轨道构成:W 4g + W 8j;Cl 4i×3 + Cl 8j×6(4+8=12 W;12+48=60 Cl)✓。
-- 血缘核对:现有 11 原子与 72 原子模板逐一比对(允许 C2/m 原点平移),
-  7/11 在 0.8 Å 内对上,平均偏差 0.67 Å —— 与"不对称单元残胞又被弛豫过"的判断一致。
-- 自检:计量 W12Cl60 = 12×WCl5 ✓;所有 12 个 W 均六配位 ✓;W-Cl = 2.139-2.437 Å;
-  最短原子间距 2.139 Å > 1.5 Å ✓。说明:AFLOW 弛豫胞(PBE 无色散修正)比现有胞大
-  3-6%,分数坐标移植后分子内 W-Cl 比实验值(端 2.24-2.28/桥 ~2.4-2.5 Å)系统性短约 4%,
-  最短端键 2.14 Å 略低于 2.2 Å 指引;氧化态分析不受此级别几何差影响。
-- 适用案例:wcl5(m4_wave2)与 scdm_wcl5(comas)。压力:常压实验相。
+- Phase: solid WCl5 = W2Cl10 dimers of two edge-sharing octahedra, monoclinic C2/m
+  (No. 12). Experimental determination: Cotton & Rice, *Acta Cryst.* **B34**,
+  2833 (1978): a=17.438, b=17.706, c=6.063 Å, β=95.51° (= ICSD 2398; the original cell
+  of the AFLOW entry Cl10W2_ICSD_2398 agrees with it exactly).
+- **Atom-count correction**: this cell has Z=12 WCl5 (6 W2Cl10 dimers) = **72 atoms**
+  (W12Cl60), not the 48 written in the registry and the task sheet. Independent check:
+  the volume of the existing cell gives 1981 Å^3 / 72 = 27.5 Å^3/atom, in agreement
+  with the 27.3 Å^3/atom of the existing WCl6 cell; with 48 atoms it would be
+  41 Å^3/atom, which is not a reasonable density. The asymmetric unit = 2 W + 9 Cl =
+  11 sites, exactly the 11 lines of the existing POSCAR (the original transcription
+  took the asymmetric unit for the full cell).
+- Lattice: the existing cell of the test set is kept (a=17.779, b=17.980, c=6.231 Å,
+  β=96.08°; the registry judges it correct).
+- Atomic coordinates: the relaxed structure of the AFLOW ICSD_WEB entry
+  Cl10W2_ICSD_2398 (36-atom monoclinic C-centred primitive cell) is transformed
+  numerically to the C2/m conventional cell (72 atoms), and the fractional coordinates
+  are then placed in the existing lattice.
+  Orbits: W 4g + W 8j; Cl 4i×3 + Cl 8j×6 (4+8=12 W; 12+48=60 Cl) ✓.
+- Lineage check: the existing 11 atoms are compared one by one with the 72-atom
+  template (a C2/m origin shift is allowed); 7/11 match within 0.8 Å, with a mean
+  deviation of 0.67 Å. This agrees with the judgement that the incomplete cell (the
+  asymmetric unit) had also been relaxed.
+- Self-checks: stoichiometry W12Cl60 = 12×WCl5 ✓; all 12 W are six-coordinate ✓;
+  W-Cl = 2.139-2.437 Å; shortest interatomic distance 2.139 Å > 1.5 Å ✓. Remark: the
+  AFLOW relaxed cell (PBE without dispersion correction) is 3-6% larger than the
+  existing cell. After the fractional coordinates are transplanted, the intramolecular
+  W-Cl is systematically about 4% shorter than experiment
+  (terminal 2.24-2.28/bridging ~2.4-2.5 Å), and the shortest terminal bond, 2.14 Å, is
+  slightly below the 2.2 Å guideline. A geometry difference of this size does not
+  affect the oxidation-state analysis.
+- Applies to cases: wcl5 (m4_wave2) and scdm_wcl5 (comas). Pressure: ambient-pressure
+  experimental phase.

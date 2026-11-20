@@ -1,13 +1,13 @@
-# Bader 统计报告
-- 数据文件: `MoCl2-charge.xsd`
-- AVF 映射: `AVF.dat`
-- 原子总数: 72
-- 拆分盆的原子数: 0
+# Bader charge report
+- Data file: `MoCl2-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 72
+- Atoms with split basins: 0
 
-## 全局统计
-总净电荷 +0.0080 e；得电子的原子累积 -23.0080 e，失电子的原子累积 +23.0160 e；总体分布标准差 0.6798 e。
+## Totals
+Net charge +0.0080 e; atoms that gained electrons sum to -23.0080 e, atoms that lost electrons to +23.0160 e; standard deviation over all atoms 0.6798 e.
 
-## 原子层级统计
+## Per atom
 | Idx | Atom | Element | Charge (e) | Volume IDs |
 | --- | --- | --- | --- | --- |
 | 1 | Cl1 | Cl | -0.546 | 45 |
@@ -83,11 +83,11 @@
 | 71 | Mo71 | Mo | +0.944 | 71 |
 | 72 | Mo72 | Mo | +0.944 | 36 |
 
-## 元素层级统计
+## Per element
 | Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Cl | 48 | -23.008 | -0.479 | -0.572 | -0.437 | +0.057 |
 | Mo | 24 | +23.016 | +0.959 | +0.941 | +0.992 | +0.023 |
 
-## 注释
-- 当 AVF.dat 提供多个体积编号时，可视为该原子拥有多个不连通的 Bader 盆。
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

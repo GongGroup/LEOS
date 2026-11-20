@@ -1,19 +1,30 @@
-# WCL3 — 三方 R-3 W6Cl18 簇相,菱方初基胞(24 原子)
+# WCL3: trigonal R-3 W6Cl18 cluster phase, rhombohedral primitive cell (24 atoms)
 
-- 相:"WCl3" 实为分子簇化合物 W6Cl18([W6Cl12]内簇 + 6 个端 Cl),空间群 R-3 (No. 148);
-  实验结构 ICSD 23129(六方胞 a=14.91, c=8.47 Å;经 AFLOW 条目 Cl18W6_ICSD_23129 获取,
-  其原始胞与 ICSD 一致)。
-- 晶格:沿用测试集现有六方胞 a=15.155, c=8.873 Å(登记表判定与 W6Cl18 的 R-3 晶格吻合)。
-  按任务要求输出 **24 原子完整胞** —— 即 R 心六方胞的菱方初基胞
-  (a_rh = 9.2363 Å, α = 110.254°,由现有六方胞严格换算),含 1 个完整 W6Cl18 簇;
-  对应的完整六方惯用胞为 72 原子(Z=3),两者是同一晶体的等价描述。
-- 原子坐标:AFLOW ICSD 23129 弛豫结构(24 原子菱方初基胞)先展开到六方胞(72 原子)
-  再折回现有晶格的菱方初基胞,全部数值变换、未手工调整。
-- 血缘核对:现有 POSCAR 的 4 原子(1W+3Cl 不对称单元)与 72 原子模板做刚性平移拟合,
-  最优平移为 (0,0,0)、平均偏差 0.85 Å —— 现有 4 原子在同一坐标框架内但已被弛豫漂移,
-  不宜直接展开,故采用数据库坐标。
-- 自检:计量 W6Cl18(= 6×WCl3)✓;W6 八面体 W-W = 2.803 / 2.926 Å 两组交替
-  (三角反棱柱畸变,实验约 2.85-2.95 Å 量级)✓;每个 W 配位 4 个桥 Cl + 1 个端 Cl,
-  W-Cl = 2.314-2.333 Å ✓;最短原子间距 2.314 Å > 1.5 Å ✓
-  (坐标由约大 3.8% 的 PBE 弛豫胞移植而来,键长相应略短于实验值)。
-- 适用案例:wcl3(m4_wave2)。压力:常压实验相。
+- Phase: "WCl3" is in fact the molecular cluster compound W6Cl18 ([W6Cl12] inner
+  cluster + 6 terminal Cl), space group R-3 (No. 148). Experimental structure:
+  ICSD 23129 (hexagonal cell a=14.91, c=8.47 Å; obtained through the AFLOW entry
+  Cl18W6_ICSD_23129, whose original cell agrees with ICSD).
+- Lattice: the existing hexagonal cell of the test set is kept, a=15.155, c=8.873 Å
+  (the registry judges it consistent with the R-3 lattice of W6Cl18). As the task
+  requires, the output is the **complete 24-atom cell**, i.e. the rhombohedral primitive
+  cell of the R-centred hexagonal cell (a_rh = 9.2363 Å, α = 110.254°, converted exactly
+  from the existing hexagonal cell), which holds 1 complete W6Cl18 cluster. The
+  corresponding complete hexagonal conventional cell has 72 atoms (Z=3); the two are
+  equivalent descriptions of the same crystal.
+- Atomic coordinates: the relaxed AFLOW structure of ICSD 23129 (24-atom rhombohedral
+  primitive cell) is expanded to the hexagonal cell (72 atoms) and folded back into the
+  rhombohedral primitive cell of the existing lattice. Every step is a numerical
+  transformation; nothing is adjusted by hand.
+- Lineage check: a rigid-translation fit of the 4 atoms of the existing POSCAR (the
+  1W+3Cl asymmetric unit) to the 72-atom template gives the optimal translation (0,0,0)
+  and a mean deviation of 0.85 Å. The existing 4 atoms are in the same coordinate frame
+  but have drifted under relaxation, so they should not be expanded directly; the
+  database coordinates are used instead.
+- Self-checks: stoichiometry W6Cl18 (= 6×WCl3) ✓; the W6 octahedron has
+  W-W = 2.803 / 2.926 Å in two alternating sets (trigonal-antiprismatic distortion;
+  experiment is of the order of 2.85-2.95 Å) ✓; each W is coordinated by
+  4 bridging Cl + 1 terminal Cl, W-Cl = 2.314-2.333 Å ✓; shortest interatomic distance
+  2.314 Å > 1.5 Å ✓ (the coordinates are transplanted from a PBE-relaxed cell about
+  3.8% larger, so the bond lengths are correspondingly slightly shorter than
+  experiment).
+- Applies to case: wcl3 (m4_wave2). Pressure: ambient-pressure experimental phase.

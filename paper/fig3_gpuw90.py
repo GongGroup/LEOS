@@ -92,8 +92,9 @@ SHOW_DOCUMENTED_SCDM = False
 # from a data file.
 #
 # (1) gpuw90 timings, plotted in panel (b).
-# Source: gpuw90/README.md, section "性能实测", subsection "V100（SAI 集群）":
-#   | 阶段 | V100 | 计算节点 torch-CPU | 集群 wannier90.x 串行 | V100 相对串行 |
+# Source: gpuw90/README.md, section "Measured performance", subsection
+# "V100 (SAI cluster)":
+#   | Stage | V100 | torch-CPU on the compute node | Serial wannier90.x on the cluster | V100 speed-up over serial |
 #   | disentangle | 0.079 | 0.423 | ~1.10 | ~14× |
 #   | wannierise | 0.041 | 0.303 | ~0.92 | ~22× |
 # Measured 2026-07-11, SAI job 644120 (gpuw90/run_bench_v100.sbatch);
@@ -107,29 +108,30 @@ README_ROWS = [r"\|\s*disentangle\s*\|\s*0\.079\s*\|\s*0\.423\s*\|",
                r"\|\s*wannierise\s*\|\s*0\.041\s*\|\s*0\.303\s*\|"]
 #
 # (2) SCDM-only timing of the Li2MnO3 frame, docs/RESULTS.md section 9
-# ("SCDM-only 快速模式", table row "96 原子 Li2MnO3 脱锂帧，12 对"):
-#   "降低 67 倍（554 → 8.3 秒/帧）"
+# ("SCDM-only fast mode", table row "96-atom Li2MnO3 delithiation frames,
+# 12 pairs"):
+#   "67 times lower (554 → 8.3 s/frame)"
 # No file under results/ or cases/ holds these two numbers.  They are drawn
 # only when SHOW_DOCUMENTED_SCDM is True, and then with open markers.
 DOCUMENTED_SCDM = {"label": "Li2MnO3", "full": 554.0, "scdm": 8.3}
-DOCUMENTED_SCDM_ROW = r"554\s*→\s*8\.3\s*秒/帧"
+DOCUMENTED_SCDM_ROW = r"554\s*→\s*8\.3\s*s/frame"
 # ==========================================================================
 
 # Statements of docs/RESULTS.md section 9 that the caption quotes or that
 # the provenance table compares with the data (pattern -> what it is).
 RESULTS_CHECKS = [
-    (r"元素平均 32/38（84%），逐原子 19/38",
+    (r"element means 32/38 \(84%\), per-atom 19/38",
      "SCDM-only vs full, 38 cases: element means 32/38, per atom 19/38"),
-    (r"元素平均 0/12", "SCDM-only vs full, Li2MnO3 frames: 0/12"),
+    (r"element means 0/12", "SCDM-only vs full, Li2MnO3 frames: 0/12"),
     (DOCUMENTED_SCDM_ROW, "SCDM-only, Li2MnO3 frame: 554 -> 8.3 s per frame"),
-    (r"CO2：2 秒 → 0\.023 秒", "SCDM-only, CO2: 2 s -> 0.023 s"),
-    (r"38 案例对比的原始数据不在仓库中",
+    (r"CO2: 2 s → 0\.023 s", "SCDM-only, CO2: 2 s -> 0.023 s"),
+    (r"raw data of the 38-case comparison are not in the repository",
      "raw data of the 38-case comparison are not in the repository"),
-    (r"\| 开启热启动 \| 572 秒 \| 6742\.6 秒 \|", "warm start on: 572 s, 6742.6 s"),
-    (r"\| 关闭热启动 \| 546 秒 \| 6532\.4 秒 \|", "warm start off: 546 s, 6532.4 s"),
-    (r"快约 14 倍和 22 倍", "gpuw90 on V100: about 14x and 22x"),
-    (r"快约 4\.6 倍", "gpuw90 on CPU: about 4.6x"),
-    (r"两个自旋的 Wannier 部分可降到约半分钟",
+    (r"\| Warm start on \| 572 s \| 6742\.6 s \|", "warm start on: 572 s, 6742.6 s"),
+    (r"\| Warm start off \| 546 s \| 6532\.4 s \|", "warm start off: 546 s, 6532.4 s"),
+    (r"about 14 and 22$", "gpuw90 on V100: about 14x and 22x"),
+    (r"about 4\.6 times faster", "gpuw90 on CPU: about 4.6x"),
+    (r"two spins would come down to about half a minute",
      "gpuw90 extrapolation to about half a minute (estimate, not plotted)"),
 ]
 

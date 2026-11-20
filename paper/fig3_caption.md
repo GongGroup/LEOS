@@ -75,12 +75,12 @@ Notes for the text (not for the caption):
 
 | Tag | Modification | Where documented | Measured in |
 |---|---|---|---|
-| M1 | Offline wannier90: export-only GPU job (`LWRITE_MMN_AMN`, `LWANNIER90_RUN = .FALSE.`), then wannier90.x with MPI on a CPU node, both spin channels at once | `pyleos/README.md` l. 121–126, `patch/README.md` l. 76–89, `docs/RESULTS.md` l. 519–541 | (b), (c) |
-| M2 | Threaded MKL in the offline wannier90 (MPI processes x threads) | `patch/README.md` l. 82–86, `docs/RESULTS.md` l. 531–538 | (b), (c) |
-| M3 | Number of WFs per spin channel (patch v3.1) | `patch/README.md` l. 32, l. 174 | (c) |
-| M4 | gpuw90: disentanglement and localisation as batched `matmul` / `eigh` over k and b; k-dependent window sizes folded into one batched `eigh`; convergence flag read back only every few iterations | `gpuw90/DESIGN.md` l. 58–71, 93–100, 150–163; `gpuw90/README.md` l. 266–300 | (b) |
-| M5 | SCDM-only mode: `num_iter = 0`, `dis_num_iter = 0` written to the wannier90 input | `patch/README.md` l. 43, `patch/v3/apply_v3_mlwf.py` l. 32–36, `docs/RESULTS.md` l. 496–517 | (d) |
-| M6 | Warm start: centres of the previously analysed step as wannier90 guiding centres | `patch/README.md` l. 44, `patch/v3/apply_v3_mlwf.py` l. 38–54, `docs/PLAN.md` l. 225–229, `docs/RESULTS.md` l. 555–570 | (d) |
+| M1 | Offline wannier90: export-only GPU job (`LWRITE_MMN_AMN`, `LWANNIER90_RUN = .FALSE.`), then wannier90.x with MPI on a CPU node, both spin channels at once | `pyleos/README.md` l. 160–168, `patch/README.md` l. 79–97, `docs/RESULTS.md` l. 636–662 | (b), (c) |
+| M2 | Threaded MKL in the offline wannier90 (MPI processes x threads) | `patch/README.md` l. 88–94, `docs/RESULTS.md` l. 649–659 | (b), (c) |
+| M3 | Number of WFs per spin channel (patch v3.1) | `patch/README.md` l. 34–35, l. 198 | (c) |
+| M4 | gpuw90: disentanglement and localisation as batched `matmul` / `eigh` over k and b; k-dependent window sizes folded into one batched `eigh`; convergence flag read back only every few iterations | `gpuw90/DESIGN.md` l. 67–83, 111–123, 188–212; `gpuw90/README.md` l. 307–349 | (b) |
+| M5 | SCDM-only mode: `num_iter = 0`, `dis_num_iter = 0` written to the wannier90 input | `patch/README.md` l. 46, `patch/v3/apply_v3_mlwf.py` l. 32–36, `docs/RESULTS.md` l. 609–634 | (d) |
+| M6 | Warm start: centres of the previously analysed step as wannier90 guiding centres | `patch/README.md` l. 47, `patch/v3/apply_v3_mlwf.py` l. 38–54, `docs/PLAN.md` l. 269–275, `docs/RESULTS.md` l. 679–697 | (d) |
 
 The list given in the task was confirmed. Two refinements: (i) the SCDM
 start (the A matrix) is computed by VASP inside the GPU job, not by the
@@ -91,7 +91,7 @@ minority-spin channel (a correctness fix); the shorter Wannier step is a
 side effect, measured in row D of the pipeline table. One further
 speed-related change is documented but has no timing in the repository and
 is not drawn: the blocked band assembly in the SCDM gather (commit 54eec66,
-`patch/README.md` l. 153 and 166).
+`patch/README.md` l. 175–177 and 190).
 
 ## Provenance
 
@@ -102,7 +102,7 @@ All plotted values are printed by the script in a provenance table.
 | b | wannier90, 1 core | `results/w90_threads_scan.tsv`, row `seq / np 1 / nt 1 / spin 1`: 0.997, 0.935 s per iteration (job 654879) |
 | b | M1, 8 MPI processes | same file, row `thr / np 8 / nt 1 / spin 1`: 0.132, 0.125 |
 | b | M1 + M2, 8 x 4 | same file, row `thr / np 8 / nt 4 / spin 1`: 0.055, 0.074 |
-| b | M4, gpuw90 on CPU and on V100 | **hand-copied** block `README_TIMINGS` in the script, from `gpuw90/README.md` l. 277–278 (section "V100（SAI 集群）", job 644120, 2026-07-11): 0.423, 0.303 and 0.079, 0.041. No data file holds these numbers; the script stops if the two README rows are no longer present |
+| b | M4, gpuw90 on CPU and on V100 | **hand-copied** block `README_TIMINGS` in the script, from `gpuw90/README.md` l. 321–322 (section "V100 (SAI cluster)", job 644120, 2026-07-11): 0.423, 0.303 and 0.079, 0.041. No data file holds these numbers; the script stops if the two README rows are no longer present |
 | c | Wannier step and GPU job | `results/w90_e2e_pipeline.tsv`, columns `w90_wall_s`, `gpu_leg_s`, rows A (reference), B (M1), C (M1 + M2), D (M1 + M3) |
 | d | full Wannierisation, CSe2 and GaSe | "Total Execution Time" of `cases/{cse2,sega}/v31-wp/wannier90.wout`: 3.283, 32.068 s |
 | d | SCDM-only, CSe2 and GaSe | "Total Execution Time" of `cases/{cse2,sega}/v3-scdm-only/wannier90.wout`: 0.099, 0.646 s. The script checks that the two runs of a pair have the same POSCAR, k grid, number of bands and of WFs, and that the SCDM-only run reports 0 iterations for both stages |
@@ -110,32 +110,32 @@ All plotted values are printed by the script in a provenance table.
 
 Hand-copied values (the block marked `HAND-COPIED VALUES` in the script):
 
-1. gpuw90 timings of panel (b), `gpuw90/README.md` l. 277–278 – plotted.
+1. gpuw90 timings of panel (b), `gpuw90/README.md` l. 321–322 – plotted.
 2. SCDM-only timing of the Li2MnO3 frame, 554 → 8.3 s per frame,
-   `docs/RESULTS.md` l. 503 – **not plotted**. `SHOW_DOCUMENTED_SCDM = True`
+   `docs/RESULTS.md` l. 617 – **not plotted**. `SHOW_DOCUMENTED_SCDM = True`
    adds it to panel (d) with open markers, a dashed line and an asterisk on
    its label; the caption would then need "* value quoted in the project
    documentation, no data file".
 
 The accuracy figures quoted in the caption for M5 (32/38, 19/38, 0/12, about
-288 unlocalised WFs) are from `docs/RESULTS.md` l. 502–503 and 509–510; the
+288 unlocalised WFs) are from `docs/RESULTS.md` l. 616–617 and 623–625; the
 script checks that these lines are still there. They cannot be recomputed:
-RESULTS.md l. 517 states that the raw data of the 38-case comparison are not
+RESULTS.md l. 634 states that the raw data of the 38-case comparison are not
 in the repository, and no SCDM-only run of the Li2MnO3 frames is in `cases/`.
 
 ## Verified against the documentation
 
 | Statement | From the data files | Status |
 |---|---|---|
-| RESULTS.md l. 526–529: 506.5 / 70.0 / 62.0 / 48.1 s; GPU 816.9 → 307.1 s, 62 % less | identical; 62.4 % | agrees |
-| RESULTS.md l. 531–533: 8 x 4 threads, 0.055–0.065 and 0.074 s per iteration, "about 16x and 13x" | spin 1: 18.1x, 12.6x; spin 2: 15.9x, 12.6x | agrees (the range covers both spin channels; the figure shows spin 1) |
-| RESULTS.md l. 549–550, README l. 268: V100 "about 14x and 22x" over serial wannier90 | 12.6x and 22.8x against 0.997 / 0.935 s of the data table | the disentanglement factor differs: the README divides the stage time by the iterations of another serial run (41.886 s / 38 = 1.10 s, `gpuw90/testdata/li2mno3/wannier90.1_ref.wout`) |
-| RESULTS.md l. 551: gpuw90 on CPU "about 4.6x" | 2.4x and 3.1x on the node of the V100 job | 4.6x compares a laptop with the cluster (README l. 293) |
-| RESULTS.md l. 563–564: warm start 572 s / 546 s per analysed step | 571.9 / 546.1 s | agrees |
-| RESULTS.md l. 563–564: whole runs 6742.6 s / 6532.4 s | sum of the 40 step times: 6735.1 / 6524.1 s | 7.5 s and 8.3 s more in the document than in the files (not reproducible from them) |
-| RESULTS.md l. 558: warm-start test on the "96-atom" Li2MnO3 cell | `warmstart_INCAR.on`: x = 0.25, MAGMOM for 24 + 16 + 48 = 88 atoms | differs; the caption says 88 atoms |
-| RESULTS.md l. 567: an analysed step costs about 525 s more than a plain step | 546.1 - 45.8 = 500 s (off), 571.9 - 45.8 = 526 s (on) | agrees for the run with warm start |
-| RESULTS.md l. 502–503: SCDM-only 554 → 8.3 s (67x), CO2 2 → 0.023 s, 86x over 38 cases | no file | not supported by data; not plotted |
+| RESULTS.md l. 644–647: 506.5 / 70.0 / 62.0 / 48.1 s; GPU 816.9 → 307.1 s, 62 % less | identical; 62.4 % | agrees |
+| RESULTS.md l. 649–652: 8 x 4 threads, 0.055–0.065 and 0.074 s per iteration, "about 16x and 13x" | spin 1: 18.1x, 12.6x; spin 2: 15.9x, 12.6x | agrees (the range covers both spin channels; the figure shows spin 1) |
+| RESULTS.md l. 671–673, README l. 309–310: V100 "about 14x and 22x" over serial wannier90 | 12.6x and 22.8x against 0.997 / 0.935 s of the data table | the disentanglement factor differs: the README divides the stage time by the iterations of another serial run (41.886 s / 38 = 1.10 s, `gpuw90/testdata/li2mno3/wannier90.1_ref.wout`) |
+| RESULTS.md l. 673–674: gpuw90 on CPU "about 4.6x" | 2.4x and 3.1x on the node of the V100 job | 4.6x compares a laptop with the cluster (README l. 341) |
+| RESULTS.md l. 688–689: warm start 572 s / 546 s per analysed step | 571.9 / 546.1 s | agrees |
+| RESULTS.md l. 688–689: whole runs 6742.6 s / 6532.4 s | sum of the 40 step times: 6735.1 / 6524.1 s | 7.5 s and 8.3 s more in the document than in the files (not reproducible from them) |
+| RESULTS.md l. 682–683: warm-start test on the "96-atom" Li2MnO3 cell | `warmstart_INCAR.on`: x = 0.25, MAGMOM for 24 + 16 + 48 = 88 atoms | differs; the caption says 88 atoms |
+| RESULTS.md l. 693–694: an analysed step costs about 525 s more than a plain step | 546.1 - 45.8 = 500 s (off), 571.9 - 45.8 = 526 s (on) | agrees for the run with warm start |
+| RESULTS.md l. 616–617: SCDM-only 554 → 8.3 s (67x), CO2 2 → 0.023 s, 86x over 38 cases | no file | not supported by data; not plotted |
 
 ## Documented, but not supported by a data file
 
@@ -145,12 +145,12 @@ in the repository, and no SCDM-only run of the Li2MnO3 frames is in `cases/`.
   86x) and the agreement rates (32/38, 19/38, 0/12) – timings not plotted,
   rates quoted in the caption.
 - "About half a minute for both spin channels with gpuw90" (RESULTS.md
-  l. 551, README l. 283) – an extrapolation from per-iteration times; not
+  l. 674–675, README l. 328–330) – an extrapolation from per-iteration times; not
   plotted.
 - 72.2 s for 4 threads per process with both spin channels at once
-  (RESULTS.md l. 538) – appears only in a comment line of
+  (RESULTS.md l. 659) – appears only in a comment line of
   `w90_e2e_pipeline.tsv`; not plotted.
-- "About 30 s" fixed time to read the overlap files (RESULTS.md l. 536) –
+- "About 30 s" fixed time to read the overlap files (RESULTS.md l. 656–657) –
   appears only in the note column of row C; not plotted.
 - Speed effect of the blocked SCDM assembly (commit 54eec66) – no number
   anywhere; not drawn.
@@ -168,8 +168,8 @@ in the repository, and no SCDM-only run of the Li2MnO3 frames is in `cases/`.
    channel 1, whose disentanglement converges in 38 iterations; in spin
    channel 2 it reaches the 200-iteration limit.
 2. **Panel (b) is not time to solution.** gpuw90 has no conjugate-gradient
-   or line-search step (`gpuw90/DESIGN.md` l. 367) and no adapter that
-   writes its centres for the assignment (l. 363, 374). M4 therefore has no
+   or line-search step (`gpuw90/DESIGN.md` l. 483–487) and no adapter that
+   writes its centres for the assignment (l. 478–479, 499–500). M4 therefore has no
    entry in panel (c): there is no end-to-end timing of a frame with
    gpuw90.
 3. **Panel (c), rows.** Row D of the data file is row B plus the smaller
@@ -196,4 +196,4 @@ in the repository, and no SCDM-only run of the Li2MnO3 frames is in `cases/`.
    enough already; this is an interpretation, not shown by the data.
 6. **Panel (a).** With M1 the assignment is done offline by pyleos (drawn
    as "CPU"). M6 exists only in the in-situ trajectory mode; gpuw90 does
-   not support guiding centres (`gpuw90/DESIGN.md` l. 373).
+   not support guiding centres (`gpuw90/DESIGN.md` l. 498).
