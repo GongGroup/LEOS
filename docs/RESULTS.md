@@ -127,7 +127,6 @@ regenerating the golden table on purpose.
 
 .github/workflows/ci.yml runs the unit tests and this benchmark on every push and
 compares the status and dev columns line by line with results/bench74_golden.tsv.
-GitHub Actions is not yet enabled for the repository (issue #3).
 
 ### Failed cases
 
