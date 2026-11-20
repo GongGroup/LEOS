@@ -111,7 +111,7 @@ EOS_PROJ_WEIGHT = .TRUE.
   relaxes the default 1e-6 to 1e-5; the multi-line string can also carry other
   parameters such as dis_num_iter). Do not switch to Gamma-only to avoid the error:
   localisation behaves differently in Gamma mode and produces many stray WFs.
-- **#WP data.** Before the fix of 2026-07-11 (commit e0ad691), the #WP blocks of all
+- **#WP data.** Before the fix of 2026-07-11 (commit 751389a), the #WP blocks of all
   multi-process runs are wrong: with band parallelisation the squared modulus was
   taken before the sum over processes, which dropped the cross terms. Such data must
   be recomputed with the fixed version. In addition, **the #WP of the GPU (nvhpc)
@@ -172,8 +172,8 @@ EOS_PROJ_WEIGHT = .TRUE.
 
 The patched VASP on the SAI cluster is in
 `/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/vasp.6.4.3_leos_v31_20260711/bin/`
-(vasp_std, vasp_gam), built from leos_v3.patch at commit e0ad691. The SCDM blocked
-assembly added later (commit 54eec66) changes only speed, not results, and is not
+(vasp_std, vasp_gam), built from leos_v3.patch at commit 751389a. The SCDM blocked
+assembly added later (commit 1aa7d02) changes only speed, not results, and is not
 yet redeployed.
 
 The symlink `/org/sjtu-gongxueqing/zhangxianyang/temp/org/apps/leos_current` and the
@@ -187,7 +187,7 @@ home-directory migration, `/home/sjtu-gongxueqing/zhangxianyang/`; change it to
 
 | Change | Content |
 |---|---|
-| SCDM blocked assembly (commit 54eec66, issue #17) | When SCDM gathers the orbitals, bands are assembled in groups of about 16, and one collective communication replaces the per-band broadcast and reduction. Each buffer element has a single non-zero contribution, so results are bit-identical |
+| SCDM blocked assembly (commit 1aa7d02, issue #17) | When SCDM gathers the orbitals, bands are assembled in groups of about 16, and one collective communication replaces the per-band broadcast and reduction. Each buffer element has a single non-zero contribution, so results are bit-identical |
 
 ### v3 → v3.1
 
@@ -199,7 +199,7 @@ home-directory migration, `/home/sjtu-gongxueqing/zhangxianyang/`; change it to
 | SCDM no longer double-buffers | Process 0 no longer holds two full-grid matrices at once (for the Ce system that memory increment was about 8 GB); results are bit-identical |
 | M/A matrices freed early | Non-master processes free M right after the reduction (−0.9 GB per process); M/A are freed after wannier90 finishes (−1 GB resident per process); A is freed only on the SCDM path, so LOCPROJ and elphon are not affected |
 | In situ minimum-cost flow: the OS(flow) column | The last column of the per-atom table of EOSCAR is the minimum-cost flow assignment done inside VASP (β = 10, Allen electronegativity, lanthanides with the same electronegativity table as pyleos); the switch EOS_FLOW is on by default. Identical to pyleos atom by atom: in 7 tests the cost is bit-identical to the Python reference, and CO2 and VIRCEF are verified in real runs |
-| #WP band-group reduction fix (commit e0ad691) | With multi-process band parallelisation, the complex components of the band groups are summed across groups first, and the squared modulus is taken afterwards. Serial results are bit-identical; after the fix the per-atom aggregates of serial and multi-process runs differ by 2×10⁻⁴ (the level of convergence noise); the regression passes on two clusters |
+| #WP band-group reduction fix (commit 751389a) | With multi-process band parallelisation, the complex components of the band groups are summed across groups first, and the squared modulus is taken afterwards. Serial results are bit-identical; after the fix the per-atom aggregates of serial and multi-process runs differ by 2×10⁻⁴ (the level of convergence noise); the regression passes on two clusters |
 | Batch runs and offline workflow | See "batch.py: cluster batch runs" in pyleos/README.md, and tools/offline_w90_prep.py |
 
 ### v2 → v3

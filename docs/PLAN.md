@@ -321,6 +321,9 @@ To-do items are kept only as GitHub issues: https://github.com/GongGroup/LEOS/is
   are stored by system in `cases/<system>/<run>/` (EOSCAR, input files, wout), and
   every run has one row in cases/INDEX.tsv; summary tables lie flat in results/. No
   directories per batch. .gitignore blocks large files and pseudopotentials.
+  No pseudopotential is in git or in its history; the POTCAR of every calculation
+  that once carried one is identified by sha256 and TITEL in
+  docs/pseudopotential_manifest.tsv.
 - **Cluster location.** Calculations run on the SAI cluster (ssh alias sai). Since
   the home-directory migration of 2026-07-25 the project directory is
   `/org/sjtu-gongxueqing/zhangxianyang/temp/org/LEOS/` (its README.txt describes

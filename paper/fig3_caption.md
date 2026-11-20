@@ -90,7 +90,7 @@ is wannier90; (ii) M3 was introduced to remove surplus ("ghost") WFs in the
 minority-spin channel (a correctness fix); the shorter Wannier step is a
 side effect, measured in row D of the pipeline table. One further
 speed-related change is documented but has no timing in the repository and
-is not drawn: the blocked band assembly in the SCDM gather (commit 54eec66,
+is not drawn: the blocked band assembly in the SCDM gather (commit 1aa7d02,
 `patch/README.md` l. 175–177 and 190).
 
 ## Provenance
@@ -152,7 +152,7 @@ in the repository, and no SCDM-only run of the Li2MnO3 frames is in `cases/`.
   `w90_e2e_pipeline.tsv`; not plotted.
 - "About 30 s" fixed time to read the overlap files (RESULTS.md l. 655–656) –
   appears only in the note column of row C; not plotted.
-- Speed effect of the blocked SCDM assembly (commit 54eec66) – no number
+- Speed effect of the blocked SCDM assembly (commit 1aa7d02) – no number
   anywhere; not drawn.
 
 ## Caveats

@@ -101,7 +101,7 @@ with `reports/multistart.json` and `review/verdict.json`. No mismatch.
   systems (wcl4 2.00 → 1.00, wcl5 3.50 → 2.50), so the statement of
   `docs/RESULTS.md` section 8 that the element means are unchanged holds for
   the verdicts of the 12 scored systems but not for the means of these two
-  (recomputing the earlier cells of commit b6305cf with pyleos gives W +2.00
+  (recomputing the earlier cells of commit a778265 with pyleos gives W +2.00
   → +3.00 and +1.50 → +2.50); (iii) its four tungsten
   chloride rows are the truncated cells that were later replaced in the
   benchmark; (iv) the ghost count changes for only 3 of 13 systems
