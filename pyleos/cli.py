@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""pyleos CLI: transport OS assignment for single cases and regression runs.
+"""pyleos CLI: the single entry point (python3 -m pyleos, or python3 pyleos/cli.py).
 
 Usage:
-  python3 pyleos/cli.py case <case_dir> [--beta B] [--eneg allen|pauling] [-v]
-  python3 pyleos/cli.py regress [--root data/v1] [--beta B] [--eneg SCALE]
+  python3 -m pyleos case <case_dir> [--beta B] [--eneg allen|pauling] [-v]
+  python3 -m pyleos regress [--beta B] [--eneg SCALE] [--reliability]
+  python3 -m pyleos bench full|clean|test ...     (see pyleos/bench.py)
+  python3 -m pyleos batch stage|submit|status|... (see pyleos/batch.py)
+  python3 -m pyleos check                         (cases/INDEX.tsv vs STRUCTURES.tsv vs disk)
+
+regress runs the 36 v1 cases (bench sets v1_mol and v1_oxide of
+cases/INDEX.tsv) and compares transport with the in-situ greedy column.
 """
 from __future__ import annotations
 
@@ -18,13 +24,15 @@ print = functools.partial(print, flush=True)   # progress must survive redirecti
 
 if __package__ is None or __package__ == "":          # direct-script support
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from pyleos.cases import bench74_dirs, check_registry           # noqa: E402
     from pyleos.parsers import load_case                            # noqa: E402
     from pyleos.transport import assign_case, reliability_margins   # noqa: E402
 else:
+    from .cases import bench74_dirs, check_registry
     from .parsers import load_case
     from .transport import assign_case, reliability_margins
 
-REF_PATH = Path(__file__).resolve().parent / "tests" / "reference_os.json"
+REF_PATH = Path(__file__).resolve().parent / "sets" / "reference_os.json"
 
 
 def element_summary(elements, values):
@@ -100,27 +108,16 @@ def run_case(case_dir: Path, beta: float, eneg_scale: str, verbose: bool = False
     return case, res
 
 
-def find_oxide_dir(root: Path, name: str):
-    for d in sorted((root / "oxides").glob(f"leos-oxide-{name}-*")):
-        if (d / "EOSCAR").is_file() and (
-                (d / "wannier90.wout").is_file() or (d / "wannier90.1.wout").is_file()):
-            return d
-    return None
-
-
-def regress(root: Path, beta: float, eneg_scale: str, reliability: bool = False):
+def regress(beta: float, eneg_scale: str, reliability: bool = False):
     ref = json.loads(REF_PATH.read_text())
+    dirs = bench74_dirs()
     rows = []
     targets = []
-    ds_root = root / "eos_dataset"
-    for name, meta in ref["dataset"].items():
-        d = ds_root / name
-        if d.is_dir() and (d / "EOSCAR").is_file():
-            targets.append((name, d, meta))
-    for name, meta in ref["oxides"].items():
-        d = find_oxide_dir(root, name)
-        if d is not None:
-            targets.append((name, d, meta))
+    for bench_set, sub in (("v1_mol", "dataset"), ("v1_oxide", "oxides")):
+        for name, meta in ref[sub].items():
+            d = dirs.get((bench_set, name))
+            if d is not None and (d / "EOSCAR").is_file():
+                targets.append((name, d, meta))
 
     print(f"regression: {len(targets)} cases, beta={beta}, eneg={eneg_scale}")
     import time
@@ -179,9 +176,20 @@ def regress(root: Path, beta: float, eneg_scale: str, reliability: bool = False)
           f"transport better than greedy in {n_better}, worse in {n_worse}")
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__)
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ["bench"]:
+        from pyleos import bench
+        return bench.main(argv[1:])
+    if argv[:1] == ["batch"]:
+        from pyleos import batch
+        sys.argv = ["pyleos batch"] + argv[1:]
+        return batch.main()
+    ap = argparse.ArgumentParser(prog="pyleos", description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("bench", help="benchmarks: python3 -m pyleos bench -h")
+    sub.add_parser("batch", help="cluster batch driver: python3 -m pyleos batch -h")
     p1 = sub.add_parser("case")
     p1.add_argument("dir", type=Path)
     p1.add_argument("--beta", type=float, default=10.0)
@@ -194,19 +202,25 @@ def main():
     p1.add_argument("--fragment", action="append", default=[],
                     help="comma-separated 1-based atom indices to merge into "
                          "one delocalised unit (repeatable), e.g. --fragment 2,3,4")
+    sub.add_parser("check", help="consistency of cases/INDEX.tsv, STRUCTURES.tsv and cases/")
     p2 = sub.add_parser("regress")
-    p2.add_argument("--root", type=Path, default=Path("data/v1"))
     p2.add_argument("--beta", type=float, default=10.0)
     p2.add_argument("--eneg", default="allen", choices=["allen", "pauling"])
     p2.add_argument("--reliability", action="store_true",
                     help="compute the +-1 re-solve reliability R per case")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     if args.cmd == "case":
         frags = [[int(t) - 1 for t in f.split(",")] for f in args.fragment]
         run_case(args.dir, args.beta, args.eneg, args.verbose, args.drop_stray,
                  args.gamma, fragments=frags or None)
+    elif args.cmd == "check":
+        problems = check_registry()
+        for line in problems:
+            print(line)
+        print(f"{len(problems)} problem(s)")
+        sys.exit(1 if problems else 0)
     else:
-        regress(args.root, args.beta, args.eneg, args.reliability)
+        regress(args.beta, args.eneg, args.reliability)
 
 
 if __name__ == "__main__":

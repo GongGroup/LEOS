@@ -1,590 +1,723 @@
-# LEOS 结果
+# LEOS results
 
-本文汇总 LEOS 的测试与应用结果。方法与设计取舍见 [PLAN.md](PLAN.md)，
-术语见 [CONTEXT.md](../CONTEXT.md)。每个数字都注明了数据文件；能在本地
-复现的给出了命令。
+This document collects the test and application results of LEOS. The method and the
+design choices are in [PLAN.md](PLAN.md), the terms in [CONTEXT.md](../CONTEXT.md).
+Every number names its data file; where a result can be reproduced locally, the
+command is given.
 
-## 总览
+## Overview
 
-| 项目 | 结果 | 数据 |
+| Item | Result | Data |
 |---|---|---|
-| 74 案例基准（72 个有参考答案） | 运输 64/72（89%），贪心 51/72（71%） | data/v3/reliability_74.tsv、data/v3/greedy_74.tsv |
-| Comas-Vilà 2025 的 40 个固体 | 40 个全部给出判定 | data/v3/comas_gap/ |
-| Li2O2 脱锂（Li16O16 / Li15O16 / Li14O16） | O 的平均氧化态 −1.00 / −0.94 / −0.88，与电荷计数一致 | data/v3/m5a_li2o2/ |
-| CeO2 氧空位（Ce4O7） | 4 个 Ce 为 [3, 3, 4, 4] | data/v3/m5c_ceo2/ |
-| 富锂正极，3 体系 × 3 个脱锂点 × 20 帧 | 有序体系过渡金属平均价态等于 4 + 2x，50 ps 内无漂移 | data/m5b/ |
-| 甲烷在 Ce18O36Co4 上的 C–H 活化 | 一个 H 以 H⁻ 形式转移到 Co4 团簇，Co4 总价 0 → +2 → +2 | data/v3/legacy_rerun/ |
+| 74-case benchmark (72 with reference oxidation states) | flow 64/72 (89%), greedy 51/72 (71%) | results/bench74_golden.tsv, results/bench74_greedy.tsv |
+| The 40 solids of Comas-Vilà 2025 | all 40 receive an assignment | runs with role=comas in cases/INDEX.tsv, results/comas40_summary.tsv |
+| Li2O2 delithiation (Li16O16 / Li15O16 / Li14O16) | mean O oxidation state −1.00 / −0.94 / −0.88, in agreement with the charge count | cases/li16o16/, cases/li15o16/, cases/li14o16/, results/li2o2_summary.tsv |
+| CeO2 oxygen vacancy (Ce4O7) | the 4 Ce are [3, 3, 4, 4] | cases/ce4o7/, cases/ce4o8/ |
+| Li-rich cathodes, 3 systems × 3 delithiation points × 20 frames | in the ordered systems the mean transition-metal oxidation state equals 4 + 2x, with no drift within 50 ps | results/cathode_md/, cases/{li2mno3,li2ruo3,nmc}/md-x* |
+| C–H activation of methane on Ce18O36Co4 | one H transfers to the Co4 cluster as H⁻; total Co4 oxidation state 0 → +2 → +2 | cases/ce18o36co4ch4_{is,ts,fs}/v3 |
 
-基准中未通过的 8 个案例都查明了原因，见"74 案例基准"一节的未通过案例表。
+The cause of each of the 8 failed benchmark cases is known; see the "Failed cases"
+table under "74-case benchmark".
 
-## 1. 测试设计
+## 1. Test design
 
-### 测试体系
+### Test systems
 
-| 批次 | 数量 | 内容 | 数据目录 |
+| Benchmark set | Count | Content | Data (bench_set column of cases/INDEX.tsv) |
 |---|---|---|---|
-| 历史回归集 | 36 | 项目原有数据：10 个分子晶体，26 个氧化物和卤化物，含磁性、金属、过氧化物、带电体系 | data/v1/ |
-| 扩展第一波 | 13 | 混合价（Fe3O4、CrO5）、羰基化合物 Cr(CO)6、电子化物 Ca3AuN 等 | data/v3/m4_wave1/ |
-| 扩展第二波 | 25 | 氢化物、Zintl 相、金属簇、钙钛矿、160 原子的 SrBe(OH)4 等 | data/v3/m4_wave2/ |
+| Legacy regression set | 36 | The project's original data: 10 molecular crystals, 26 oxides and halides, including magnetic, metallic, peroxide and charged systems | cases/*/v1 (v1_mol, v1_oxide) |
+| Extension wave 1 | 13 | Mixed valence (Fe3O4, CrO5), the carbonyl Cr(CO)6, the electride Ca3AuN and others | cases/*/v3 (wave1) |
+| Extension wave 2 | 25 | Hydrides, Zintl phases, metal clusters, perovskites, the 160-atom SrBe(OH)4 and others | cases/*/v3 (wave2) |
 
-其中 AuClB 配合物和 CuCl4 没有参考答案，只检查能否跑通，不计分。计分
-案例共 72 个。
+The AuClB complex and CuCl4 have no reference oxidation states; they are only checked
+for running to completion and are not scored. This leaves 72 scored cases.
 
-所有结构的来源核查见 [testset_findings.md](testset_findings.md)。基准中
-还有 3 个计分案例的结构不是案例名所指的真实化合物：CO（实为乙烯二酮）、
-SnO（假想的岩盐相）、Ti2O3（金红石去掉一个 O 的缺陷模型）。它们的组成与
-名称相同，参考答案对实际胞内容也成立，都判为通过。
+The source check of all structures is in [testset_findings.md](testset_findings.md).
+In 3 more scored cases of the benchmark the structure is not the real compound the
+case name refers to: CO (actually ethylenedione), SnO (a hypothetical rock-salt
+phase), Ti2O3 (a defect model: rutile with one O removed). Their composition matches
+the name and the reference also holds for the actual cell content, so all count as
+pass.
 
-### 参考答案
+### Reference oxidation states
 
-每个体系的理想氧化态按化学常识和 IUPAC 规则人工标注，存于
-pyleos/tests/reference_os.json。混合价体系标元素平均值，例如 Fe3O4 中
-Fe 为 +2.667（1 个 Fe²⁺ 加 2 个 Fe³⁺）。答案本身有争议的体系（如 Ca3AuN）
-在标注中注明了不同观点。
+The ideal oxidation states of each system are annotated by hand from chemical
+knowledge and the IUPAC rules, and stored in pyleos/sets/reference_os.json.
+Mixed-valence systems carry the element mean, e.g. Fe +2.667 in Fe3O4 (1 Fe²⁺ plus
+2 Fe³⁺). Where the answer itself is disputed (e.g. Ca3AuN), the annotation records
+the differing views.
 
-### 判定标准
+### Pass criterion
 
-对每个体系，先算每种元素的平均氧化态，再与参考值比较，取各元素中最大的
-绝对偏差，记为 dev。
+For each system, compute the mean oxidation state of each element, compare it with
+the reference value, and take the largest absolute deviation over the elements. This
+is dev.
 
-| 状态 | 条件 |
+| Status | Condition |
 |---|---|
-| OK（通过） | dev ≤ 0.25 |
+| OK (pass) | dev ≤ 0.25 |
 | ~ | 0.25 < dev ≤ 1.0 |
 | FAIL | dev > 1.0 |
-| run | 没有参考答案，只检查能否跑通 |
+| run | no reference; only checked for running to completion |
 
-dev 只检查元素平均，不检查单个原子。例如 As4S4 中 As 一半为 +1、一半为
-+3，平均 +2，dev 为 0。单个原子层面的情况在具体案例中单独说明。
+dev checks element means only, not single atoms. In As4S4, for example, half of the
+As are +1 and half +3; the mean is +2 and dev is 0. Per-atom behaviour is described
+case by case.
 
-### 两种分配方法
+### The two assignment methods
 
-- **贪心**：VASP 补丁内置的方法，每个 WF 独立判给最近的原子（考虑电负性）。
-  结果在 EOSCAR 逐原子表的 OS(int) 列。
-- **运输**：pyleos 用同一份 WF 数据，把全部电子一起做最小费用流分配。VASP
-  补丁也在 EOSCAR 的 OS(flow) 列中输出同样的结果。
+- **Greedy**: the method built into the VASP patch. Each WF goes independently to the
+  nearest atom (electronegativity taken into account). The result is the OS(int)
+  column of the per-atom table in EOSCAR.
+- **Flow**: pyleos takes the same WF data and assigns all electrons together as a
+  minimum-cost flow. The VASP patch writes the same result to the OS(flow) column of
+  EOSCAR.
 
-两种方法的输入完全相同，差别只在分配方式。
+The two methods have identical input; they differ only in how they assign.
 
-## 2. 74 案例基准
+## 2. 74-case benchmark
 
-### 通过数
+### Pass counts
 
-| 批次（计分案例数） | 运输通过 | 贪心通过 |
+| Benchmark set (scored cases) | Flow pass | Greedy pass |
 |---|---|---|
-| 历史回归集（35） | 33 | 30 |
-| 扩展第一波（12） | 10 | 9 |
-| 扩展第二波（25） | 21 | 12 |
-| 合计（72） | 64（89%） | 51（71%） |
+| Legacy regression set (35) | 33 | 30 |
+| Extension wave 1 (12) | 10 | 9 |
+| Extension wave 2 (25) | 21 | 12 |
+| Total (72) | 64 (89%) | 51 (71%) |
 
-逐案例比较：15 个案例只有运输通过，2 个只有贪心通过（CSe2 的 v1 数据和
-hi3），其余案例两种方法结论相同。第二波中这两个数字是 10 和 1。
+Case by case: 15 cases pass only with the flow, 2 pass only with greedy (the v1 data
+of CSe2, and hi3); for the rest the two methods agree. Within wave 2 these two
+numbers are 10 and 1.
 
-数据：运输为 data/v3/reliability_74.tsv，贪心为 data/v3/greedy_74.tsv，
-两表由同一脚本、按同一 dev 定义产出。
+Data: the flow in results/bench74_golden.tsv, greedy in results/bench74_greedy.tsv.
+Both tables come from the same script with the same definition of dev.
 
-复现（约 25 秒）：
+**Structure-corrected version.** 12 scored cases of the 74 have a wrong structure, a
+broken geometry, or are plainly not the intended phase: CO (actually ethylenedione),
+SnO (hypothetical rock-salt phase), Ti2O3 (rutile with oxygen removed), CuO
+(hypothetical rock-salt phase), Ce2O3 (hand-built ideal cell), ReCl4, Na2CrO4 and
+NaMnO4 (isolated clusters), N2O (an ordered model 14% denser than the experimental
+phase), S4N4 (a PBE cell without dispersion correction, 25% too large in volume),
+li2o2 and re2 (the POSCAR scaling factor enlarged the Cartesian coordinates). They
+are replaced by COD or Materials Project structures; N2O uses a P2₁3 ordered
+approximant built on the experimental Pa-3 cell. After recomputation
+(`cases/<system>/v31`; li2o2 uses the Föppl crystal of the homonuclear-bond test set,
+cases/li2o2/v3; replacement list pyleos/sets/corrected.json) all 12 cases still pass
+and the flow stays at 64/72 (results/bench74_corrected.tsv,
+`python3 -m pyleos bench full --corrected --out ...`). The golden table still holds
+the original runs, and CI compares against the golden table.
+
+Four are not replaced: the correct crystal of RhCl(CO)(PPh3)2 is only in the CSD,
+which needs a licence, and the present cell is an SO2 adduct; the cell of the AuClB
+complex is a structure corrupted in transcription, and no real compound with this
+formula exists; HI3 has no solid phase; neutral CuCl4 does not exist. The last three
+also have no reference, or a reference that does not hold for the actual cell.
+
+Reproduce (about 25 s):
 
 ```bash
-python3 script/full_bench.py --no-reliability --out /tmp/bench.tsv
-python3 script/full_bench.py --greedy --no-reliability --out /tmp/greedy.tsv
+python3 -m pyleos bench full --no-reliability --out /tmp/bench.tsv
+python3 -m pyleos bench full --greedy --no-reliability --out /tmp/greedy.tsv
 ```
 
-去掉 `--no-reliability` 会同时计算可靠性指标 R，需要几分钟。**不加
-`--out` 时脚本会覆盖 data/v3/reliability_74.tsv。**
+Without `--no-reliability` the reliability index R is computed as well, which takes
+much longer. `--out` is required; write results/bench74_golden.tsv only when
+regenerating the golden table on purpose.
 
-.github/workflows/ci.yml 在每次 push 时运行单元测试和这个基准，并逐行比较
-status 和 dev 两列与 data/v3/reliability_74.tsv 是否一致。仓库的 GitHub
-Actions 目前还没有启用（issue #3）。
+.github/workflows/ci.yml runs the unit tests and this benchmark on every push and
+compares the status and dev columns line by line with results/bench74_golden.tsv.
 
-### 未通过的案例
+### Failed cases
 
-| 案例 | 状态 / dev | 运输结果 | 参考答案 | 原因 |
+| Case | Status / dev | Flow result | Reference | Cause |
 |---|---|---|---|---|
-| As4S4（v1 数据） | ~ / 1.00 | As +1.00，S −1.00 | As +2，S −2 | 88 个 WF 中 15 个未定域。用 v3 重算的同一体系通过（见"典型案例"） |
-| CSe2（v1 与第一波两份数据） | FAIL / 4.00 | C 0，Se 0 | C −4，Se +2 | Allen 标度下 C（2.544）与 Se（2.424）只差 0.12，归属处于近简并区（R_elem 约 25） |
-| Ca3AuN | FAIL / 2.00 | Au −1，一个 Ca 为 0 | Au −3 | 结果对应电子化物图像，IUPAC 技术报告认为这一图像更准确（见"典型案例"） |
-| hi3 | FAIL / 2.00 | H −1 | H +1 | 胞内实际是 HI + I2 分子链；H（2.300）与 I（2.359）电负性接近 |
-| RhCl(CO)(PPh3)2 | FAIL / 4.00 | Rh +5 | Rh +1 | 结构里多一个 SO2 配体，参考答案按无 SO2 的化合物写。投影辅助判定能把它判对 |
-| WAu12 | FAIL / 6.00 | W +6，Au 平均 −0.5 | W 0 | 两种惯例的差别：按电负性规则 W 为 +6，IUPAC 按 18 电子规则判 W(0) |
-| WCl5 | FAIL / 4.67 | W 平均 +0.33，Cl 平均 −0.07 | W +5，Cl −1 | Wannier 化失败，598 个 WF 中 316 个未定域（见"典型案例"） |
+| As4S4 (v1 data) | ~ / 1.00 | As +1.00, S −1.00 | As +2, S −2 | 15 of the 88 WFs are unlocalised. The same system recomputed with v3 passes (see "Case studies") |
+| CSe2 (two data sets: v1 and wave 1) | FAIL / 4.00 | C 0, Se 0 | C −4, Se +2 | On the Allen scale C (2.544) and Se (2.424) differ by only 0.12, so the assignment is near-degenerate (R_elem about 25) |
+| Ca3AuN | FAIL / 2.00 | Au −1, one Ca at 0 | Au −3 | The result corresponds to the electride picture, which the IUPAC technical report considers more accurate (see "Case studies") |
+| hi3 | FAIL / 2.00 | H −1 | H +1 | The cell actually holds HI + I2 molecular chains; H (2.300) and I (2.359) are close in electronegativity |
+| RhCl(CO)(PPh3)2 | FAIL / 4.00 | Rh +5 | Rh +1 | The structure has an extra SO2 ligand, while the reference is written for the compound without SO2. Projection-assisted arbitration assigns it correctly |
+| WAu12 | FAIL / 6.00 | W +6, Au mean −0.5 | W 0 | A difference between two conventions: the electronegativity rule gives W +6, IUPAC assigns W(0) by the 18-electron rule |
+| WCl5 | FAIL / 4.67 | W mean +0.33, Cl mean −0.07 | W +5, Cl −1 | Wannierisation failed: 316 of the 598 WFs are unlocalised (see "Case studies") |
 
-单个案例的结果用 `python3 pyleos/cli.py case <目录> -v` 查看，例如
-`data/v3/m4_wave2/hi3`。
+Inspect a single case with `python3 pyleos/cli.py case <dir> -v`, e.g.
+`cases/hi3/v3`.
 
-### 运输修正的典型案例（第二波）
+### Cases corrected by the flow (wave 2)
 
-| 案例 | 贪心 dev | 运输 dev | 说明 |
+| Case | Greedy dev | Flow dev | Note |
 |---|---|---|---|
-| SrBe(OH)4 | 6.25 | 0.00 | 贪心把 64 个 H 中的 50 个判成 −1，即把 O–H 键当成氢化物，Sr 被推到 +4 至 +10。Gimferrer 2020 指出的"最近原子"判据失效就是这一类 |
-| KMgF3 | 4.00 | 0.00 | 钙钛矿 |
-| Rb2CuCl4 | 8.00 | 0.00 | 卤化物 |
-| RhH | 5.00 | 0.00 | 金属氢化物 |
-| RbPb | 5.88 | 0.06 | Zintl 相；有 48 个 WF 为 stray，运输结果仍接近参考答案 |
-| H3PO3 | 1.00 | 0.00 | 两种惯例，见"典型案例" |
+| SrBe(OH)4 | 6.25 | 0.00 | Greedy assigns −1 to 50 of the 64 H, i.e. treats O–H bonds as hydrides, and pushes Sr to between +4 and +10. This is the kind of failure of the "nearest atom" criterion that Gimferrer 2020 points out |
+| KMgF3 | 4.00 | 0.00 | Perovskite |
+| Rb2CuCl4 | 8.00 | 0.00 | Halide |
+| RhH | 5.00 | 0.00 | Metal hydride |
+| RbPb | 5.88 | 0.06 | Zintl phase; 48 WFs are stray, yet the flow result stays close to the reference |
+| H3PO3 | 1.00 | 0.00 | Two conventions, see "Case studies" |
 
-## 3. 典型案例
+## 3. Case studies
 
-### As4S4（雄黄）
+### As4S4 (realgar)
 
-在 v3 数据上，运输给出 As +2、S −2（元素平均），与参考答案一致；贪心给出
-As +4，S 平均 −4。
+On the v3 data the flow gives As +2 and S −2 (element means), in agreement with the
+reference; greedy gives As +4 and a mean S of −4.
 
-| 数据 | 运输 As / S | 贪心 As / S | 未定域的 WF | 状态 |
+| Data | Flow As / S | Greedy As / S | Unlocalised WFs | Status |
 |---|---|---|---|---|
-| v3：data/v3/m4_wave2/as4s4 | +2.00 / −2.00 | +4.00 / −4.00 | 0 | OK |
-| v1：data/v1/eos_dataset/As4S4 | +1.00 / −1.00 | +4.12 / −4.12 | 15 | ~ |
+| v3: cases/as4s4/v3 | +2.00 / −2.00 | +4.00 / −4.00 | 0 | OK |
+| v1: cases/as4s4/v1 | +1.00 / −1.00 | +4.12 / −4.12 | 15 | ~ |
 
-单个原子：晶胞里有 8 条 As–As 键，每个 As 恰好在其中一条上。这条键上的
-一对电子只能整对判给一端，所以 8 个 As 记 +1、8 个记 +3。元素平均不受
-影响，R_site 为 1.8 反映的就是这种两端等价的情况。用 `--fragment` 把成键的
-两个 As 合成一个单元，每个单元总价 +4，即每个 As +2：
+Per atom: the cell has 8 As–As bonds, and every As sits on exactly one of them. The
+electron pair of such a bond can only go to one end as a whole, so 8 As are +1 and
+8 are +3. The element mean is unaffected; R_site = 1.8 reflects exactly this
+equivalence of the two ends. `--fragment` merges the two bonded As into one unit;
+each unit totals +4, i.e. +2 per As:
 
 ```bash
-python3 pyleos/cli.py case data/v3/m4_wave2/as4s4 -v \
+python3 pyleos/cli.py case cases/as4s4/v3 -v \
   --fragment 17,19 --fragment 18,20 --fragment 21,23 --fragment 22,24 \
   --fragment 25,27 --fragment 26,28 --fragment 29,31 --fragment 30,32
 ```
 
-v1 数据的问题：88 个 WF 中 15 个没有定域，spread 最大 22.6 Å²（正常低于
-1 Å²），中心落在原子之间的空隙里。排除这 15 个后（`--drop-stray`），其余
-73 个 WF 的归属全部正确，包括 27 条 As–S 键的电子都判给 S。排除 WF 后总
-电子数变少，元素平均值不能再与参考答案直接比较，这一检查只能逐个 WF 核对。
-同一份数据上，贪心给某些 S 记了 14 个电子（氧化态 −8），超出 S 价层能
-容纳的 8 个。
+The problem of the v1 data: 15 of the 88 WFs are not localised. Their spread reaches
+22.6 Å² (normal is below 1 Å²) and their centres lie in the voids between atoms. With
+these 15 excluded (`--drop-stray`), the other 73 WFs are all assigned correctly,
+including the electrons of the 27 As–S bonds, which all go to S. Excluding WFs lowers
+the electron total, so the element means can no longer be compared directly with the
+reference; this check is only possible WF by WF. On the same data greedy gives some S
+14 electrons (oxidation state −8), more than the 8 that the S valence shell can hold.
 
-v3 数据有两份：data/v3/m4_wave2/as4s4 和
-data/v3/rerun_20260711/g4_projection/as4s4。两次计算的 POSCAR、INCAR
-相同，判定结果逐原子相同；后者由 v3.1 补丁产出，其 EOSCAR 的 OS(flow) 列
-与 pyleos 的结果逐原子一致。
+There are two sets of v3 data: cases/as4s4/v3 and cases/as4s4/v31-wp. The two
+calculations have the same POSCAR and INCAR and the same assignment atom by atom. The
+latter is produced by the v3.1 patch, and the OS(flow) column of its EOSCAR agrees
+with pyleos atom by atom.
 
-### H3PO3：两种惯例
+### H3PO3: two conventions
 
-教科书把 H3PO3 中的 P 记为 +3，依据是"H 总记 +1"的习惯。按 IUPAC 的电负性
-规则，Allen 标度下 H（2.300）比 P（2.253）电负性大，P–H 键的电子应归 H。
-运输按后一规则给出 P +5、与 P 相连的 H 为 −1，参考答案按同一规则标注，
-dev 为 0.00；贪心 dev 为 1.00。R 约为 50，反映 H 与 P 的电负性很接近。
+Textbooks give P +3 in H3PO3, from the habit that "H is always +1". Under the IUPAC
+electronegativity rule, H (2.300) is more electronegative than P (2.253) on the Allen
+scale, so the electrons of a P–H bond belong to H. The flow follows the latter rule
+and gives P +5 and −1 for the H bonded to P. The reference is annotated by the same
+rule, so dev is 0.00; greedy has dev 1.00. R is about 50, which reflects how close H
+and P are in electronegativity.
 
-### Ca3AuN：电子化物
+### Ca3AuN: electride
 
-IUPAC 氧化态技术报告（Karen 等）讨论过这个体系：按其他钙钛矿的常规做法
-会得到 Au −3，但报告认为 Au −1 加 2 个不属于任何原子的电子（电子化物）
-更准确。Comas-Vilà 2025 的方法给出 Au −3（R = 60.4）。
+The IUPAC technical report on oxidation states (Karen et al.) discusses this system:
+the usual treatment of other perovskites gives Au −3, but the report considers Au −1
+plus 2 electrons that belong to no atom (an electride) more accurate. The method of
+Comas-Vilà 2025 gives Au −3 (R = 60.4).
 
-运输给出两个 Ca 为 +2、一个 Ca 为 0、Au −1、N −3，与 Karen 的图像一致：
-2 个游离电子被记在一个 Ca 上，所以这个 Ca 显示 0 价。支持这一解读的是 WF
-本身：6 个 WF 的中心靠近 Ca，但 spread 达 5–10 Å²（定域良好的 WF 低于
-2 Å²），这是游离电子在 Wannier 表示里的样子。R_site 为 7.1，说明这 2 个
-电子记在哪个 Ca 名下是任意的。
+The flow gives two Ca at +2, one Ca at 0, Au −1 and N −3, consistent with Karen's
+picture: the 2 free electrons are booked on one Ca, which therefore shows 0. The WFs
+themselves support this reading: 6 WFs have centres near Ca but spreads of 5–10 Å²
+(well-localised WFs are below 2 Å²), which is how free electrons look in the Wannier
+representation. R_site is 7.1: which Ca carries these 2 electrons is arbitrary.
 
-参考答案按 Au −3 标注，所以该案例记为未通过（dev 2.00）。Comas-Vilà
-对照集中的高压 K 表现相同。
+The reference is annotated as Au −3, so the case counts as failed (dev 2.00).
+High-pressure K in the Comas-Vilà comparison set behaves the same way.
 
-### hi3 与 WAu12：片段
+### hi3 and WAu12: fragments
 
-片段（`--fragment`）把指定的一组原子当作一个整体接收电子，输出整体的
-氧化态，用于离域阴离子和金属簇。出现代价几乎相同的电子对时，pyleos 会
-提示考虑片段。
+A fragment (`--fragment`) makes a specified group of atoms receive electrons as one
+unit and reports the oxidation state of the unit. It is meant for delocalised anions
+and metal clusters. When electron pairs with almost equal costs appear, pyleos
+suggests considering a fragment.
 
-- **hi3**：不用片段时，pyleos 提示两团离域电子（margin 0.34）。投影辅助
-  判定把 H 判回 +1；再加片段，两个三碘单元各为 −1。该胞的实际内容是
-  HI + I2 链而不是 I3⁻（见 testset_findings.md），化学解读按实际内容。
-- **WAu12**：Au12 作为片段时得到 W +6、Au12 整体 −6，与电负性规则一致。
-  IUPAC 对该体系判 W(0)，依据是 18 电子规则。这与 H3PO3 一样是惯例差别。
+- **hi3**: without fragments, pyleos reports two groups of delocalised electrons
+  (margin 0.34). Projection-assisted arbitration returns H to +1; with fragments
+  added, the two tri-iodine units are −1 each. The actual content of the cell is
+  HI + I2 chains, not I3⁻ (see testset_findings.md); the chemical reading follows the
+  actual content.
+- **WAu12**: with Au12 as a fragment the result is W +6 and −6 for Au12 as a whole,
+  consistent with the electronegativity rule. IUPAC assigns W(0) to this system by
+  the 18-electron rule. As with H3PO3, this is a difference of convention.
 
-### 钨氯化物
+### Tungsten chlorides
 
-原测试集里的钨氯化物结构只转录了不对称单元，例如名为 WCl6 的胞里只有
-1 个 W 和 1 个 Cl。换用文献或数据库来源、按空间群展开后重算的结果：
+The tungsten chloride structures of the original test set transcribed only the
+asymmetric unit; the cell named WCl6, for example, holds only 1 W and 1 Cl. Results
+after replacing them with literature or database structures, expanded by the space
+group, and recomputing:
 
-| 体系 | 运输结果 | 说明 |
+| System | Flow result | Note |
 |---|---|---|
-| WCl6 | OK，W +6 / Cl −1 | 无警告 |
+| WCl6 | OK, W +6 / Cl −1 | No warnings |
 | WCl4 | OK | |
-| WCl3 | OK，W 平均 +3 | W6 簇内各 W 位点等价，单个 W 的值不唯一，可用片段 |
-| WCl5 | FAIL，dev 4.67 | 实验晶格和自洽弛豫晶格两次计算分别有 316 和 323 个 WF 未定域。问题出在 Wannier 化，与结构转录无关 |
+| WCl3 | OK, W mean +3 | The W sites within the W6 cluster are equivalent, so the value of a single W is not unique; a fragment can be used |
+| WCl5 | FAIL, dev 4.67 | The two calculations, on the experimental lattice and on the self-consistently relaxed lattice, have 316 and 323 unlocalised WFs. The problem lies in the wannierisation, not in the structure transcription |
 
-数据：data/v3/m4_wave2/wcl3、wcl4、wcl5、wcl5_v2（弛豫晶格）、wcl6；
-修正结构及来源：docs/structures_fix/。
+Data: cases/wcl3/v3, cases/wcl4/v3, cases/wcl5/v3, cases/wcl5/v3-relaxed (relaxed
+lattice), cases/wcl6/v3; corrected structures and their sources:
+cases/wcl*/structure-fixed/.
 
-在只有不对称单元的错误结构上，程序给出的是这个残缺胞实际组成的结果，例如
-名为 WCl6、实际只有一个 W 和一个 Cl 的胞判为 W +1。
+On a wrong structure that holds only the asymmetric unit, the program returns the
+result for the actual composition of that incomplete cell: the cell named WCl6 that
+really holds one W and one Cl gives W +1.
 
-## 4. Comas-Vilà 对照集（40 个固体）
+## 4. Comas-Vilà comparison set (40 solids)
 
-Comas-Vilà 2025（JCTC）用 QTAIM 原子重叠矩阵方法测试了 40 个固体，我们
-对全部 40 个做了判定：
+Comas-Vilà 2025 (JCTC) tests 40 solids with a method based on QTAIM atomic overlap
+matrices. We assign all 40:
 
-- 30 个在 data/v3/comas_gap/ 下，都是完整 MLWF 计算。默认代价和投影辅助
-  判定给出的元素平均值相同。
-- 10 个与 74 案例基准重合（CrO3、KMgF3、NaBF4、SrBe(OH)4、Cs3AuO、
-  Rb3AuO、Ca3AuN、GaSe、WCl4、Rb2CuCl4），结果取自
-  data/v3/reliability_74.tsv。
+- 30 are the runs with role=comas in cases/INDEX.tsv, all full MLWF calculations. The
+  default cost and projection-assisted arbitration give the same element means.
+- 10 overlap with the 74-case benchmark (CrO3, KMgF3, NaBF4, SrBe(OH)4, Cs3AuO,
+  Rb3AuO, Ca3AuN, GaSe, WCl4, Rb2CuCl4); their results are taken from
+  results/bench74_golden.tsv.
 
-结构来自论文 SI 表格转录、实验 CIF 和数据库，共 29 个新结构；MgXe 和
-MH4 氢化物的精确结构见 docs/structures_fix/。comas_gap/ 下另有 6 个
-scdm_* 目录，是 SCDM-only 快速模式的运行，不计入对照。两种方法的逐体系
-对比见 [comas_vila_2025_notes.md](comas_vila_2025_notes.md)。
+The structures come from transcription of the SI tables of the paper, experimental
+CIFs and databases, 29 new structures in all; the exact structures of MgXe and the
+MH4 hydrides are in `cases/<system>/structure-fixed/`. A further 6 v3-scdm-only runs
+use the SCDM-only fast mode and are not part of the comparison. The system-by-system
+comparison of the two methods is in
+[comas_vila_2025_notes.md](comas_vila_2025_notes.md).
 
-| 类别 | 体系与判定 | 说明 |
+| Class | Systems and assignment | Note |
 |---|---|---|
-| Zintl 相 | Ba3Si4：Ba +2，Si −1.5 | Si4⁶⁻ 蝴蝶形簇 |
-| 铂化物 | Cs2Pt：Cs +1，Pt −2 | IUPAC 的负价金属例子 |
-| 电子化物 | 高压 K：K 平均 0（−1 到 +1），伴随 stray 警告 | 原文为 K +1，电子记在非核吸引子上。LEOS 没有这类记账单元，游离电子记在 K 上，与 Ca3AuN 相同 |
-| 混合价 | YBaFe2O5 两相：Y +3，Ba +2，Fe +2.5，O −2 | 元素平均正确；位点电荷序未检查 |
-| 氢化物 MH4 | Mg、Ca、Sr：M +2 + 2H⁻ + H2；Sc、Y：M +3 + 3H⁻ + ½H2；Zr、Ce、Th：M +4 + 4H⁻ | 金属价态和 H 的元素平均与原文一致。Sc、Y 的位点分布不同：原文是 2 个 H⁻ 加 2 个 −½ 的 H。贪心在 Sr、Ce、Th 上给出金属 +10 / +9 / +10 |
-| 氙氟化物 | XeF2 +2，XeF3 +3，XeF4 +4 | |
-| 高压氙氧化物 | XeO 两相 +2；XeO2 两相 +4；XeO3 130 GPa 相 Xe 平均 +5（+4 到 +6）；XeO3 150 GPa 相 +6 | XeO3 两相与原文不同：原文 130 GPa 相为 Xe +4（把 O2 作为片段时为 +5，但 R 更低），150 GPa 相为 +6 和 +4 混合且原文认为判定本质上模糊 |
-| 汞(IV) | HgF4：hgf4_a、hgf4_c 为 +4；hgf4_b 的 Hg 平均 +3（+2 到 +4） | 原文三个结构都是 +4。hgf4_b 的结构与原文的对应关系未核实 |
-| 多原子阴离子 | CsF3：F −1/3；CsF5：F −0.2；CsH3：H −1/3；LiN5：N −0.2 | 电荷分摊在多个原子上，可用片段。CsH3 胞内的 H 是两个孤立的等边 H3 三角形（H–H 1.24 Å），原文是线性 H3；LiN5 胞内是线性 N3 加拉长的 N2，原文是五唑环（见 testset_findings.md）。这两例不是在同一结构上比较 |
-| 稀有气体阴离子 | MgXe（200 GPa）：Mg +2，Xe −2 | 与文献的 Xe 阴离子结论一致；晶格由状态方程推定，误差约 ±1.5% |
+| Zintl phase | Ba3Si4: Ba +2, Si −1.5 | Si4⁶⁻ butterfly cluster |
+| Platinide | Cs2Pt: Cs +1, Pt −2 | The IUPAC example of a metal in a negative oxidation state |
+| Electride | High-pressure K: K mean 0 (−1 to +1), with stray warnings | The paper has K +1, with the electrons booked on non-nuclear attractors. LEOS has no such bookkeeping unit and books the free electrons on K, as for Ca3AuN |
+| Mixed valence | YBaFe2O5, two phases: Y +3, Ba +2, Fe +2.5, O −2 | Element means correct; site charge order not checked |
+| MH4 hydrides | Mg, Ca, Sr: M +2 + 2H⁻ + H2; Sc, Y: M +3 + 3H⁻ + ½H2; Zr, Ce, Th: M +4 + 4H⁻ | Metal oxidation states and H element means agree with the paper. The site distribution differs for Sc and Y: the paper has 2 H⁻ plus 2 H at −½. Greedy gives metal +10 / +9 / +10 for Sr, Ce, Th |
+| Xenon fluorides | XeF2 +2, XeF3 +3, XeF4 +4 | |
+| High-pressure xenon oxides | XeO, two phases: +2; XeO2, two phases: +4; XeO3, 130 GPa phase: Xe mean +5 (+4 to +6); XeO3, 150 GPa phase: +6 | The two XeO3 phases differ from the paper. There the 130 GPa phase is Xe +4 (+5 with O2 as a fragment, but with a lower R), and the 150 GPa phase is a mixture of +6 and +4 whose assignment the paper considers intrinsically ambiguous |
+| Mercury(IV) | HgF4: hgf4_a and hgf4_c are +4; hgf4_b has Hg mean +3 (+2 to +4) | All three structures are +4 in the paper. How the hgf4_b structure corresponds to the paper's is not verified |
+| Polyatomic anions | CsF3: F −1/3; CsF5: F −0.2; CsH3: H −1/3; LiN5: N −0.2 | The charge is shared among several atoms; fragments can be used. The H in the CsH3 cell form two isolated equilateral H3 triangles (H–H 1.24 Å), whereas the paper has linear H3; the LiN5 cell holds linear N3 plus an elongated N2, whereas the paper has a pentazole ring (see testset_findings.md). These two are not compared on the same structure |
+| Noble-gas anion | MgXe (200 GPa): Mg +2, Xe −2 | Agrees with the Xe anion reported in the literature; the lattice is inferred from an equation of state, with an error of about ±1.5% |
 
-30 个 comas_gap 计算中有 12 个带 stray 警告（括号内为 stray 数）：ba3si4
-（36）、xeo3_b（9）、ceh4（8）、thh4（8）、k_hp（6）、mgxe（5）、
-ybafe2o5_b（4）、csh3（3）、mgh4（3）、sch4（3）、lin5（1）、xeo3_a（1）。
+12 of the 30 calculations of the Comas comparison set carry stray warnings (number of
+strays in brackets): ba3si4 (36), xeo3_b (9), ceh4 (8), thh4 (8), k_hp (6), mgxe (5),
+ybafe2o5_b (4), csh3 (3), mgh4 (3), sch4 (3), lin5 (1), xeo3_a (1).
 
-数据：data/v3/comas_gap/。其中 summary.tsv 的 status 列是批跑状态（EOSCAR
-是否正常产出），不表示判定是否与原文一致。
+Data: the runs with role=comas. The status column of results/comas40_summary.tsv is
+the batch-run status (whether EOSCAR was produced normally); it does not say whether
+the assignment agrees with the paper.
 
-## 5. 应用
+## 5. Applications
 
-### Li2O2 脱锂：氧的价态
+### Li2O2 delithiation: the oxidation state of oxygen
 
-锂空气电池充电时，Li2O2 中的 Li 被逐个移除。每移除一个 Li 留下一个空穴，
-使一个过氧根（O2²⁻，每个 O 记 −1）变成超氧根（O2⁻，两个 O 合计 −1）。
-这里变价的是 O，而 DFT+U+V 占据矩阵方法只能跟踪 d/f 金属位点。
+When a lithium-air battery is charged, the Li atoms of Li2O2 are removed one by one.
+Each removed Li leaves a hole, which turns one peroxide (O2²⁻, −1 per O) into a
+superoxide (O2⁻, the two O totalling −1). The element that changes oxidation state
+here is O, whereas the DFT+U+V occupation-matrix method can only follow d/f metal
+sites.
 
-计算：32 原子超胞，完整的 Li16O16，移除 1 个 Li 的 Li15O16，移除 2 个 Li 的
-Li14O16。
+Calculations: 32-atom supercells, namely the complete Li16O16, Li15O16 with 1 Li
+removed, and Li14O16 with 2 Li removed.
 
-| 体系 | 电荷计数的 O 平均值 | 运输 | 贪心 |
+| System | Mean O from the charge count | Flow | Greedy |
 |---|---|---|---|
-| Li16O16 | −1.000 | −1.00 | −0.25，另把 6 个 Li 判成 −1 |
-| Li15O16 | −0.9375 | −0.94 | 0.00 |
+| Li16O16 | −1.000 | −1.00 | −1.00 |
+| Li15O16 | −0.9375 | −0.94 | −0.94 |
 | Li14O16 | −0.875 | −0.88 | −0.88 |
 
-移除 1 个 Li 即少 1 个电子，分到 16 个 O 上，平均价态从 −1 变为
-−15/16 = −0.9375。
+Removing 1 Li removes 1 electron, shared among 16 O, so the mean oxidation state goes
+from −1 to −15/16 = −0.9375.
 
-分子动力学：Li15O16 室温 40 步，每 2 步分析一次（共 20 帧），运输给出的
-O 平均值 20 帧都是 −0.94。
+Both methods agree with the charge count in the element mean; they differ in the
+single atoms and the single O2 units. The 8 O2 units of the flow have exactly these
+charges: 8 at −2 in Li16O16; 7 at −2 plus 1 at −1 in Li15O16; 6 at −2 plus 2 at −1 in
+Li14O16. Every O lies between −2 and 0. Greedy assigns −3 or +1 to individual O (in
+Li16O16 the O range from −3 to +1).
 
-数据：data/v3/m5a_li2o2/（li16o16、li15o16、li14o16、li15o16_md）。
+The calculations use a 2×2×1 supercell of Föppl-type Li2O2 (COD 1514084), lattice
+a = 6.366, c = 7.726 Å; single points, PBE, ISPIN = 2. The earlier v3 runs had the
+two columns of O coordinates swapped, which put 8 Li at the midpoints of O–O bonds
+(Li–O 0.78 Å); on that geometry greedy gave −0.25 and 0.00. The table above is the
+recomputation on the corrected geometry (v31); the element means of the flow are the
+same as before. See "Geometry re-check" in docs/testset_findings.md.
 
-**空穴位置。** 物理上只有 1 个空穴，但纯 PBE 计算中逐帧看会有多个 O2 单元
-轮流显示被氧化，且所有 O–O 键长都没有缩短（局域的超氧根键长应从 1.55 Å
-缩到约 1.33 Å）。这说明 PBE 把空穴分摊到了所有 O2 单元上，这是 PBE
-自相互作用误差的已知表现。
+Molecular dynamics: Li15O16 at room temperature, 40 steps, analysed every 2 steps
+(20 frames in all). The flow gives a mean O of −0.94 in all 20 frames. This
+trajectory starts from the relaxed, correct geometry and is not affected by the
+problem above.
 
-为得到局域空穴，在 Li15O16 上用"目标过氧根预缩短到 1.354 Å + 不对称磁矩"的
-初始结构，做 PBE+U（U 加在 O 2p 上）扫描，再在 U = 8 eV 的几何上做 PBE 和
-HSE06 单点：
+Data: the table above is cases/li16o16/v31, cases/li15o16/v31, cases/li14o16/v31
+(SAI: LEOS/recompute_20261021); the earlier runs with the wrong geometry are kept in
+the respective v3 directories. The MD is cases/li15o16/v3-md2 (20 frames);
+cases/li15o16/v3-md is the first MD attempt, which crashed after the first step and
+has only 1 frame.
 
-| 计算 | 目标 O2 单元（O16–O20） | 结论 |
+**Position of the hole.** Physically there is only 1 hole, but in the pure PBE
+calculation several O2 units appear oxidised in turn from frame to frame, and no O–O
+bond shortens (the bond of a localised superoxide should shorten from 1.55 Å to about
+1.33 Å). PBE thus spreads the hole over all O2 units, a known symptom of the PBE
+self-interaction error.
+
+To obtain a localised hole, Li15O16 is started from a structure with "the target
+peroxide pre-shortened to 1.354 Å + asymmetric magnetic moments" and scanned with
+PBE+U (U on O 2p); PBE and HSE06 single points are then run on the U = 8 eV geometry:
+
+| Calculation | Target O2 unit (O16–O20) | Conclusion |
 |---|---|---|
-| U = 0（纯 PBE） | 键长回到 1.530 Å，−1.98；空穴分摊到 6 个单元（−1.7 至 −2.0） | 只靠初始结构破缺不够，需要 U |
-| U = 4 | 空穴没有落在目标单元；两对 O2 解离 | 局域化不完全 |
-| U = 6 | 空穴落在 O25–O29（1.377 Å，−1.13）；5 对 O2 被拉长 | 局域化，但副作用大 |
-| U = 8 | 1.401 Å，−1.11；其余过氧根 −1.93 至 −2.00 | 局域化最好 |
-| PBE，用 U = 8 的几何 | −1.22，外加约 0.3 个电子的弥散部分，ghost = 7 | 部分局域 |
-| HSE06，用 U = 8 的几何 | −1.11，与 PBE+U 相同 | 杂化泛函确认 |
+| U = 0 (pure PBE) | Bond length returns to 1.530 Å, −1.98; the hole is spread over 6 units (−1.7 to −2.0) | Symmetry breaking in the initial structure alone is not enough; U is needed |
+| U = 4 | The hole does not land on the target unit; two O2 pairs dissociate | Localisation incomplete |
+| U = 6 | The hole lands on O25–O29 (1.377 Å, −1.13); 5 O2 pairs are stretched | Localised, but with large side effects |
+| U = 8 | 1.401 Å, −1.11; the other peroxides −1.93 to −2.00 | Best localisation |
+| PBE on the U = 8 geometry | −1.22, plus a diffuse part of about 0.3 electrons, ghost = 7 | Partly localised |
+| HSE06 on the U = 8 geometry | −1.11, the same as PBE+U | Confirmed by the hybrid functional |
 
-表中单元电荷按贪心的占据统计。U 加在 O 2p 上的副作用是把非目标过氧根拉长
-（U = 8 时 3 对到约 2.2 Å），所以结论要用无 U 或杂化泛函单点交叉检查，
-即表中最后两行。
+The unit charges in the table are counted from the greedy occupations. A side effect
+of U on O 2p is that the non-target peroxides are stretched (at U = 8, 3 pairs to
+about 2.2 Å), so the conclusion needs a cross-check by a single point without U or
+with a hybrid functional: the last two rows of the table.
 
-数据：data/v3/m5a_li2o2/polaron/（u0、u4、u6、u8、sp_pbe、sp_hse）。
+Data: cases/li15o16/polaron-{u0,u4,u6,u8,sp-pbe,sp-hse}.
 
-空穴具体在哪个 O2 单元，运输方法给不出可靠答案。所有计算中，运输与贪心的
-O 平均值都等于 −0.9375，但把空穴改判到相邻单元只多花约 0.005 个代价单位，
-R_site 只有 0.3–0.5。在这种等价位点之间，运输解落在哪个单元没有物理意义，
-可能与几何不一致；贪心逐个 WF 保留原始归属，反而与几何一致。合理的做法是：
-用 R_elem（约 91）确认总账，用 R_site 发现位点简并，具体位点交给键长
-（1.40 对 1.55 Å）和自旋密度判断。
+The flow cannot say reliably which O2 unit holds the hole. In all calculations the
+mean O of both the flow and greedy equals −0.9375, but moving the hole to a
+neighbouring unit costs only about 0.005 cost units more, and R_site is only 0.3–0.5.
+Between such equivalent sites the unit on which the flow solution lands has no
+physical meaning and may contradict the geometry; greedy keeps the original
+assignment of each WF and so does agree with the geometry. The sound procedure:
+confirm the total with R_elem (about 91), detect site degeneracy with R_site, and
+leave the specific site to the bond lengths (1.40 against 1.55 Å) and the spin
+density.
 
-### CeO2 氧空位
+### CeO2 oxygen vacancy
 
-从 CeO2 中移除一个 O 原子会留下 2 个电子，通常认为它们落在两个 Ce 上
-（Ce⁴⁺ → Ce³⁺）。计算用了 DFT+U，使 Ce 4f 电子局域。
+Removing one O atom from CeO2 leaves 2 electrons, which are usually taken to sit on
+two Ce (Ce⁴⁺ → Ce³⁺). The calculations use DFT+U to localise the Ce 4f electrons.
 
-| 体系 | 理想结果 | 运输 | 计算质量 |
+| System | Ideal result | Flow | Quality of the calculation |
 |---|---|---|---|
-| Ce4O8（完整） | 4 个 Ce⁴⁺ | [4, 4, 4, 4] | 电子数守恒到小数点后三位，无警告 |
-| Ce4O7（1 个氧空位） | 2 个 Ce³⁺ + 2 个 Ce⁴⁺ | [3, 3, 4, 4] | 同上 |
+| Ce4O8 (complete) | 4 Ce⁴⁺ | [4, 4, 4, 4] | Electron count conserved to three decimal places, no warnings |
+| Ce4O7 (1 oxygen vacancy) | 2 Ce³⁺ + 2 Ce⁴⁺ | [3, 3, 4, 4] | Same |
 
-历史数据中不加 U 的 Ce2O3 计算丢失了 0.30 个电子（dNe 警告）。
+In the legacy data, the Ce2O3 calculation without U loses 0.30 electrons (dNe
+warning).
 
-数据：data/v3/m5c_ceo2/。
+Data: cases/ce4o7/v3, cases/ce4o8/v3.
 
-### 富锂正极：价态时间序列
+### Li-rich cathodes: oxidation-state time series
 
-三个体系各取 x = 0、0.25、0.50 三个脱锂点。流程：MACE-MPA-0（预训练模型，
-未微调）各跑 50 ps 分子动力学 → 每 2.5 ps 取一帧（每点 20 帧，共 180 帧）→
-每帧做 DFT 单点（PBE+U，U 加在过渡金属上）和完整 MLWF → 运输判定。
+Each of the three systems is taken at three delithiation points, x = 0, 0.25 and
+0.50. Workflow: 50 ps of molecular dynamics for each with MACE-MPA-0 (pretrained
+model, not fine-tuned) → one frame every 2.5 ps (20 frames per point, 180 frames in
+all) → for each frame a DFT single point (PBE+U, U on the transition metals) and full
+MLWF → flow assignment.
 
-| 体系 | 结果 |
+| System | Result |
 |---|---|
-| Li2MnO3（有序，3d） | x = 0 / 0.25 / 0.50 时 Mn 平均价态为 +4.0 / +4.5 / +5.0，等于电荷计数 4 + 2x；每条 50 ps 序列最大漂移 0.000 |
-| Li2RuO3（有序，4d） | 与 Li2MnO3 相同：+4.0 / +4.5 / +5.0，最大漂移 0.000 |
-| NMC（Li1.2Ni0.13Mn0.54Co0.13O2，SQS 无序） | Li 和 O 全程为 +1 / −2，无漂移；过渡金属有帧间电荷涨落，Ni 的涨落从 x = 0 的 ±0.9 增大到 x = 0.50 的 ±1.7，x = 0.25 不在两者之间 |
+| Li2MnO3 (ordered, 3d) | At x = 0 / 0.25 / 0.50 the mean Mn oxidation state is +4.0 / +4.5 / +5.0, equal to the charge count 4 + 2x; the largest drift in each 50 ps series is 0.000 |
+| Li2RuO3 (ordered, 4d) | Same as Li2MnO3: +4.0 / +4.5 / +5.0, largest drift 0.000 |
+| NMC (Li1.2Ni0.13Mn0.54Co0.13O2, SQS disorder) | Li and O are +1 / −2 throughout, with no drift; the transition metals show charge fluctuations between frames; the Ni fluctuation grows from ±0.9 at x = 0 to ±1.7 at x = 0.50, and x = 0.25 does not lie between the two |
 
-同一数据上，贪心的 Mn 平均值为 3.984，逐帧涨落 ±0.047。
+On the same data the greedy Mn mean is 3.984, with a frame-to-frame fluctuation of
+±0.047.
 
-Li2RuO3 在完整 MLWF 流程下与 Li2MnO3 一样稳定，说明 4d 体系在 SCDM-only
-快速模式下的问题（见"效率"）是该模式特有的。
+Li2RuO3 is as stable as Li2MnO3 in the full MLWF workflow, so the problem of 4d
+systems in the SCDM-only fast mode (see "Efficiency") is specific to that mode.
 
-在 PBE+U（U 只加在金属上）下，脱锂产生的空穴全部由过渡金属承担
-（Mn、Ru 由 +4 变为 +5），O 一直为 −2。这与 Li2O2 的结果一致：O 2p 空穴
-要用 O 上的 U 或杂化泛函才能局域。哪种元素被氧化取决于泛函，LEOS 报告的
-是所用泛函下的结果。
+Under PBE+U (U on the metals only) the holes created by delithiation are all carried
+by the transition metals (Mn and Ru go from +4 to +5), and O stays at −2. This agrees
+with the Li2O2 result: an O 2p hole localises only with U on O or with a hybrid
+functional. Which element is oxidised depends on the functional; LEOS reports the
+result for the functional used.
 
-其他说明：抽取的帧普遍有 ghost 48–56 个，来自自动冻结窗口的余量和脱锂态的
-金属性，由总电子数上限处理。50 ps 内 MACE 轨迹中没有出现 O–O 二聚。NMC 的
-SQS 初始结构在前约 1 ps 有弛豫过程（瞬时温度到 930 K 后回落），不影响抽帧。
+Other notes: the sampled frames typically have 48–56 ghosts, which come from the
+margin of the automatic frozen window and the metallic character of the delithiated
+states, and are handled by the cap on the electron total. No O–O dimerisation occurs
+in the MACE trajectories within 50 ps. The SQS initial structure of NMC relaxes
+during roughly the first 1 ps (the instantaneous temperature reaches 930 K and then
+falls back), which does not affect the sampled frames.
 
-数据：data/m5b/timeseries/（逐帧序列）、data/m5b/acceptance/（汇总）。
-逐帧判定由 script/timeseries.py 完成，该脚本默认开启投影辅助判定
-（`--tier2 arbiter`）。
+Data: results/cathode_md/timeseries_*.tsv (frame-by-frame series),
+results/cathode_md/acceptance_*.json (summaries). The per-frame assignment is done by
+tools/timeseries.py, which enables projection-assisted arbitration by default
+(`--tier2 arbiter`).
 
-### Fe3O4：没有出现电荷序
+### Fe3O4: no charge order appears
 
-在立方常规胞上，用正确磁序、Verwey 型交替初值和 U(Fe d) = 4 eV 弛豫。
-元素平均正确（Fe +2.667，O −2.000），但没有出现位点电荷序，并有
-ghost = 48 警告。OUTCAR 显示体系收敛到半金属态（费米面穿过能带，磁矩
-39.7 μB/胞，理想值为 32）。在这种条件下立方 Fd-3m 胞本来就是电荷无序的
-半金属；Verwey 电荷序需要低温单斜超胞（P2/c 或 Cc）和更强的关联处理，
-这里没有计算。
+The cubic conventional cell is relaxed with the correct magnetic order, Verwey-type
+alternating initial values and U(Fe d) = 4 eV. The element means are correct
+(Fe +2.667, O −2.000), but no site charge order appears, and there is a ghost = 48
+warning. OUTCAR shows that the system converges to a half-metallic state (bands cross
+the Fermi level; magnetic moment 39.7 μB/cell, ideal value 32). Under these
+conditions the cubic Fd-3m cell is a charge-disordered half-metal anyway; Verwey
+charge order needs the low-temperature monoclinic supercell (P2/c or Cc) and a
+stronger treatment of correlation, which are not computed here.
 
-数据：data/v3/fe3o4_verwey/。
+Data: cases/fe3o4/v3-verwey/.
 
-## 6. 旧版程序失败体系的重算
+## 6. Recomputation of systems the old program failed on
 
-这 7 个目录原来用 v1/v2 程序和手写 wannier90 输入计算，均出过问题。用 v3
-重算的结果：
+These 7 directories were originally computed with the v1/v2 programs and hand-written
+wannier90 input, and all had problems. Results of the v3 recomputation:
 
-| 体系 | 旧版症状 | v3 结果 |
+| System | Symptom in the old version | v3 result |
 |---|---|---|
-| ReO3 | NELECT mismatch 中止（金属且电子数为奇数） | Re +6，O −2，R = 84；5 个 ghost 自动排除 |
-| MUMNOX（K 配合物） | 丢失 5.7 个电子，被跳过 | dNe = 8e-11，无警告；K、O、N、H 全对，C 为正常的混合价 |
-| LASWEH（Ag 配合物） | 丢失 3.4 个电子；强行计算时 Ag 被记为 +2 或 +3 | dNe = 5e-11，无警告；Ag 为 +1，O、N、H 全对。S 为 +6，磺酰胺的理想值是 +4，差在一条代价几乎持平的 S–C 键 |
-| VIRCEF（Ce 配合物） | N、C 混乱 | N、H 正确；Ce 为 +3（按自旋设置 WF 数后多余 WF 消失）；C、H 的残余错误来自 stray |
-| Ce18O36Co4CH4 初态 | 解纠缠多轮不收敛（Co4 团簇有金属性） | 18 个 Ce +4，36 个 O −2，CH4 正确，Co4 片段总价 0；stray 2，ghost 6 |
-| Ce18O36Co4CH4 过渡态、末态 | 同上，重跑时内存不足 | 8 GPU 下完成；Ce、O 不变；C–H 键断开，一个 H 以 H⁻ 转移到团簇，Co4 总价变为 +2 |
+| ReO3 | Aborted with NELECT mismatch (a metal with an odd electron count) | Re +6, O −2, R = 84; 5 ghosts excluded automatically |
+| MUMNOX (K complex) | Lost 5.7 electrons; skipped | dNe = 8e-11, no warnings; K, O, N, H all correct, C in its normal mixed valence |
+| LASWEH (Ag complex) | Lost 3.4 electrons; when the calculation was forced, Ag was assigned +2 or +3 | dNe = 5e-11, no warnings; Ag is +1, O, N, H all correct. S is +6 whereas the ideal value for a sulfonamide is +4; the difference is one S–C bond with almost tied costs |
+| VIRCEF (Ce complex) | N and C scrambled | N and H correct; Ce is +3 (the surplus WFs vanish once the WF number is set per spin); the residual errors in C and H come from strays |
+| Ce18O36Co4CH4 initial state | Disentanglement did not converge over many rounds (the Co4 cluster is metallic) | 18 Ce +4, 36 O −2, CH4 correct, Co4 fragment total 0; stray 2, ghost 6 |
+| Ce18O36Co4CH4 transition state, final state | Same, and out of memory on rerun | Completed on 8 GPUs; Ce and O unchanged; the C–H bond breaks, one H transfers to the cluster as H⁻, and the Co4 total becomes +2 |
 
-旧版失败的两个原因：
+The two causes of the old failures:
 
-1. NELECT mismatch 的原因是手写的 wannier90.win 缺少解纠缠冻结窗口
-   `dis_froz_max`，与解纠缠迭代数无关。同批体系中只有写了窗口的 VIRCEF
-   没有丢电子。v3 的自动冻结窗口（AUTO_WINDOW）解决了这个问题。
-2. 旧输入里的 `kmesh_tol = 1e-5` 是它们的 4×4×2 k 网格能通过 wannier90
-   b 向量检查的原因（使用方法见 patch/README.md）。
+1. NELECT mismatch came from the hand-written wannier90.win lacking the
+   disentanglement frozen window `dis_froz_max`; it had nothing to do with the number
+   of disentanglement iterations. In that batch only VIRCEF, whose input had the
+   window, lost no electrons. The automatic frozen window (AUTO_WINDOW) of v3 solves
+   this.
+2. `kmesh_tol = 1e-5` in the old inputs is what let their 4×4×2 k-mesh pass the
+   wannier90 b-vector check (usage in patch/README.md).
 
-数据：data/v3/legacy_rerun/；逐原子结果见
-data/v3/legacy_rerun/pyleos_rerun_20260709.txt。
+Data:
+cases/{ce18o36co4ch4_is,ce18o36co4ch4_ts,ce18o36co4ch4_fs,lasweh,mumnox,vircef}/v3;
+per-atom results in results/legacy_rerun_pyleos.txt.
 
-### 甲烷活化的三个像
+### The three images of methane activation
 
-Co4 片段（`--fragment 55,56,57,58`）的电子数为 60 → 58 → 58，总氧化态为
-0 → +2 → +2（初态 → 过渡态 → 末态）。过渡态和末态各出现一个 H⁻，全胞
-电荷守恒：CH3(−1) + H⁻(−1) + Co4(+2) = 0，与初态的 CH4(0) + Co4(0) 一致。
+The Co4 fragment (`--fragment 55,56,57,58`) has 60 → 58 → 58 electrons and a total
+oxidation state of 0 → +2 → +2 (initial state → transition state → final state). One
+H⁻ appears in each of the transition and final states, and the charge of the cell is
+conserved: CH3(−1) + H⁻(−1) + Co4(+2) = 0, matching CH4(0) + Co4(0) of the initial
+state.
 
-氧化态只说明"H 元素里有一个 −1"，不指明是哪个原子。用 POSCAR 的键长核对：
-只有 H60 沿路径断键（C–H 距离 1.10 → 2.35 → 2.92 Å），并与团簇成键
-（Co–H 1.60 / 1.66 Å），与氧化态结果对应同一个原子。
+The oxidation states only say that "one of the H is −1", not which atom. A check
+against the POSCAR bond lengths: only H60 breaks its bond along the path (C–H
+distance 1.10 → 2.35 → 2.92 Å) and bonds to the cluster (Co–H 1.60 / 1.66 Å), so the
+geometry and the oxidation states point to the same atom.
 
-同一数据上贪心给出物理上不可能的值：末态 C −6，过渡态 H 在 −4 到 +1 之间，
-Ce 平均值随像在 3.83–3.89 之间变化。
+On the same data greedy gives physically impossible values: C −6 in the final state,
+H between −4 and +1 in the transition state, and a Ce mean that varies over 3.83–3.89
+from image to image.
 
-Co 原子之间的归属是简并的：Ce、O 的 R 为 80–92，四个 Co 只有 4–22。同样
-总价 +2，过渡态的解记在 Co57 一个原子上，末态的解分给 Co57 和 Co58 各 +1，
-两者都是最优解。这种情况下应该看 Co4 片段的总价，而不是单个 Co。
+The assignment among the Co atoms is degenerate: R is 80–92 for Ce and O, but only
+4–22 for the four Co. For the same total of +2, the transition-state solution books
+it all on Co57, and the final-state solution gives +1 each to Co57 and Co58; both are
+optimal. In this situation read the total of the Co4 fragment, not the single Co.
 
-基态：三个像各用磁矩 6 和 10 两种初值重算，初态收敛到磁矩 6，过渡态 4，
-末态 6；末态两种初值的能量相同（−490.23423 eV）。数据：
-data/v3/rerun_20260711/g1_methane/groundstate_verdict.tsv。
+Ground state: each of the three images is recomputed from two initial magnetic
+moments, 6 and 10. The initial state converges to moment 6, the transition state to
+4, the final state to 6; the two initial values give the same energy for the final
+state (−490.23423 eV). Data: results/methane_groundstate_verdict.tsv.
 
-集群原始数据与本地入库 EOSCAR 的 md5 一致，对应作业 602731、604671、
-604672。
+The md5 sums of the raw cluster data and of the EOSCAR files in the local repository
+agree; the jobs are 602731, 604671 and 604672.
 
-## 7. 参数选择
+## 7. Parameter choices
 
-### 电负性权重 β
+### Electronegativity weight β
 
-β 是代价函数中电负性项的权重，默认 10。对 β 的全量扫描（data/v3/
-beta_scan_20260712.tsv，script/beta_scan.py）：
+β is the weight of the electronegativity term in the cost function; the default
+is 10. Full scan over β (results/scan_beta.tsv, tools/beta_scan.py):
 
-| β | 通过数 | 相对 β = 10 的变化 |
+| β | Pass count | Change relative to β = 10 |
 |---|---|---|
-| 3 | 55 | 7 个 X–H 和硫链类案例由通过变为不通过 |
+| 3 | 55 | 7 X–H and sulfur-chain cases go from pass to fail |
 | 5 | 58 | |
-| 8 | 63 | RhCl(CO)(PPh3)2 变为通过 |
-| 9–12 | 62 | 无 |
-| 15 起 | | Cr(CO)6 变为不通过 |
-| 20 起 | | TMAO 也变为不通过 |
+| 8 | 63 | RhCl(CO)(PPh3)2 becomes pass |
+| 9–12 | 62 | None |
+| 15 and above | | Cr(CO)6 becomes fail |
+| 20 and above | | TMAO also becomes fail |
 
-8 到 12 之间结果稳定，默认取 10。β 太小时 X–H 键会被判错，而且没有警告。
-这次扫描在钨氯化物换用修正结构之前完成，所以 β = 10 时是 62 而不是现在的 64。
+Results are stable between 8 and 12; the default is 10. When β is too small, X–H
+bonds are misassigned, and without any warning. This scan predates the corrected
+tungsten chloride structures, which is why β = 10 gives 62 here and not the present
+64.
 
-### 投影辅助判定（TAU、PMARGIN）
+### Projection-assisted arbitration (TAU, PMARGIN)
 
-默认的代价只用 WF 中心的几何位置和电负性。投影辅助判定另外用 EOSCAR 的
-#WP 块：每个 WF 在各原子 PAW 投影上的权重。它不是默认设置，需要显式开启。
+The default cost uses only the geometric position of the WF centre and the
+electronegativity. Projection-assisted arbitration also uses the #WP block of EOSCAR:
+the weight of each WF on the PAW projectors of each atom. It is not the default and
+must be switched on explicitly.
 
-规则：只有当某个 WF 的前两个候选原子代价差小于 TAU，且投影权重领先超过
-PMARGIN 时，才按投影改判。几何上明确的归属不会被改变。
+Rule: a WF is reassigned by projection only when the cost difference between its two
+best candidate atoms is below TAU and the projection weight leads by more than
+PMARGIN. Assignments that are geometrically clear are never changed.
 
-选择这个规则而不是"在代价上线性减去投影权重"：在 38 个带 #WP 数据的案例上，
-两种方式最好成绩相同，但线性方式只在一个参数值附近有效（γ = 0.5 和 3.0 都
-回到基线），而且投影本身偏向重原子，线性方式会把电子拉向重原子（CSe2 上
-出现了这种情况）。
+This rule is chosen over "subtracting the projection weight linearly from the cost".
+On the 38 cases with #WP data both reach the same best score, but the linear form
+works only near one parameter value (γ = 0.5 and 3.0 both fall back to the baseline).
+The projection itself also favours heavy atoms, so the linear form pulls electrons
+towards heavy atoms (this happened on CSe2).
 
-参数扫描：TAU × PMARGIN 为 6 × 5 网格，在 38 个 #WP 基准案例和 6 个旧版程序
-体系上运行（script/arbiter_scan.py，data/v3/arbiter_scan_20260712.tsv）。
+Parameter scan: a 6 × 5 grid of TAU × PMARGIN, run on the 38 #WP benchmark cases and
+the 6 old-program systems (tools/arbiter_scan.py,
+results/scan_arbiter_20260712.tsv).
 
-- 不开启时基线为 31/37（分母不含 Wannier 化失败的 WCl5）。
-- PMARGIN 在 0.20–0.30、TAU 在 0.25–1.5 之间的 8 个格点都安全，不新增错误。
-- PMARGIN 太低时，H 1s 投影的假象会把 C–H、N–H 键判错：0.05 时旧版体系中
-  37 个 H 被判错（VIRCEF 24 个 H 全部变成 −1，MUMNOX 13 个）。TAU ≥ 0.5 时，
-  PMARGIN ≤ 0.10 都不安全。
-- 默认取 (TAU, PMARGIN) = (1.0, 0.20)，周围格点都安全。基线由 31/37 提高到
-  33/37（修正 hi3 和 RhCl(CO)(PPh3)2），没有新增错误。
+- Switched off, the baseline is 31/37 (the denominator excludes WCl5, whose
+  wannierisation failed).
+- The 8 grid points with PMARGIN in 0.20–0.30 and TAU in 0.25–1.5 are all safe: they
+  add no new errors.
+- When PMARGIN is too low, artefacts of the H 1s projection misassign C–H and N–H
+  bonds: at 0.05, 37 H in the old-program systems are misassigned (all 24 H of VIRCEF
+  become −1, and 13 in MUMNOX). For TAU ≥ 0.5, every PMARGIN ≤ 0.10 is unsafe.
+- The default is (TAU, PMARGIN) = (1.0, 0.20), and all neighbouring grid points are
+  safe. The baseline rises from 31/37 to 33/37 (hi3 and RhCl(CO)(PPh3)2 are
+  corrected) with no new errors.
 
-适用范围：在含大量 C–H 键的有机配体上（如 VIRCEF），H 1s 投影在键中点附近
-权重偏大，可能把 C–H 键电子错判给 H。38 个基准案例中的含氢体系没有出现这种
-错误。因此投影辅助判定适合无机体系和近简并情况，含大量 C–H 键的分子体系
-慎用。
+Scope: on organic ligands with many C–H bonds (e.g. VIRCEF) the H 1s projection has
+too much weight near the bond midpoint and may wrongly give the electrons of a C–H
+bond to H. The hydrogen-containing systems among the 38 benchmark cases show no such
+error. Projection-assisted arbitration therefore suits inorganic systems and
+near-degenerate situations; use it with caution on molecular systems with many C–H
+bonds.
 
-## 8. 质量警告与可靠性
+## 8. Quality warnings and reliability
 
-### 可靠性指标 R 的表现
+### Behaviour of the reliability index R
 
-R 的定义见 PLAN.md"可靠性指标"。74 个案例（data/v3/reliability_74.tsv）
-中，64 个通过案例的 R_elem 中位数为 83.0，8 个未通过案例为 25.55。hi3
-（25.2）、RhCl(CO)(PPh3)2（21.7）、CSe2（25.0 和 25.9）、WCl5（3.6）的
-R_elem 都很低。Ca3AuN 的 R_site = 7.1 反映了游离电子归属的任意性；H3PO3
-的 R = 49.7，反映 H 与 P 的电负性很接近。
+R is defined in PLAN.md, "Reliability index R". Over the 74 cases
+(results/bench74_golden.tsv), the median R_elem is 83.0 for the 64 passing cases and
+25.55 for the 8 failing ones. R_elem is very low for hi3 (25.2), RhCl(CO)(PPh3)2
+(21.7), CSe2 (25.0 and 25.9) and WCl5 (3.6). R_site = 7.1 for Ca3AuN reflects the
+arbitrary placement of the free electrons; R = 49.7 for H3PO3 reflects how close H
+and P are in electronegativity.
 
-R 高不代表结果与参考答案一致。Ca3AuN（75.6）和 WAu12（74.0）未通过但
-R_elem 较高，两者都是参考答案的惯例与电负性规则不同。R 衡量的是在当前输入
-下这个解有多稳定；如果输入本身有系统性错误（错误结构、Wannier 化失败），
-解也可以既稳定又错误。判断结果是否可信要把 R 和 stray、ghost、dNe 三个
-警告一起看。
+A high R does not mean agreement with the reference. Ca3AuN (75.6) and WAu12 (74.0)
+fail with a fairly high R_elem; in both, the convention of the reference differs from
+the electronegativity rule. R measures how stable the solution is for the given
+input. If the input itself is systematically wrong (wrong structure, failed
+wannierisation), the solution can be both stable and wrong. To judge whether a result
+can be trusted, read R together with the three warnings stray, ghost and dNe.
 
-### 带 ghost 警告的磁性体系复验
+### Re-check of magnetic systems with ghost warnings
 
-13 个自旋极化且带 ghost 警告的体系，用 v3.1 补丁（按自旋分别设置 WF 数）
-重算后，元素平均结果不变。自旋不对称的体系中 ghost 数下降，例如 Fe3O4
-由 42 降到 20。
+13 spin-polarised systems with ghost warnings were recomputed with the v3.1 patch
+(WF number set per spin); the element means do not change. In the spin-asymmetric
+systems the ghost count drops, e.g. from 42 to 20 for Fe3O4.
 
-数据：data/v3/rerun_20260711/ghost_ab_summary.tsv。
+Data: results/ghost_ab_summary.tsv.
 
-### ghost 对金属价态的系统偏差
+### Systematic bias of ghosts on metal oxidation states
 
-总电子数上限去掉多余的 WF 时，先去掉代价最高的。代价包含电负性项，所以
-上游丢失的电子在账面上会集中算到电负性最低的原子（通常是金属）头上：
-LASWEH 的 Ag 曾被记为 +2 或 +3（应为 +1），VIRCEF 的 Ce、MUMNOX 的 C 也
-是这样。
+When the cap on the electron total removes surplus WFs, it removes the costliest
+first. The cost contains the electronegativity term, so electrons lost upstream are
+booked mostly against the least electronegative atoms (usually metals): Ag in LASWEH
+was once assigned +2 or +3 (it should be +1), and the same happened to Ce in VIRCEF
+and C in MUMNOX.
 
-因此 ghost > 0 时，电正性金属的价态可能被高估 1–2；ghost = 0 时没有这个
-问题。解决办法是修好上游计算（加冻结窗口或用自动冻结窗口重算）。
+So with ghost > 0 the oxidation state of an electropositive metal may be
+overestimated by 1–2; with ghost = 0 the problem does not arise. The remedy is to fix
+the upstream calculation (add a frozen window, or recompute with the automatic frozen
+window).
 
-VIRCEF 的一组对照：离线 wannier90 用共享的 WF 数时 Ce 为 +4，库模式按自旋
-设置 WF 数时 Ce 为 +3，差别就来自这一偏差。数据：data/v3/w90_offline/。
+A VIRCEF comparison: offline wannier90 with a shared WF number gives Ce +4, library
+mode with the WF number set per spin gives Ce +3; the difference comes from this
+bias. Data: cases/li2mno3/w90-library, cases/li2mno3/w90-offline,
+cases/vircef/w90-offline.
 
-## 9. 效率
+## 9. Efficiency
 
-### SCDM-only 快速模式
+### SCDM-only fast mode
 
-SCDM-only 跳过 Wannier 函数的迭代优化，直接用 SCDM 初猜的中心做判定。
+SCDM-only skips the iterative optimisation of the Wannier functions and assigns
+directly from the centres of the SCDM initial guess.
 
-| 测试 | 与完整计算一致 | wannier90 耗时 |
+| Test | Agreement with the full calculation | wannier90 time |
 |---|---|---|
-| 38 个案例 | 元素平均 32/38（84%），逐原子 19/38 | 约降低 86 倍（CO2：2 秒 → 0.023 秒） |
-| 96 原子 Li2MnO3 脱锂帧，12 对 | 元素平均 0/12 | 降低 67 倍（554 → 8.3 秒/帧） |
+| 38 cases | element means 32/38 (84%), per-atom 19/38 | about 86 times lower (CO2: 2 s → 0.023 s) |
+| 96-atom Li2MnO3 delithiation frames, 12 pairs | element means 0/12 | 67 times lower (554 → 8.3 s/frame) |
 
-38 个案例中不一致的 6 个都是两类体系：4d/5d 过渡金属卤化物（WCl4/5/6、
-MoCl2，d 轨道对初猜敏感）和离域键（GaSe）。CSe2 在快速模式下碰巧给出了
-参考答案。
+The 6 cases among the 38 that disagree fall into two classes: halides of 4d/5d
+transition metals (WCl4/5/6, MoCl2; d orbitals are sensitive to the initial guess)
+and delocalised bonds (GaSe). CSe2 happens to give the reference in the fast mode.
 
-Li2MnO3 是混合价且有金属性的体系，快速模式全部失败，但每个失败帧都有约
-288 个 stray 的警告（完整计算为 0–4 个）。批跑脚本的分级模式
-（`batch.py stage --mode tiered`）在出现质量警告或含 4d/5d 金属时自动改用
-完整计算，这 12 帧全部被转去完整计算。
+Li2MnO3 is a mixed-valence system with metallic character, and the fast mode fails on
+every frame, but every failed frame carries a warning of about 288 strays (0–4 in the
+full calculation). The tiered mode of the batch script
+(`batch.py stage --mode tiered`) switches to the full calculation automatically on a
+quality warning or when 4d/5d metals are present; all 12 frames were redirected to
+the full calculation.
 
-本文其他结果都使用完整 MLWF。快速模式只用于小体系或绝缘体的高通量筛查和
-轨迹逐帧分析。
+All other results in this document use full MLWF. The fast mode is only for
+high-throughput screening of small systems or insulators and for frame-by-frame
+analysis of trajectories.
 
-38 案例对比的原始数据不在仓库中。
+The raw data of the 38-case comparison are not in the repository.
 
-### 离线 wannier90 与线程化 MKL
+### Offline wannier90 and threaded MKL
 
-把 wannier90 从 GPU 作业里拆出来，在 CPU 节点上离线运行。测试帧为 96 原子
-Li2MnO3，两个自旋同时运行（data/v3/e2e_pipeline_20260712.tsv）：
+wannier90 is split off from the GPU job and run offline on CPU nodes. The test frame
+is the 96-atom Li2MnO3, with the two spins run at the same time
+(results/w90_e2e_pipeline.tsv):
 
-| 方式 | wannier90 墙钟 | GPU 段 |
+| Mode | wannier90 wall time | GPU part |
 |---|---|---|
-| wannier90 库模式在 GPU 作业内运行 | 506.5 秒 | 整帧 816.9 秒，4 张卡全程占用 |
-| GPU 只导出，CPU 离线运行 wannier90 | 70.0 秒 | 307.1 秒（GPU 占用时间减少 62%） |
-| 同上，加线程化 MKL（每进程 2 线程） | 62.0 秒 | 307.1 秒 |
-| 同上，第二自旋 WF 数由 288 减到 240 | 48.1 秒 | 307.1 秒 |
+| wannier90 library mode inside the GPU job | 506.5 s | whole frame 816.9 s, all 4 cards occupied throughout |
+| GPU only exports, wannier90 runs offline on CPU | 70.0 s | 307.1 s (GPU occupancy reduced by 62%) |
+| Same, plus threaded MKL (2 threads per process) | 62.0 s | 307.1 s |
+| Same, with the WF number of the second spin reduced from 288 to 240 | 48.1 s | 307.1 s |
 
-线程化 MKL：参考版数学库对线程数没有响应；换成线程化 MKL 后，8 进程 ×
-4 线程时解纠缠每次迭代 0.055–0.065 秒、局域化 0.074 秒，比单核参考版快约
-16 倍和 13 倍（18 组扫描，data/v3/w90_threads_scan_20260712.tsv）。正常
-收敛的通道结果与参考版逐位相同，18 次运行的 Ω_I 全部相同。
+Threaded MKL: the reference maths library does not respond to the thread count. With
+threaded MKL, at 8 processes × 4 threads, disentanglement takes 0.055–0.065 s per
+iteration and localisation 0.074 s, about 16 and 13 times faster than the single-core
+reference build (scan of 18 settings, results/w90_threads_scan.tsv). Channels that
+converge normally give results bit-identical to the reference build, and Ω_I is the
+same in all 18 runs.
 
-两点限制：这个体系 k 点少（nk = 8），读 .mmn/.amn 的固定 IO 约 30 秒，
-占了墙钟的大部分，体系越大线程化收益越明显；两个自旋并发时内存带宽是瓶颈，
-每进程 2 线程最好，4 线程反而变慢（72.2 秒）。
+Two limits. This system has few k-points (nk = 8), and the fixed IO of reading
+.mmn/.amn, about 30 s, takes most of the wall time; the larger the system, the more
+threading gains. With the two spins running concurrently, memory bandwidth is the
+bottleneck: 2 threads per process is best, and 4 threads is slower (72.2 s).
 
-离线模式与库模式在收敛通道上逐 WF 结果相同。构建和运行方法见
-patch/README.md。
+On converged channels the offline mode and the library mode give the same result WF
+by WF. Build and run instructions are in patch/README.md.
 
 ### gpuw90
 
-gpuw90 是本仓库里用 PyTorch 重写的 wannier90 解纠缠和局域化（CPU/CUDA 同一
-份代码）。在 4 个纠缠带验收通道上，Ω_I 与 wannier90 相差 10⁻⁹ Å² 量级，
-解纠缠迭代数与 wannier90 相同。
+gpuw90 is the PyTorch rewrite, in this repository, of the disentanglement and
+localisation of wannier90 (one code for CPU and CUDA). On the 4 entangled-band
+acceptance channels Ω_I differs from wannier90 on the order of 10⁻⁹ Å², and the
+number of disentanglement iterations is the same as in wannier90.
 
-在 96 原子富锂正极帧（288 个 WF）上，V100 每次迭代解纠缠 0.079 秒、局域化
-0.041 秒，比集群上的串行 wannier90 快约 14 倍和 22 倍；纯 CPU 的 torch 版
-快约 4.6 倍。按 554 秒/帧的基线估算，两个自旋的 Wannier 部分可降到约半分钟。
+On a 96-atom Li-rich cathode frame (288 WFs), a V100 takes 0.079 s per
+disentanglement iteration and 0.041 s per localisation iteration, about 14 and 22
+times faster than serial wannier90 on the cluster; the torch version on pure CPU is
+about 4.6 times faster. Against the baseline of 554 s/frame, the Wannier part for the
+two spins would come down to about half a minute.
 
-详见 [gpuw90/README.md](../gpuw90/README.md)。
+Details in [gpuw90/README.md](../gpuw90/README.md).
 
-### 热启动
+### Warm start
 
-热启动把上一帧的 Wannier 中心作为引导中心（guiding centres）写进下一帧的
-wannier90 输入。在 96 原子 Li2MnO3 脱锂超胞的 40 步 AIMD 上（每 5 步分析一次，
-共 8 个分析步），没有加速效果：
+A warm start writes the Wannier centres of the previous frame into the wannier90
+input of the next frame as guiding centres. On a 40-step AIMD of the 96-atom
+delithiated Li2MnO3 supercell (analysed every 5 steps, 8 analysis steps in all) it
+gives no speed-up:
 
-| 设置 | 分析步平均 | 全轨迹总时长 |
+| Setting | Mean analysis step | Whole trajectory |
 |---|---|---|
-| 开启热启动 | 572 秒 | 6742.6 秒 |
-| 关闭热启动 | 546 秒 | 6532.4 秒 |
+| Warm start on | 572 s | 6742.6 s |
+| Warm start off | 546 s | 6532.4 s |
 
-原因是这里的初猜来自 SCDM，质量已经足够好，引导中心带来的只有额外开销。
-这个选项保留给不用 SCDM 初猜的场景。另外，分析步比普通 MD 步多花约 525 秒
-（wannier90 加 LEOS），这是 SCDM-only 在轨迹中能节省时间的上限。
+The reason is that the initial guess here comes from SCDM and is already good enough,
+so the guiding centres only add overhead. The option is kept for cases without an
+SCDM initial guess. Also, an analysis step costs about 525 s more than an ordinary MD
+step (wannier90 plus LEOS); this is the upper limit of what SCDM-only can save in a
+trajectory.
 
-数据：data/m5b/ws_bench/。
+Data: results/cathode_md/warmstart_*.
 
-### 分析耗时
+### Analysis time
 
-pyleos 在笔记本上完成 74 个案例的运输判定约需 25 秒（纯 Python 标准库，
-不计算 R）；计算 R 需要几分钟。
+On a laptop pyleos assigns the 74 cases by the flow in about 25 s (pure Python
+standard library, without R); computing R takes a few minutes.
 
-## 10. 已知限制
+## 10. Known limitations
 
-- **轨迹中占据数不更新。** EOS_PREPARE_MLWF 只在第一步调用，轨迹第 2 步起
-  仍按第一步的 WF 数处理。如果占据数增加，电子数守恒检查（EOS_NELECT_ABORT）
-  会中止计算并报告，不会给出错误结果。
-- **wannier90 输入长度上限。** .win 处理上限为 20000 行、每行 255 列，超出
-  部分被截断。实际输入远低于这个上限；一旦超出，wannier90 会报错。
-- **WCl5** 的 Wannier 化在两种晶格下都失败（见"典型案例"）。
-- **VIRCEF 的 C、H 残余错误**来自 stray，即 Wannier 化质量，不是 ghost 问题。
-- **#WP 数据有平台差异。** GPU（nvhpc）版和 CPU（Intel）版补丁产出的 #WP
-  每原子聚合值相差约一倍，原因未查明。不同平台产出的 #WP 不能混用（见
-  patch/README.md）。
-- **位点简并。** 等价原子之间（同核键两端、金属簇内、等价 O2 单元）的电子
-  归属不唯一，此时应看元素平均或片段总价，单个原子的值不可靠。
+- **Occupations are not updated along a trajectory.** EOS_PREPARE_MLWF is called only
+  at the first step; from step 2 on, the trajectory still uses the WF number of the
+  first step. If the occupation increases, the electron-conservation check
+  (EOS_NELECT_ABORT) aborts the calculation and reports it; no wrong result is
+  produced.
+- **Length limit of the wannier90 input.** The .win is processed up to 20000 lines of
+  255 columns each; anything beyond is truncated. Real inputs are far below this
+  limit; if it is exceeded, wannier90 reports an error.
+- **WCl5**: wannierisation fails on both lattices (see "Case studies").
+- **The residual C and H errors of VIRCEF** come from strays, i.e. from the quality
+  of the wannierisation, not from ghosts.
+- **#WP data differ between platforms.** The per-atom aggregated #WP values from the
+  GPU (nvhpc) and CPU (Intel) builds of the patch differ by about a factor of two,
+  for an unknown reason. #WP data from different platforms must not be mixed (see
+  patch/README.md).
+- **Site degeneracy.** The assignment of electrons among equivalent atoms (the two
+  ends of a homonuclear bond, the atoms of a metal cluster, equivalent O2 units) is
+  not unique. Read the element mean or the fragment total; single-atom values are
+  unreliable.

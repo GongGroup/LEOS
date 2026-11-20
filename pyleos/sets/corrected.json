@@ -1,0 +1,17 @@
+{
+ "_comment": "Structure-corrected variant of the 74-case benchmark (python3 -m pyleos bench full --corrected). Each listed case is scored on the named run, whose structure replaces one marked wrong in cases/STRUCTURES.tsv; reference answers are unchanged. The golden table results/bench74_golden.tsv keeps the archived runs. Cases marked wrong or suspect but not listed here: rhcl_co__p_c6h5_3_2 (the correct crystal is in the licensed CSD only; the archived cell is the SO2 adduct), AuClB_C6H5_3_P_C6H5_3_2 (transcription corrupted, no real compound of this formula, no reference), hi3 (no solid HI3 exists) and cucl4 (neutral CuCl4 does not exist, no reference).",
+ "cases": {
+  "v1_mol/CO": {"run": "co/v31", "why": "the archived cell holds two O=C-C=O molecules; alpha-CO, Materials Project mp-11875"},
+  "v1_oxide/li2o2": {"run": "li2o2/v3", "why": "the archived input put both Li on one site (scaled Cartesian coordinates); Foppl Li2O2, COD 1514084, computed for the homonuclear test set"},
+  "v1_oxide/re2": {"run": "re2/v31", "why": "the archived input placed the two Re 4.8 A apart (scaled Cartesian coordinates); the intended 2.40 A dimer"},
+  "v1_oxide/sno": {"run": "sno/v31", "why": "hypothetical rock salt; romarchite, COD 9011217"},
+  "v1_oxide/ti2o3": {"run": "ti2o3/v31", "why": "rutile TiO2 with one O removed; corundum type, COD 9008082"},
+  "v1_oxide/cuo": {"run": "cuo/v31", "why": "hypothetical rock salt; tenorite, COD 9014580"},
+  "v1_oxide/ce2o3": {"run": "ce2o3/v31", "why": "idealised hand-built cell; A-type Ce2O3, Materials Project mp-2721"},
+  "v1_oxide/recl4": {"run": "recl4/v31", "why": "isolated tetrahedral molecule; beta-ReCl4, COD 4123951"},
+  "v1_oxide/na2cro4": {"run": "na2cro4/v31", "why": "isolated unrelaxed cluster; Na2CrO4 Cmcm, COD 2107101"},
+  "v1_oxide/namno4": {"run": "namno4/v31", "why": "isolated unrelaxed cluster; AgMnO4-type P2_1/n, Materials Project mp-765753"},
+  "wave1/n2o": {"run": "n2o/v31", "why": "ordered model 14% denser than alpha-N2O; P2_13 ordered approximant of the Pa-3 cell (COD 1010059)"},
+  "wave2/n4s4": {"run": "n4s4/v31", "why": "PBE cell without dispersion, volume +25%; experimental S4N4, COD 9008994"}
+ }
+}

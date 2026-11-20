@@ -1,169 +1,219 @@
-# LEOS 术语表
+# LEOS glossary
 
-本仓库文档统一使用下列术语。方法说明见 docs/PLAN.md，结果见 docs/RESULTS.md。
+The documents of this repository use the terms below. Method: docs/PLAN.md.
+Results: docs/RESULTS.md.
 
-## 基本概念
+## Basic concepts
 
-**氧化态（OS，oxidation state）**
-假想把每条键的电子全部判给电负性更大的一端后，原子相对中性时多出或缺少的
-电子数，是整数。它是记账约定，不是可测量的物理量。
-不要与化合价（valence，成键能力）或电荷（Bader 等方法给出的连续值）混用。
+**Oxidation state (OS)**
+The number of electrons an atom has lost or gained relative to the neutral
+atom once every bond pair is given whole to the more electronegative end. An
+integer. It is a bookkeeping convention, not a measurable quantity. Do not mix
+it with valence (bonding capacity) or charge (the continuous values of Bader
+and similar methods).
 
-**Wannier 函数（WF）**
-由 DFT 占据态变换得到的局域电子团，有中心坐标和 spread。闭壳层计算
-（ISPIN = 1）每个 WF 装 2 个电子；自旋极化计算（ISPIN = 2）每个自旋通道的
-每个 WF 装 1 个电子。
+**Wannier function (WF)**
+A localised packet of electrons obtained by transforming the occupied DFT
+states; it has a centre and a spread. In a closed-shell calculation
+(ISPIN = 1) each WF holds 2 electrons; in a spin-polarised one (ISPIN = 2)
+each WF of each spin channel holds 1.
 
-**Wannier 中心**
-WF 的中心坐标（笛卡尔坐标，Å），是判断归属的几何依据。中心紧贴某原子时通常
-是孤对电子，落在两个原子之间时是共价键。
+**Wannier centre**
+The centre of a WF (Cartesian, Å), the geometric basis of the assignment. A
+centre close to one atom is usually a lone pair; a centre between two atoms is
+a covalent bond.
 
-**spread**
-WF 的空间展宽（Å²），衡量 Wannier 化的质量。定域良好的 WF 一般在 1–2 Å² 以下。
+**Spread**
+The spatial extent of a WF (Å²), a measure of the quality of the Wannier step.
+A well-localised WF is generally below 1–2 Å².
 
 **EOSCAR**
-LEOS VASP 补丁输出的文件，pyleos 的输入。包含：逐原子表（贪心结果列
-OS(int)，运输结果列 OS(flow)）、#WF 块（每个 WF 的中心、spread、占据数）、
-#WP 块（每个 WF 在各原子 PAW 投影上的权重），以及电子丢失诊断块。
+The file written by the LEOS VASP patch and read by pyleos. It holds the
+per-atom table (greedy column OS(int), flow column OS(flow)), the #WF block
+(centre, spread and occupation of every WF), the #WP block (weight of every WF
+on the PAW projectors of each atom) and the electron-loss diagnostics.
 
-## 分配
+## Assignment
 
-**贪心（greedy）**
-对照方法：每个 WF 独立判给最近（考虑电负性）的原子，WF 之间互不知情。可能
-给出物理上不可能的结果，例如一个 S 收到 14 个电子。结果在 EOSCAR 的
-OS(int) 列。
+**Greedy**
+The baseline: each WF goes, on its own, to the nearest atom (with an
+electronegativity correction), and the WFs know nothing of each other. It can
+give physically impossible answers, such as one S receiving 14 electrons.
+Column OS(int) of EOSCAR.
 
-**运输（最小费用流）**
-LEOS 的分配方法：把所有 WF 的电子一起分配给原子，每个原子有接收上下限，
-求总代价最小的方案。电子数和容量都是整数，所以最优解是整数。论文中首次出现时
-写作 "minimum-cost-flow / optimal-assignment formulation"，以免被理解为电子
-输运。
+**Minimum-cost flow ("the flow")**
+The LEOS assignment: the electrons of all WFs are distributed over the atoms
+together, each atom has a lower and an upper limit on what it may receive, and
+the plan of least total cost is taken. Electron counts and capacities are
+integers, so the optimum is integral. The code calls it transport
+(`transport.py`); in the paper the first mention reads "minimum-cost-flow /
+optimal-assignment formulation", so that it is not read as electron transport.
 
 **OS(flow)**
-EOSCAR 逐原子表的最后一列，是 VASP 补丁内部完成的运输分配结果（INCAR 参数
-EOS_FLOW，默认开），与 pyleos 默认设置的结果逐原子相同。
+The last column of the per-atom table of EOSCAR: the flow assignment computed
+inside the VASP patch (INCAR tag EOS_FLOW, on by default). It equals the
+pyleos default atom by atom.
 
-**代价**
-把一个 WF 的电子给某个原子的代价：d² + β·(1 − χ/χmax)。d 是 WF 中心到原子的
-距离，χ 是电负性（默认 Allen 标度），β 默认 10。
+**Cost**
+The cost of giving the electrons of a WF to an atom: d² + β·(1 − χ/χmax). d is
+the distance from the WF centre to the atom, χ the electronegativity (Allen
+scale by default), β = 10 by default.
 
 **β**
-代价中电负性项的权重，默认 10。8–12 之间结果稳定；太小时 X–H 键会被判错且
-没有警告。
+The weight of the electronegativity term, 10 by default. Results are stable
+for 8–12; below that X–H bonds are assigned wrongly, with no warning.
 
-**容量**
-每个原子接收电子数的上下限 [n_min, n_max]，按价层物理极限设定，只排除不可能
-的情况，不排除罕见价态。不按"化学上常见的氧化态范围"设定。
+**Capacity**
+The lower and upper limits [n_min, n_max] on the electrons an atom receives,
+set by the physical limits of the valence shell. They exclude the impossible,
+not the rare; they are not set from "chemically common oxidation states".
 
-**半芯**
-必须记满的内层壳层（如 Na 的 2s2p），对应 n_min 中必须满足的部分。
+**Semicore**
+An inner shell that must be counted full (2s2p of Na, for example): the part
+of n_min that has to be met.
 
-**投影辅助判定**
-可选的判定规则：某个 WF 的前两个候选原子代价差小于 TAU（1.0）、且 #WP 投影
-权重领先超过 PMARGIN（0.20）时，按投影改判。默认不开启。不适合含大量 C–H 键
-的有机体系。代码中叫 `tier2="arbiter"`；旧文档中的"档 2""仲裁"指的就是它，
-"档 1"指默认代价。
+**Projection-assisted arbitration**
+An optional rule: when the costs of the two best candidate atoms of a WF
+differ by less than TAU (1.0) and one of them leads in #WP projector weight by
+more than PMARGIN (0.20), the WF follows the projection. Off by default. Not
+suited to organic systems with many C–H bonds. `tier2="arbiter"` in the code;
+"tier 2" and "arbiter" in older text mean this, and "tier 1" means the default
+cost.
 
-**片段（fragment）**
-用户指定的一组原子，作为一个整体接收电子（容量相加，代价取离 WF 最近的成员），
-输出整体的氧化态。用于离域阴离子和金属簇（I3⁻、Au12、Co4 等）。
+**Fragment**
+A user-defined group of atoms that receives electrons as one unit (capacities
+add; the cost uses the member nearest to the WF) and reports one oxidation
+state. For delocalised anions and metal clusters (I3⁻, Au12, Co4 and the
+like).
 
-**位点简并**
-等价原子之间交换电子几乎不改变总代价的情况，例如同核键两端、簇内等价位点、
-等价 O2 单元。此时元素平均可信，单个原子的值不唯一，R_site 接近 0，应看元素
-平均或片段总价。
+**Site degeneracy**
+Equivalent atoms can exchange electrons at almost no change in total cost: the
+two ends of a homonuclear bond, equivalent sites of a cluster, equivalent O2
+units. The element mean is then reliable and the value of a single atom is not
+unique; R_site is close to 0. Read the element mean or the fragment total.
 
-**可靠性指标 R（R_site、R_elem）**
-解出最优分配后，强制某原子多拿或少拿 1 个电子、全局重新求解所需多付的代价 m，
-按 R = 100·m/(m+1) 归一化到 0–100。R_site 计入所有扰动，同核键两端等简并会
-使它接近 0；R_elem 只计入改变某元素总电子数的扰动。R 是 Comas-Vilà R(%) 的
-对应物。R 低表示解不唯一，R 高不保证正确。
+**Reliability index R (R_site, R_elem)**
+After the optimum is found, one atom is forced to take one electron more or
+less and the problem is solved again; m is the extra cost. R = 100·m/(m+1),
+from 0 to 100. R_site counts every perturbation, so degeneracies such as the
+ends of a homonuclear bond bring it close to 0; R_elem counts only the
+perturbations that change the electron total of an element. R is the
+counterpart of the R(%) of Comas-Vilà. A low R means the solution is not
+unique; a high R does not guarantee that it is right.
 
-## 质量警告
+## Quality warnings
 
 **stray**
-未定域的 WF：spread > 3 Å²，或中心离所有原子都超过 1.6 Å。说明 Wannier 化本身
-有问题，分配无法修正，应重做 Wannier 化。
+An unlocalised WF: spread > 3 Å², or centre more than 1.6 Å from every atom.
+The Wannier step itself has failed; the assignment cannot repair it. Redo the
+Wannier step.
 
 **ghost**
-WF 数多于占据的电子对时，多出来的、没有电子可装的 WF（常见于金属和分数占据
-体系）。总电子数上限（NELECT）使求解器丢掉代价最高的部分。ghost > 0 时电正性
-金属的价态可能被高估。
+When there are more WFs than occupied electron pairs, the extra WFs that have
+no electrons to hold (common in metals and with fractional occupations). The
+cap on the electron total (NELECT) makes the solver drop the costliest part.
+With ghost > 0 the oxidation state of electropositive metals may be
+overestimated.
 
 **dNe**
-Wannier 表示中的总电子数与 DFT 真实电子数之差。健康计算低于 1e-6；明显不为零
-说明有电子没有进入 Wannier 子空间（电子丢失）。
+The electron total of the Wannier representation minus the true DFT total.
+Below 1e-6 in a healthy calculation; a clear non-zero value means that
+electrons did not enter the Wannier subspace (electron loss).
 
-**诊断版 EOSCAR**
-电子丢失超过 EOS_NELECT_ABORT 时，补丁中止前写出的 EOSCAR，带
-`# LEOS_ABORTED` 标记和丢失定位块（窗口型 #NL、弥散型 #NLD）。wannier90 自身
-失败时不产生这个文件。
+**Diagnostic EOSCAR**
+The EOSCAR the patch writes before it aborts when the electron loss exceeds
+EOS_NELECT_ABORT. It carries the mark `# LEOS_ABORTED` and blocks that locate
+the loss (#NL for the window type, #NLD for the diffuse type). It is not
+written when wannier90 itself fails.
 
-## 基准与数据
+## Benchmarks and data
 
-**74 案例基准**
-三批测试体系：历史回归集 36、扩展第一波 13、扩展第二波 25，其中 72 个有参考
-答案。
+**74-case benchmark**
+Three batches of test systems: the legacy regression set (36), extension
+wave 1 (13) and extension wave 2 (25). 72 of them have reference oxidation
+states.
 
-**参考答案**
-按化学常识和 IUPAC 规则人工标注的氧化态，存于 pyleos/tests/reference_os.json。
-混合价体系标元素平均值（Fe3O4 中 Fe 为 +2.667）。
+**Reference oxidation states**
+Oxidation states labelled by hand from chemical knowledge and the IUPAC rules,
+in pyleos/sets/reference_os.json. Mixed-valence systems carry the element mean
+(Fe in Fe3O4: +2.667).
 
 **dev**
-每种元素的平均氧化态与参考值之差的最大绝对值。dev ≤ 0.25 为通过。只检查元素
-平均，不检查单个原子。
+The largest absolute difference between the mean oxidation state of an element
+and its reference. dev ≤ 0.25 is a pass. Only element means are checked, not
+single atoms.
 
-**基准参考表**
-data/v3/reliability_74.tsv。CI 把新跑出的基准结果与它逐行比较（status 和
-dev 两列）。gpuw90 中与之对应的是 wannier90 参考输出（.wout）。
+**Golden table**
+results/bench74_golden.tsv. CI compares a fresh benchmark run with it line by
+line (columns status and dev). Its counterpart in gpuw90 is the wannier90
+reference output (.wout).
 
 **Comas-Vilà**
-参考方法：Comas-Vilà et al., JCTC 2025，用 QTAIM 原子域和原子重叠矩阵判定
-有效氧化态，测试集为 40 个固体。"EOS"这个名字出自该文。
+The reference method: Comas-Vilà et al., JCTC 2025, effective oxidation states
+from QTAIM atomic domains and atomic overlap matrices, tested on 40 solids.
+The name "EOS" comes from that paper.
 
-**v1 / v3**
-数据版本。v1 是项目早期程序（贪心）产生的历史数据（data/v1/）；v3 是当前
-补丁产生的数据（data/v3/）。
+**Case / run**
+A case is one chemical system, `cases/<case>/`; a run is one calculation of it,
+`cases/<case>/<run>/`. The run name gives the program version and what differs:
+v1 is the early program of the project (greedy), v3 the current patch, v31-*
+a recomputation or diagnostic with v3.1 (v31-wp carries #WP, v31-ghost is the
+ghost A/B test); structure/ and structure-fixed/ hold structures only. The
+purpose (role), benchmark set (bench_set) and former path (origin) of each run
+are in cases/INDEX.tsv.
 
-**M4 / M5**
-数据批次编号。M4 为扩展基准（data/v3/m4_wave1、m4_wave2）；M5 为应用：
-M5-A 为 Li2O2，M5-B 为富锂正极三体系（data/m5b/），M5-C 为 CeO2。
+**Benchmark set**
+The 74-case benchmark has four groups: v1_mol (10 molecular crystals),
+v1_oxide (26 oxides and halides), wave1 (13) and wave2 (25). They are the
+bench_set column of INDEX.tsv and the batch column of the golden table.
+wave1 and wave2 are also called extension wave 1 and 2 (formerly M4). The
+application systems were formerly M5: M5-A is Li2O2, M5-B the three Li-rich
+cathode systems, M5-C CeO2.
 
-## Wannier 流程
+## Wannier workflow
 
-**原位 / 离线**
-原位：在 VASP 内完成 Wannier 化和分配（贪心列和 OS(flow) 列），可用于分子
-动力学逐帧分析。离线：在 VASP 之外用 pyleos、gpuw90 或独立的 wannier90.x 处理。
+**In situ / offline**
+In situ: Wannier step and assignment inside VASP (the greedy and OS(flow)
+columns), usable frame by frame in molecular dynamics. Offline: outside VASP,
+with pyleos, gpuw90 or a stand-alone wannier90.x.
 
-**局域化（wannierise）**
-Marzari–Vanderbilt 方法：在给定子空间内做幺正变换，使总 spread 最小，得到
-Wannier 中心和 spread。
+**Localisation (wannierise)**
+The Marzari–Vanderbilt method: a unitary transformation within a given
+subspace that minimises the total spread and yields the Wannier centres and
+spreads.
 
-**解纠缠（disentanglement）**
-能带数多于 WF 数（num_bands > num_wann，金属或含导带的体系）时，在局域化之前
-先选出要局域化的子空间（Souza–Marzari–Vanderbilt 方法）。跳过这一步直接局域化
-会得到错误结果且没有报错。
+**Disentanglement**
+When there are more bands than WFs (num_bands > num_wann; metals, or
+conduction bands included), the subspace to be localised is selected first
+(Souza–Marzari–Vanderbilt). Localising without this step gives wrong results
+and no error.
 
-**冻结窗口**
-解纠缠时必须原样保留的能量范围，通常覆盖占据态，保证价电子不因子空间选取而
-丢失。
+**Frozen window**
+The energy range that disentanglement must keep unchanged. It usually covers
+the occupied states, so that no valence electron is lost in the choice of
+subspace.
 
-**自动冻结窗口（AUTO_WINDOW）**
-补丁按占据态自动设定冻结窗口的功能（INCAR 参数 LWANNIER90_AUTO_WINDOW），
-不需要手写 dis_froz_max。手写输入缺少窗口是 NELECT mismatch 失败的主要原因。
+**Automatic frozen window (AUTO_WINDOW)**
+The patch sets the frozen window from the occupations (INCAR tag
+LWANNIER90_AUTO_WINDOW); no hand-written dis_froz_max is needed. A missing
+window in hand-written input is the main cause of the NELECT mismatch failure.
 
 **SCDM**
-Wannier 化的初猜方法（selected columns of the density matrix），不需要手工设定
-投影。SCDM-only 是跳过迭代局域化、只用初猜中心的快速模式。
+The initial guess of the Wannier step (selected columns of the density
+matrix); it needs no hand-set projections. SCDM-only is the fast mode that
+skips the iterative localisation and uses the centres of the initial guess.
 
-**引导中心（guiding centres）**
-热启动的实现方式：把上一帧的 Wannier 中心写进下一帧的 wannier90 输入。
+**Guiding centres**
+How the warm start is implemented: the Wannier centres of one frame are
+written into the wannier90 input of the next.
 
 **gpuw90**
-本仓库中用 PyTorch 实现的解纠缠和局域化工具，CPU 和 CUDA 用同一份代码，不修改
-wannier90 和 VASP。
+The disentanglement and localisation tool of this repository, written in
+PyTorch. The same code runs on CPU and CUDA; wannier90 and VASP are not
+modified.
 
-**失败分类（FAIL_DFT / FAIL_W90 / FAIL_LEOS）**
-batch.py 对失败算例的分类：FAIL_DFT 为 SCF 崩溃或 OUTCAR 不完整；FAIL_W90 为
-DFT 正常但 wannier90 没有完成；FAIL_LEOS 为 Wannier 化正常但没有可用的 EOSCAR
-（缺失或带 LEOS_ABORTED 标记）。每类有各自的自动重试设置。
+**Failure triage (FAIL_DFT / FAIL_W90 / FAIL_LEOS)**
+How batch.py classifies failed cases. FAIL_DFT: the SCF crashed or OUTCAR is
+incomplete. FAIL_W90: DFT is fine but wannier90 did not finish. FAIL_LEOS: the
+Wannier step is fine but there is no usable EOSCAR (missing, or marked
+LEOS_ABORTED). Each class has its own automatic retry settings.

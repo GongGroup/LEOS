@@ -1,0 +1,53 @@
+# Bader charge report
+- Data file: `N4S4-charge.xsd`
+- AVF map: `AVF.dat`
+- Atoms: 32
+- Atoms with split basins: 0
+
+## Totals
+Net charge +0.0080 e; atoms that gained electrons sum to -18.9600 e, atoms that lost electrons to +18.9680 e; standard deviation over all atoms 1.1853 e.
+
+## Per atom
+| Idx | Atom | Element | Charge (e) | Volume IDs |
+| --- | --- | --- | --- | --- |
+| 1 | N1 | N | -1.195 | 31 |
+| 2 | N2 | N | -1.195 | 30 |
+| 3 | N3 | N | -1.174 | 7 |
+| 4 | N4 | N | -1.176 | 25 |
+| 5 | N5 | N | -1.174 | 20 |
+| 6 | N6 | N | -1.176 | 2 |
+| 7 | N7 | N | -1.195 | 13 |
+| 8 | N8 | N | -1.195 | 18 |
+| 9 | N9 | N | -1.195 | 29 |
+| 10 | N10 | N | -1.195 | 32 |
+| 11 | N11 | N | -1.176 | 1 |
+| 12 | N12 | N | -1.174 | 19 |
+| 13 | N13 | N | -1.176 | 26 |
+| 14 | N14 | N | -1.174 | 8 |
+| 15 | N15 | N | -1.195 | 17 |
+| 16 | N16 | N | -1.195 | 14 |
+| 17 | S17 | S | +1.188 | 5 |
+| 18 | S18 | S | +1.188 | 24 |
+| 19 | S19 | S | +1.183 | 3 |
+| 20 | S20 | S | +1.183 | 16 |
+| 21 | S21 | S | +1.183 | 4 |
+| 22 | S22 | S | +1.183 | 28 |
+| 23 | S23 | S | +1.188 | 6 |
+| 24 | S24 | S | +1.188 | 22 |
+| 25 | S25 | S | +1.188 | 23 |
+| 26 | S26 | S | +1.188 | 9 |
+| 27 | S27 | S | +1.183 | 15 |
+| 28 | S28 | S | +1.183 | 11 |
+| 29 | S29 | S | +1.183 | 27 |
+| 30 | S30 | S | +1.183 | 12 |
+| 31 | S31 | S | +1.188 | 21 |
+| 32 | S32 | S | +1.188 | 10 |
+
+## Per element
+| Element | Count | Total Charge | Mean Charge | Min | Max | σ (pop) |
+| --- | --- | --- | --- | --- | --- | --- |
+| N | 16 | -18.960 | -1.185 | -1.195 | -1.174 | +0.010 |
+| S | 16 | +18.968 | +1.185 | +1.183 | +1.188 | +0.002 |
+
+## Notes
+- Several volume IDs for one atom in AVF.dat mean that the atom has several disconnected Bader basins.

@@ -1,0 +1,69 @@
+
+ gpuw90 driver run at 2026-10-12T10:43:38
+   case dir            : /private/tmp/claude-501/-Users-mastreina-Desktop-EOS/72ab7a9d-086f-4822-aaec-6447e7e17f5e/scratchpad/holdout/a1/coo
+   seed / spin         : wannier90.2 / 2
+   mode / device       : multistart best of 16 (rand seed 2, scale 1.0) / cpu
+   num_bands / num_wann: 20 / 16
+   num_kpts / nntot    : 8 / 8
+   B1 residual         : 4.441e-16
+
+ DISENTANGLE (gpuw90 SMV)
+   Outer:  -11.78883  to   15.49352  (eV)
+   Inner:  -11.78883  to    8.62929  (eV)
+   ndimwin  min/max    : 20 / 20
+   ndimfroz min/max    : 16 / 16
+   iterations          : 3  converged=True
+        Final Omega_I     7.06677419 (Ang^2)
+
+ WANNIERISE (gpuw90 steepest descent)
+   num_iter cap / conv_tol / conv_window : 200000 / 1.0e-10 / 3
+   iterations          : 64099  converged=True  stability-probe=True
+   SD step alpha       : start 1.0  final 0.5  (rejected chunks: 22, step regrowths: 21, total SD iterations incl. rejected/probe: 70349)
+
+ ------------------------------------------------------------------------------
+ Initial State
+  WF centre and spread    1  (  -0.639493, -0.170399,  0.042231 )      5.41989268
+  WF centre and spread    2  (   1.534398,  0.816962,  0.329585 )      5.28289594
+  WF centre and spread    3  (   0.886727,  0.518441,  0.062872 )      8.02881476
+  WF centre and spread    4  (  -0.149485, -0.433272,  0.359694 )     11.20287050
+  WF centre and spread    5  (   1.329687,  0.558352,  0.647246 )      7.00431540
+  WF centre and spread    6  (   1.797688,  0.104132, -0.353781 )      8.03779629
+  WF centre and spread    7  (   0.028214,  0.281951,  0.465301 )     10.01554557
+  WF centre and spread    8  (   1.216948,  0.452704,  0.321065 )      7.75686938
+  WF centre and spread    9  (   0.288073,  1.055256,  1.025662 )      7.70813822
+  WF centre and spread   10  (   1.093588,  0.646926,  0.541153 )      6.62240260
+  WF centre and spread   11  (   0.213319,  0.614035,  0.414723 )     12.40038515
+  WF centre and spread   12  (  -1.138097, -0.164359, -0.433481 )      6.05754619
+  WF centre and spread   13  (  -0.955527, -0.504649, -0.816083 )      7.69195442
+  WF centre and spread   14  (  -0.095351, -0.936907, -0.533546 )     10.15105858
+  WF centre and spread   15  (   0.691914, -1.075026, -0.944559 )      7.34407437
+  WF centre and spread   16  (  -0.388794, -0.410239,  1.092607 )     14.04713867
+  Sum of centres and spreads (   5.713808,  1.353906,  2.220690 )    134.77169873
+
+ ------------------------------------------------------------------------------
+
+ Final State
+  WF centre and spread    1  (  -0.000000,  2.130000,  2.130000 )      0.37556024
+  WF centre and spread    2  (   1.740033,  0.054756,  0.054757 )      0.60384144
+  WF centre and spread    3  (   2.130000, -0.000000,  2.130000 )      0.37423118
+  WF centre and spread    4  (  -0.000000, -0.000000, -0.000000 )      0.44050465
+  WF centre and spread    5  (  -0.000000, -0.000000, -0.000000 )      0.44050780
+  WF centre and spread    6  (   2.340631,  0.210631,  0.210628 )      0.60145723
+  WF centre and spread    7  (   0.054757,  1.740033,  0.054757 )      0.60384147
+  WF centre and spread    8  (  -0.000000, -0.000000, -0.000000 )      0.44050342
+  WF centre and spread    9  (  -2.130000, -2.130000, -0.000000 )      0.37375919
+  WF centre and spread   10  (   2.130000,  2.130000, -0.000000 )      0.37371881
+  WF centre and spread   11  (   0.389967, -0.054756, -2.184757 )      0.60384141
+  WF centre and spread   12  (  -0.054757, -0.054757, -1.740030 )      0.60384329
+  WF centre and spread   13  (  -2.340631, -0.210631, -0.210628 )      0.60145715
+  WF centre and spread   14  (  -0.054757, -1.740033, -0.054757 )      0.60384144
+  WF centre and spread   15  (  -2.130000,  0.000000, -2.130000 )      0.37529533
+  WF centre and spread   16  (   0.054757,  0.054757,  1.740030 )      0.60384332
+  Sum of centres and spreads (   2.130000,  2.130000, -0.000000 )      8.02004738
+
+         Spreads (Ang^2)       Omega I      =     7.066774187
+        ================       Omega D      =     0.003287144
+                               Omega OD     =     0.949986048
+    Final Spread (Ang^2)       Omega Total  =     8.020047380
+ ------------------------------------------------------------------------------
+

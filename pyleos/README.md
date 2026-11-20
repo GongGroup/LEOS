@@ -1,91 +1,129 @@
 # pyleos
 
-pyleos 读 LEOS VASP 补丁输出的 EOSCAR，把每个 Wannier 函数（WF）的电子分配给
-原子，给出整数氧化态、质量警告和可靠性指标。分配写成带容量约束的最小费用流
-（运输问题），全局最优、结果为整数。只用 Python 标准库，没有第三方依赖。
+pyleos reads the EOSCAR written by the LEOS VASP patch, assigns the electrons
+of every Wannier function (WF) to atoms, and reports integer oxidation states,
+quality warnings and a reliability index. The assignment is a
+capacity-constrained minimum-cost flow: globally optimal and integral. Python
+standard library only, no third-party dependency.
 
-方法说明见 [docs/PLAN.md](../docs/PLAN.md)，输出的读法见其中"怎么读结果"一节。
+Method: [docs/PLAN.md](../docs/PLAN.md); how to read the output: its section
+"Reading the output".
 
-## 用法
+## Usage
 
 ```bash
-# 单个算例。目录中需要 POSCAR、EOSCAR，以及 wannier90.wout
-# （自旋极化时为 wannier90.1.wout 和 wannier90.2.wout）
-python3 pyleos/cli.py case data/v3/m4_wave2/as4s4 -v
+# One case. The directory needs POSCAR, EOSCAR and wannier90.wout
+# (wannier90.1.wout and wannier90.2.wout when spin-polarised)
+python3 -m pyleos case cases/as4s4/v3 -v
 
-# 历史回归集：对 data/v1 下的算例比较运输与贪心，并对照参考答案
-python3 pyleos/cli.py regress
+# Legacy regression set: flow against greedy on the 36 v1 runs, scored
+# against the reference
+python3 -m pyleos regress
+
+# Benchmarks (see "Benchmarks" below)
+python3 -m pyleos bench full --no-reliability --out /tmp/bench.tsv
 ```
 
-`case` 的选项：
+`python3 pyleos/cli.py ...` is the same as `python3 -m pyleos ...`.
 
-| 选项 | 默认 | 作用 |
+Options of `case`:
+
+| Option | Default | Effect |
 |---|---|---|
-| `--beta B` | 10.0 | 电负性项的权重。小于约 8 时 X–H 键会被判错且没有警告，见 RESULTS.md"参数选择" |
-| `--eneg allen\|pauling` | allen | 电负性标度 |
-| `-v` | | 输出逐原子结果 |
-| `--fragment 2,3,4` | | 把这些原子（从 1 开始编号）合成一个整体接收电子，可重复使用 |
-| `--drop-stray` | | 排除未定域的 WF（stray）后再分配，用于判断错误来自输入还是分配。排除后总电子数变少，元素平均值不能再与参考答案比较 |
-| `--gamma G` | 0.0 | 线性叠加投影权重：代价减去 G 乘以归一化的投影权重。这种方式对参数敏感、偏向重原子，不推荐；推荐的阈值规则见下文"作为库使用" |
+| `--beta B` | 10.0 | Weight of the electronegativity term. Below about 8, X–H bonds are assigned wrongly with no warning; see RESULTS.md, "Parameter choices" |
+| `--eneg allen\|pauling` | allen | Electronegativity scale |
+| `-v` | | Print the per-atom result |
+| `--fragment 2,3,4` | | Merge these atoms (numbered from 1) into one unit that receives electrons; repeatable |
+| `--drop-stray` | | Exclude unlocalised WFs (stray) before assigning, to tell whether an error comes from the input or from the assignment. The electron total is then smaller, and the element means can no longer be compared with the reference |
+| `--gamma G` | 0.0 | Linear mixing of the projector weights: the cost is lowered by G times the normalised weight. Sensitive to the parameter and biased towards heavy atoms; not recommended. The recommended threshold rule is under "Library use" |
 
-`regress` 的选项：`--root`（默认 data/v1）、`--beta`、`--eneg`、
-`--reliability`（同时计算 R）。
+Options of `regress`: `--beta`, `--eneg`, `--reliability` (also compute R).
 
-全部 74 个基准案例用 script/full_bench.py，见 docs/RESULTS.md"74 案例基准"。
+## Benchmarks
 
-## 作为库使用
+`python3 -m pyleos bench` has three subcommands. All of them find the case
+directories through cases/INDEX.tsv.
+
+| Subcommand | What it runs |
+|---|---|
+| `full --out FILE` | The 74-case benchmark, in the format of results/bench74_golden.tsv (`--out` is required, so that the golden table is not overwritten by accident). `--greedy` scores the greedy column instead; `--no-reliability` skips R |
+| `clean` | The clean set: element-mean dev and per-atom accuracy. `--method` selects the assignment plugin (default methods/baseline.py) |
+| `test --set regression\|homonuclear\|both --method PLUGIN` | The pre-registered held-out test sets. `--selftest` only checks the scoring path on the dev set |
+
+An assignment plugin is a .py file in methods/ that defines `assign(case)`.
+methods/frozen/ holds the frozen candidates, which are never edited again
+(their sha256 are in sets/test_set.json). A plugin sees neither the results of
+other methods nor the file system; the rules are at the top of bench.py.
+
+The benchmarks are defined in sets/: reference_os.json (reference oxidation
+states of the 74 cases, grouped as dataset, oxides, wave1, wave2),
+clean_set.json (per-atom labels) and test_set.json (held-out test sets).
+
+## Library use
 
 ```python
 from pathlib import Path
 from pyleos.parsers import load_case
 from pyleos.transport import assign_case, reliability_margins
 
-case = load_case(Path("data/v3/m4_wave2/as4s4"))
-res = assign_case(case)                      # 默认：beta=10，Allen，几何 + 电负性
-res = assign_case(case, tier2="arbiter")     # 投影辅助判定，需要 EOSCAR 的 #WP 块
-res = reliability_margins(case, res=res)     # 计算 R_site / R_elem
+case = load_case(Path("cases/as4s4/v3"))
+res = assign_case(case)                      # default: beta=10, Allen, geometry + electronegativity
+res = assign_case(case, tier2="arbiter")     # projection-assisted arbitration; needs the #WP block of EOSCAR
+res = reliability_margins(case, res=res)     # compute R_site / R_elem
 ```
 
-投影辅助判定的阈值是 transport.py 中的 ARBITER_TAU（1.0）和
-ARBITER_PMARGIN（0.20）。
+The thresholds of the projection-assisted arbitration are ARBITER_TAU (1.0)
+and ARBITER_PMARGIN (0.20) in transport.py.
 
-## 模块
+## Modules
 
-| 文件 | 内容 |
+| File | Content |
 |---|---|
-| parsers.py | 读 POSCAR、EOSCAR（含 #WF、#WP 块）和 wannier90 .wout，组装成 CaseData |
-| capacity.py | 各元素的容量上下限 OS_BOUNDS，Allen 和 Pauling 电负性表 |
-| transport.py | 最小费用流分配、stray 和 ghost 诊断、可靠性指标 R |
-| cli.py | 命令行入口 |
-| batch.py | 集群批跑驱动（见下） |
-| xsd2poscar.py | 把 Materials Studio 的 .xsd 转成 POSCAR |
+| parsers.py | Reads POSCAR, EOSCAR (with the #WF and #WP blocks) and the wannier90 .wout into a CaseData |
+| capacity.py | Capacity limits OS_BOUNDS of each element; Allen and Pauling electronegativity tables |
+| transport.py | Minimum-cost-flow assignment, stray and ghost diagnostics, reliability index R |
+| cases.py | Reads cases/INDEX.tsv (the case registry) |
+| bench.py | The three benchmarks: 74 cases, clean set, held-out test sets |
+| cli.py | Command line (`python3 -m pyleos`) |
+| batch.py | Cluster batch driver (below) |
+| xsd2poscar.py | Converts a Materials Studio .xsd to POSCAR |
 
-EOSCAR 解析的一个兼容处理：官方 Xe 赝势的 VRHFIN 字段写作 "X"，会使 EOSCAR
-中的元素名被截断，parsers.py 按前缀匹配元素名。
+One compatibility rule in the EOSCAR parser: the VRHFIN field of the official
+Xe pseudopotential reads "X", which truncates the element name in EOSCAR;
+parsers.py matches element names by prefix.
 
-## 模型
+## Model
 
-- 图：源 → WF 节点 → 原子节点 → 汇。闭壳层（ISPIN = 1）每个 WF 提供 2 个
-  电子；自旋极化（ISPIN = 2）每个通道每个 WF 提供 1 个电子，两个通道在同一张
-  图里共享原子容量。
-- 代价：`d²(WF 中心, 原子) + β·(1 − χ/χmax)`，χ 默认为 Allen 电负性。
-- 原子容量 [n_min, n_max] 来自 capacity.py 的 OS_BOUNDS，按价层物理极限设定。
-  半芯壳层必须记满，用负代价边实现 n_min。
-- 总流量不超过 NELECT，多余的 WF（ghost）由求解器丢掉代价最高的部分。
-- 电子数和容量都是整数，所以最优流是整数，氧化态不需要舍入。
-- stray 判据：spread > 3 Å²，或中心离所有原子都超过 1.6 Å。
+- Graph: source → WF nodes → atom nodes → sink. Closed-shell (ISPIN = 1): each
+  WF supplies 2 electrons. Spin-polarised (ISPIN = 2): each WF of each channel
+  supplies 1, and both channels share the atom capacities in one graph.
+- Cost: `d²(WF centre, atom) + β·(1 − χ/χmax)`, χ the Allen electronegativity
+  by default.
+- Atom capacities [n_min, n_max] come from OS_BOUNDS in capacity.py and follow
+  the physical limits of the valence shell. Semicore shells must be counted
+  full; n_min is enforced with negative-cost edges.
+- The total flow does not exceed NELECT. Of the surplus WFs (ghost) the solver
+  drops the costliest part.
+- Electron counts and capacities are integers, so the optimal flow is integral
+  and the oxidation states need no rounding.
+- Stray criterion: spread > 3 Å², or centre more than 1.6 Å from every atom.
 
-求解器实现中需要注意的三点：
+Three points of the solver need care:
 
-1. 最短路的势（potential）更新必须覆盖没有被访问到的节点，否则会出现负的
-   约化代价，算法退化到指数时间。
-2. 大数值奖励与浮点容差的数量级要拉开（1e3 与 1e-9），否则舍入残差会被当成
-   改进，造成死循环。
-3. 迭代次数设上限，异常时抛出明确错误，而不是无限循环。
+1. The shortest-path potential update must cover the nodes that were not
+   reached; otherwise reduced costs turn negative and the algorithm becomes
+   exponential.
+2. The large reward and the floating-point tolerance must be far apart in
+   magnitude (1e3 and 1e-9); otherwise rounding residue counts as an
+   improvement and the loop never ends.
+3. The number of iterations is capped, and an anomaly raises a clear error
+   instead of looping for ever.
 
-## batch.py：集群批跑
+## batch.py: cluster batch runs
 
-batch.py 只依赖标准库，可以单独复制到集群上运行。
+batch.py depends on the standard library only and can be copied to a cluster
+as a single file; inside the repository it is also
+`python3 -m pyleos batch ...`.
 
 ```bash
 python3 batch.py stage   --dest ~/leos_batch1 --cases cases.json
@@ -95,55 +133,63 @@ python3 batch.py retry   --dest ~/leos_batch1
 python3 batch.py harvest --dest ~/leos_batch1 --out ~/leos_batch1_results
 ```
 
-cases.json 的格式：`[{"name": "co2", "src": "<含 POSCAR、POTCAR、KPOINTS 的目录>",
-"incar": {"ENCUT": 500}}, ...]`。每个算例目录会得到 LEOS INCAR 模板（合并
-算例自己的设置）、一个 4 GPU 的 sbatch 脚本，状态记录在
-`<dest>/batch_state.json`。
+Format of cases.json: `[{"name": "co2", "src": "<directory with POSCAR, POTCAR,
+KPOINTS>", "incar": {"ENCUT": 500}}, ...]`. Each case directory receives the
+LEOS INCAR template (merged with the settings of the case) and a 4-GPU sbatch
+script. The state is kept in `<dest>/batch_state.json`.
 
-失败分类（status 和 harvest 输出）：
+Failure triage (printed by status and harvest):
 
-| 状态 | 含义 | retry 的处理 |
+| Status | Meaning | What retry does |
 |---|---|---|
-| FAIL_DFT | SCF 崩溃（EDDDAV、ZHEGV、"I REFUSE"）或 OUTCAR 不完整 | 先 ALGO = Normal，再 ALGO = All 且 EDIFF = 1e-5 |
-| FAIL_W90 | DFT 正常，但 wannier90 没有输出 Final State | 关闭 EOS_SCDM_ONLY，NBANDS 放大到 1.3 倍 |
-| FAIL_LEOS | Wannier 化正常，但没有可用的 EOSCAR（缺失，或带 LEOS_ABORTED 标记） | EOS_NELECT_ABORT 放宽到 0.5 重跑，用于诊断 |
-| OK | EOSCAR 存在且没有 LEOS_ABORTED 标记 | |
+| FAIL_DFT | The SCF crashed (EDDDAV, ZHEGV, "I REFUSE") or OUTCAR is incomplete | ALGO = Normal first, then ALGO = All with EDIFF = 1e-5 |
+| FAIL_W90 | DFT is fine, but wannier90 printed no Final State | Switches EOS_SCDM_ONLY off and raises NBANDS to 1.3 times |
+| FAIL_LEOS | The Wannier step is fine, but there is no usable EOSCAR (missing, or marked LEOS_ABORTED) | Reruns with EOS_NELECT_ABORT relaxed to 0.5, for diagnosis |
+| OK | EOSCAR exists and carries no LEOS_ABORTED mark | |
 
-wannier90 报 "Not enough bvectors" 时归为 FAIL_W90（是 k 网格问题，不是 SCF
-问题），处理方法见 patch/README.md"常见失败"。
+"Not enough bvectors" from wannier90 counts as FAIL_W90 (a k-mesh problem, not
+an SCF problem); the remedy is in patch/README.md, "Common failures".
 
-两种附加模式：
+Two further modes:
 
-- **分级筛查**（`stage --mode tiered`，之后运行 `escalate`）：不含 4d、5d、
-  f 区元素的算例先用 SCDM-only 快速模式，含这些元素的直接用完整 MLWF。运行
-  结束后，`escalate` 把 EOSCAR 带质量警告（stray、dNe 偏差、ghost 过多）的
-  快速模式算例改为完整 MLWF 重新排队。
-- **离线 wannier90**（`stage --offline-w90`，之后反复运行 `w90`）：GPU 作业
-  只导出 .mmn/.amn（`LWRITE_MMN_AMN = .TRUE.`，`LWANNIER90_RUN = .FALSE.`），
-  wannier90 在 DSPRHBM CPU 分区上运行。`w90` 命令推进每个算例的状态：导出完成
-  → 生成每个自旋的 .win（script/offline_w90_prep.py）并提交一个 CPU 作业
-  （两个自旋并发）→ 两个 .wout 都有 Final State 后复制回算例目录，供 pyleos
-  读取。只导出的运行不产生可用的 EOSCAR，离线模式按导出文件和 .wout 判断状态。
+- **Tiered screening** (`stage --mode tiered`, then `escalate`): cases without
+  4d, 5d or f elements start in the SCDM-only fast mode; cases with them go
+  straight to the full MLWF. After the run, `escalate` re-queues with the full
+  MLWF every fast-mode case whose EOSCAR carries a quality warning (stray, dNe
+  deviation, too many ghosts).
+- **Offline wannier90** (`stage --offline-w90`, then `w90` repeatedly): the
+  GPU job only exports .mmn/.amn (`LWRITE_MMN_AMN = .TRUE.`,
+  `LWANNIER90_RUN = .FALSE.`) and wannier90 runs on the DSPRHBM CPU partition.
+  The `w90` command advances each case: export finished → write the .win of
+  each spin (tools/offline_w90_prep.py, kept next to batch.py in a single-file
+  deployment) and submit one CPU job (both spins concurrently) → once both
+  .wout have a Final State, copy them back to the case directory for pyleos.
+  An export-only run yields no usable EOSCAR; the offline mode reads the state
+  from the exported files and the .wout.
 
-**batch.py 开头的 VASP_BIN、OFFLINE_VASP_BIN、W90_BIN 三个常量写死了 SAI
-集群家目录迁移前的路径（/home/sjtu-gongxueqing/zhangxianyang/...），其中
-VASP_BIN 还指向旧的 vasp.6.4.3_leos_v2。使用前要改成当前路径，见
-patch/README.md"集群部署"。**
+**The three constants VASP_BIN, OFFLINE_VASP_BIN and W90_BIN at the top of
+batch.py are hard-coded to paths from before the home-directory migration of
+the SAI cluster (/home/sjtu-gongxueqing/zhangxianyang/...), and VASP_BIN still
+points at the old vasp.6.4.3_leos_v2. Change them to the current paths before
+use; see patch/README.md, "Cluster deployment".**
 
-## 测试
+## Tests
 
 ```bash
-python3 -m unittest discover pyleos/tests -v   # 21 个测试
+python3 -m unittest discover pyleos/tests -v   # 23 tests
 ```
 
-| 文件 | 内容 |
+| File | Content |
 |---|---|
-| test_mcf.py | 最小费用流求解器与分配 |
-| test_batch.py、test_batch_tier.py、test_batch_offline.py | batch.py 的失败分类、重试、分级筛查和离线模式 |
-| reference_os.json | 基准案例的参考氧化态，按批次分组（dataset、oxides、wave1、wave2） |
+| test_mcf.py | Minimum-cost-flow solver and assignment |
+| test_batch.py, test_batch_tier.py, test_batch_offline.py | Failure triage, retry, tiered screening and offline mode of batch.py |
+| test_registry.py | Consistency of cases/INDEX.tsv, cases/STRUCTURES.tsv and cases/ (the same check as `python3 -m pyleos check`) |
 
-## 已知限制
+## Known limitations
 
-- 等价位点之间（同核键两端、簇内等价原子）的归属不唯一：元素平均正确，单个
-  原子的值取决于求解器落在哪个最优解上。用 `--fragment` 处理。
-- 容量只按物理极限设定；按化学常见价态收紧容量的诊断模式没有实现。
+- The assignment between equivalent sites (the two ends of a homonuclear bond,
+  equivalent atoms of a cluster) is not unique: the element mean is right, and
+  the value of a single atom depends on which optimum the solver lands on. Use
+  `--fragment`.
+- Capacities follow physical limits only. A diagnostic mode that tightens them
+  to chemically common oxidation states is not implemented.

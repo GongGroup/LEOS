@@ -1,0 +1,57 @@
+
+ gpuw90 driver run at 2026-10-12T10:43:39
+   case dir            : /private/tmp/claude-501/-Users-mastreina-Desktop-EOS/72ab7a9d-086f-4822-aaec-6447e7e17f5e/scratchpad/holdout/a1/feo
+   seed / spin         : wannier90.1 / 1
+   mode / device       : multistart best of 16 (rand seed 3, scale 1.0) / cpu
+   num_bands / num_wann: 16 / 10
+   num_kpts / nntot    : 64 / 8
+   B1 residual         : 2.220e-16
+
+ DISENTANGLE (gpuw90 SMV)
+   Outer:  -14.30772  to   33.68059  (eV)
+   Inner:  -14.30772  to    6.47768  (eV)
+   ndimwin  min/max    : 16 / 16
+   ndimfroz min/max    : 9 / 9
+   iterations          : 200  converged=False
+        Final Omega_I     4.74579405 (Ang^2)
+
+ WANNIERISE (gpuw90 steepest descent)
+   num_iter cap / conv_tol / conv_window : 200000 / 1.0e-10 / 3
+   iterations          : 112198  converged=True  stability-probe=True
+   SD step alpha       : start 1.0  final 0.5  (rejected chunks: 10, step regrowths: 9, total SD iterations incl. rejected/probe: 115448)
+
+ ------------------------------------------------------------------------------
+ Initial State
+  WF centre and spread    1  (   0.308273, -0.083403, -0.045416 )      2.26650783
+  WF centre and spread    2  (   0.053705, -0.802201, -0.393019 )      3.46160709
+  WF centre and spread    3  (  -0.045285,  0.697694, -0.063126 )      2.42144649
+  WF centre and spread    4  (   0.051854, -0.202840, -0.079132 )      1.86250653
+  WF centre and spread    5  (   0.109118, -0.080130, -0.162597 )      3.09555933
+  WF centre and spread    6  (   0.381876, -0.031251, -0.060837 )      2.18876440
+  WF centre and spread    7  (  -0.020757, -0.379132, -0.307591 )      2.99400763
+  WF centre and spread    8  (  -0.113606, -0.273268, -0.297751 )      2.71598934
+  WF centre and spread    9  (   0.139651, -0.210073, -0.093324 )      2.28402768
+  WF centre and spread   10  (   0.061098, -0.180195, -0.145349 )      3.12969694
+  Sum of centres and spreads (   0.925926, -1.544799, -1.648140 )     26.42011326
+
+ ------------------------------------------------------------------------------
+
+ Final State
+  WF centre and spread    1  (   2.079061,  0.337508,  0.068800 )      0.53847447
+  WF centre and spread    2  (  -0.067680, -2.222199, -0.335825 )      0.51909091
+  WF centre and spread    3  (  -0.190921,  1.958450,  0.188677 )      0.61575691
+  WF centre and spread    4  (   0.005556, -0.014301,  0.003819 )      0.42319682
+  WF centre and spread    5  (  -0.002533, -0.005300,  0.002396 )      0.41638782
+  WF centre and spread    6  (   0.005532,  0.005951,  0.003789 )      0.41614591
+  WF centre and spread    7  (  -1.814999, -2.223542, -2.082134 )      0.52610154
+  WF centre and spread    8  (  -0.011976,  0.008648, -0.003208 )      0.42448397
+  WF centre and spread    9  (  -0.006013, -0.005062,  0.000631 )      0.41684403
+  WF centre and spread   10  (   0.702884,  0.583087, -0.777289 )      0.98790134
+  Sum of centres and spreads (   0.698913, -1.576760, -2.930344 )      5.28438372
+
+         Spreads (Ang^2)       Omega I      =     4.745794045
+        ================       Omega D      =     0.002797802
+                               Omega OD     =     0.535791870
+    Final Spread (Ang^2)       Omega Total  =     5.284383717
+ ------------------------------------------------------------------------------
+

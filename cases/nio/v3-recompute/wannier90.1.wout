@@ -1,0 +1,69 @@
+
+ gpuw90 driver run at 2026-10-12T10:43:44
+   case dir            : /private/tmp/claude-501/-Users-mastreina-Desktop-EOS/72ab7a9d-086f-4822-aaec-6447e7e17f5e/scratchpad/holdout/a1/nio
+   seed / spin         : wannier90.1 / 1
+   mode / device       : multistart best of 16 (rand seed 11, scale 1.0) / cpu
+   num_bands / num_wann: 20 / 16
+   num_kpts / nntot    : 8 / 8
+   B1 residual         : 2.220e-16
+
+ DISENTANGLE (gpuw90 SMV)
+   Outer:  -11.97780  to   15.45537  (eV)
+   Inner:  -11.97780  to    7.76433  (eV)
+   ndimwin  min/max    : 20 / 20
+   ndimfroz min/max    : 16 / 16
+   iterations          : 3  converged=True
+        Final Omega_I     6.69945243 (Ang^2)
+
+ WANNIERISE (gpuw90 steepest descent)
+   num_iter cap / conv_tol / conv_window : 200000 / 1.0e-10 / 3
+   iterations          : 68168  converged=True  stability-probe=True
+   SD step alpha       : start 1.0  final 0.5  (rejected chunks: 23, step regrowths: 22, total SD iterations incl. rejected/probe: 74668)
+
+ ------------------------------------------------------------------------------
+ Initial State
+  WF centre and spread    1  (   0.756504,  0.714298,  0.506554 )      3.02777394
+  WF centre and spread    2  (   0.608545,  0.149806, -0.250024 )      3.39030376
+  WF centre and spread    3  (  -0.624380, -0.621836, -0.569023 )     10.13700735
+  WF centre and spread    4  (   0.815718,  0.746709,  0.647220 )     21.67973321
+  WF centre and spread    5  (  -0.333666, -0.595293, -0.756732 )      3.24586687
+  WF centre and spread    6  (   1.812152,  1.857024,  1.610364 )     12.19780194
+  WF centre and spread    7  (   1.315680,  1.158610,  1.073603 )      3.22877335
+  WF centre and spread    8  (  -0.232167, -0.400132, -0.447574 )      3.28310896
+  WF centre and spread    9  (  -0.217273, -0.719795, -0.787789 )      3.10143599
+  WF centre and spread   10  (  -1.677088, -1.537952, -1.603644 )     12.41211760
+  WF centre and spread   11  (  -2.123699, -2.142849, -2.198286 )      4.09800009
+  WF centre and spread   12  (   1.262152,  1.319350,  0.889032 )      3.87754938
+  WF centre and spread   13  (  -1.839932, -1.866396, -2.010773 )      3.30951439
+  WF centre and spread   14  (  -1.946428, -2.048942, -2.165422 )      3.60249528
+  WF centre and spread   15  (   0.257905, -0.018047,  0.042748 )     22.71998522
+  WF centre and spread   16  (  -1.283021, -1.237439, -1.290830 )      3.13177978
+  Sum of centres and spreads (  -3.448999, -5.242883, -7.310574 )    116.44324711
+
+ ------------------------------------------------------------------------------
+
+ Final State
+  WF centre and spread    1  (   2.100000,  2.100000,  0.000000 )      0.36775479
+  WF centre and spread    2  (   0.000000,  0.000000,  0.000000 )      0.34280708
+  WF centre and spread    3  (   0.000000, -2.100000, -2.100000 )      0.36775429
+  WF centre and spread    4  (   1.706549,  2.153260,  2.153261 )      0.60346322
+  WF centre and spread    5  (   0.053261, -2.046737, -0.393452 )      0.60346258
+  WF centre and spread    6  (   0.000000, -0.000000,  0.000000 )      0.34285964
+  WF centre and spread    7  (   2.153262,  1.706549,  2.153260 )      0.60346304
+  WF centre and spread    8  (  -0.000000, -0.000000,  0.000000 )      0.33620973
+  WF centre and spread    9  (  -0.000000,  0.000000,  0.000000 )      0.34279014
+  WF centre and spread   10  (   0.000000, -0.000000,  0.000000 )      0.33633199
+  WF centre and spread   11  (  -2.100000, -2.100000,  0.000000 )      0.36773103
+  WF centre and spread   12  (   2.309945,  2.309945,  2.309946 )      0.59748229
+  WF centre and spread   13  (  -1.706549, -2.153260, -2.153261 )      0.60346323
+  WF centre and spread   14  (  -2.153262, -1.706549, -2.153260 )      0.60346304
+  WF centre and spread   15  (  -0.209945,  1.890055, -0.209946 )      0.59748234
+  WF centre and spread   16  (  -2.153261, -2.153263, -1.706548 )      0.60346258
+  Sum of centres and spreads (  -0.000000, -2.100000, -2.100000 )      7.61998101
+
+         Spreads (Ang^2)       Omega I      =     6.699452431
+        ================       Omega D      =     0.003378197
+                               Omega OD     =     0.917150383
+    Final Spread (Ang^2)       Omega Total  =     7.619981012
+ ------------------------------------------------------------------------------
+

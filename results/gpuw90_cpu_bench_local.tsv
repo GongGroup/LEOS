@@ -1,0 +1,10 @@
+# gpuw90 on a laptop CPU with a known thread count (poster, gpuw90 block)
+# machine: Apple M4 Pro (10 performance + 4 efficiency cores), torch 2.8.0 CPU build, torch.get_num_threads() = 10, FP64
+# workload: gpuw90/testdata/li2mno3, seed wannier90.1 (96-atom Li2MnO3 frame, 356 bands, 288 WFs, 8 k-points), fixed iteration counts
+# command (in gpuw90/): python3 bench_gpu.py testdata/li2mno3 --seed wannier90.1 --device cpu --dis-iters 20 --wann-iters 40
+# measured 2026-11-19, two consecutive runs
+run	threads	stage	iters	total_s	s_per_iter
+1	10	disentangle	20	5.04	0.252
+1	10	wannierise	40	7.90	0.198
+2	10	disentangle	20	5.00	0.250
+2	10	wannierise	40	7.88	0.197

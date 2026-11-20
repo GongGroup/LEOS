@@ -1,107 +1,131 @@
-# gpuw90 设计
+# gpuw90 design
 
-gpuw90 是独立于 pyleos 的后处理工具。它读 wannier90 标准格式的输入，用 PyTorch 批量实现
-Souza–Marzari–Vanderbilt（SMV）解纠缠和 Marzari–Vanderbilt（MV）局域化，输出 Wannier 中心和 spread，
-供 LEOS 判定氧化态。安装、运行命令、测试数据和性能数字见 README.md。
+gpuw90 is a post-processing tool independent of pyleos. It reads input in the
+standard wannier90 formats, implements Souza–Marzari–Vanderbilt (SMV)
+disentanglement and Marzari–Vanderbilt (MV) localisation as batched PyTorch
+operations, and outputs the Wannier centres and spreads from which LEOS assigns
+oxidation states. Installation, commands, test data and performance numbers are in
+README.md.
 
-## 范围
+## Scope
 
-gpuw90 只实现 wannier90 中的解纠缠和局域化两步。它不 fork wannier90，不改 VASP；
-计算设备由 `device` 参数决定，CPU 与 CUDA 共用一份代码。
+gpuw90 implements only the disentanglement and localisation steps of wannier90. It
+does not fork wannier90 and does not change VASP; the `device` argument selects the
+device, and CPU and CUDA share the same code.
 
-| | 孤立带 | 纠缠带 |
+| | Isolated bands | Entangled bands |
 |---|---|---|
-| 条件 | `nb == nw` | `nb > nw`（金属或含导带） |
-| 入口 | `wannierise()` | `disentangle()` → `wannierise()` |
-| 输入文件 | `.mmn`（nb×nb 重叠）、`.amn`（nb×nw 初猜）、`.win` | 另加 `.eig`（能带能量，用于确定外窗和冻结窗） |
-| 每次迭代每个 k 的主要运算 | 1 个 nw×nw 厄米特征分解，约 20 个 nw³ 矩阵乘 | 解纠缠阶段另有 1 个 nb 维厄米特征分解（Z 矩阵的子空间选取） |
-| 迭代方法 | 固定步长最速下降（SD） | 解纠缠用 Z 矩阵不动点迭代，mixing 方式与 wannier90 相同；之后同孤立带 |
+| Condition | `nb == nw` | `nb > nw` (metal, or conduction bands included) |
+| Entry point | `wannierise()` | `disentangle()` → `wannierise()` |
+| Input files | `.mmn` (nb×nb overlaps), `.amn` (nb×nw initial guess), `.win` | plus `.eig` (band energies, which set the outer and frozen windows) |
+| Main operations per k per iteration | 1 Hermitian eigendecomposition of size nw×nw, about 20 matrix products of cost nw³ | the disentanglement stage adds 1 Hermitian eigendecomposition of dimension nb (subspace selection from the Z matrix) |
+| Iteration method | fixed-step steepest descent (SD) | disentanglement by fixed-point iteration on the Z matrix, with the same mixing as wannier90; then as for isolated bands |
 
-不在范围内的内容：
+Out of scope:
 
-- SCDM 初猜。初猜直接读 VASP 写出的 `.amn`。
-- 能带插值。因此省略了 wannier90 在解纠缠收敛后的一步规范旋转，见"算法"中的"与 wannier90 的差异"。
+- The SCDM initial guess. The initial guess is read from the `.amn` that VASP writes.
+- Band interpolation. gpuw90 therefore omits the gauge rotation that wannier90
+  applies after disentanglement converges; see "Differences from wannier90" under
+  "Algorithms".
 
-解纠缠是局域化的前处理。它输出降维后的 `M0_reduced [nk,nnb,nw,nw]` 和初始规范 `U0 [nk,nw,nw]`，
-直接交给 `wannierise()`。`wannierise()` 不感知 nb，孤立带和纠缠带共用同一套局域化代码。
+Disentanglement is a preprocessing step of localisation. It outputs the reduced
+`M0_reduced [nk,nnb,nw,nw]` and the initial gauge `U0 [nk,nw,nw]`, which go straight
+to `wannierise()`. `wannierise()` is unaware of nb; isolated and entangled bands
+share the same localisation code.
 
-## 模块与数据流
+## Modules and data flow
 
-数据从 VASP 写出的文件开始，经 `io_w90` 读入，按带组类型分两路，最后都进入 `wannierise()`。
+The data start as files written by VASP, are read by `io_w90`, follow one of two
+paths according to the type of band group, and all end in `wannierise()`.
 
 ```
-VASP（LWRITE_MMN_AMN）
- │  写出 seedname.mmn、.amn、.eig；另备 .win
+VASP (LWRITE_MMN_AMN)
+ │  writes seedname.mmn, .amn, .eig; a .win is supplied as well
  ▼
 io_w90.load_case()
- │  解析文件，重建 b 向量和 shell 权重，返回 W90Case
+ │  parses the files, rebuilds the b vectors and shell weights, returns W90Case
  │
- ├─ 孤立带（nb == nw）
+ ├─ isolated bands (nb == nw)
  │    M0 = case.M
  │    U0 = wannierise.lowdin_orthonormalize(A)
  │
- ├─ 纠缠带（nb > nw；load_case 需传 allow_entangled=True 和 eig_path）
+ ├─ entangled bands (nb > nw; load_case needs allow_entangled=True and eig_path)
  │    disentangle.disentangle_case()
- │      窗口与冻结掩码 → 初始子空间 → Z 矩阵不动点迭代
- │      得到 M0_reduced 和 U0，作为下一步的 M0、U0
+ │      window and frozen masks → initial subspace → fixed-point iteration on the Z matrix
+ │      gives M0_reduced and U0, the M0 and U0 of the next step
  │
  ▼
 wannierise.wannierise(M0, U0, bvec, wb, kb_idx)
- │  每次迭代：旋转 M → 梯度 g → exp(dW) → 更新 U
- │  返回 centres [nw,3]、spreads [nw]、omega
+ │  each iteration: rotate M → gradient g → exp(dW) → update U
+ │  returns centres [nw,3], spreads [nw], omega
  ▼
-check_against_w90.py（孤立带）/ check_dis_against_w90.py（纠缠带）
-    读参考 <seed>_ref.wout（io_w90.parse_wout_final_state、parse_wout_dis_info）
-    按最近中心配对，用最小镜像距离比较，判定 PASS/FAIL（阈值 1e-4 Å）
+check_against_w90.py (isolated bands) / check_dis_against_w90.py (entangled bands)
+    reads the reference <seed>_ref.wout (io_w90.parse_wout_final_state, parse_wout_dis_info)
+    pairs by nearest centre, compares minimum-image distances, verdict PASS/FAIL (threshold 1e-4 Å)
 ```
 
-### 批量布局
+### Batched layout
 
-k 是批量维。所有重计算都是对 k（以及近邻 b）批量执行的 `torch.matmul` 和 `torch.linalg.eigh`，
-对应 wannier90 中逐 k 调用的 `zgemm` 和 `zheev`。切换到 `device="cuda"` 时数学不变。
+k is the batch dimension. All heavy computation is `torch.matmul` and
+`torch.linalg.eigh` batched over k (and over the neighbours b); these correspond to
+the per-k `zgemm` and `zheev` calls of wannier90. Switching to `device="cuda"`
+leaves the mathematics unchanged.
 
-| 张量 | 形状 | 类型 | 含义 |
+| Tensor | Shape | Type | Meaning |
 |---|---|---|---|
-| `M0` | `[nk, nnb, nw, nw]` | complex128 | 每个 (k, b) 的第一性原理重叠矩阵 |
-| `U` | `[nk, nw, nw]` | complex128 | 每个 k 的幺正规范 |
-| `bvec` | `[nk, nnb, 3]` | float64 | 笛卡尔 b 向量（Å⁻¹） |
-| `wb` | `[nk, nnb]` | float64 | shell 权重 |
-| `kb_idx` | `[nk, nnb]` | long | 近邻 k 的索引，即 k+b 折回布里渊区后对应的 k |
+| `M0` | `[nk, nnb, nw, nw]` | complex128 | First-principles overlap matrix of each (k, b) |
+| `U` | `[nk, nw, nw]` | complex128 | Unitary gauge at each k |
+| `bvec` | `[nk, nnb, 3]` | float64 | Cartesian b vectors (Å⁻¹) |
+| `wb` | `[nk, nnb]` | float64 | Shell weights |
+| `kb_idx` | `[nk, nnb]` | long | Index of the neighbour k, i.e. the k that k+b folds back to in the Brillouin zone |
 
-解纠缠阶段的输入是全带维度：`M0_full [nk,nnb,nb,nb]`、`A_full [nk,nb,nw]`、`eig [nk,nb]`。
+The input of the disentanglement stage has the full band dimension:
+`M0_full [nk,nnb,nb,nb]`, `A_full [nk,nb,nw]`, `eig [nk,nb]`.
 
-## 算法
+## Algorithms
 
-### 局域化（wannierise.py）
+### Localisation (wannierise.py)
 
-局域化与 wannier90 3.1 的 MV 最速下降相同。每次迭代对全部 k 批量执行以下步骤：
+Localisation is the same as the MV steepest descent of wannier90 3.1. Each iteration
+runs the following steps batched over all k:
 
-1. 旋转重叠：`M^{k,b} = U_k† M0^{k,b} U_{k+b}`（`_rotate_M`，近邻的规范用 `U[kb_idx]` 取）。
-2. 相位：`Im ln M_nn = atan2(Im, Re)`，取主支。
-3. 中心：`r_n = −(1/N) Σ_{k,b} w_b b · Im ln M_nn`。
-4. 梯度，即真实的 dΩ/dW，反厄米：
-   `g_k = −(1/N) · 4 Σ_b w_b (A[R^{k,b}] − S[T^{k,b}])`。
-   其中 `R_mn = M_mn·conj(M_nn)`，`T_mn = (M_mn/M_nn)·q_n`，`q_n = Im ln M_nn + b·r_n`，
-   `A[B] = (B − B†)/2`，`S[B] = (B + B†)/(2i)`。
-5. 步长：`dW_k = −(α·N / (4 w_tot)) g_k`，`w_tot = Σ_b w_b`。α = 1 是经典 MV 步长。
-6. 更新：`U_k ← U_k · exp(dW_k)`。矩阵指数通过 `i·dW` 的厄米特征分解计算：
-   `exp(dW) = V·diag(e^{−iλ})·V†`，与 wannier90 用 `zheev` 求指数的做法相同。
-7. 收敛：`|ΔΩ| < conv_tol` 连续 `conv_window` 次，语义与 wannier90 相同。
+1. Rotate the overlaps: `M^{k,b} = U_k† M0^{k,b} U_{k+b}` (`_rotate_M`; the
+   neighbour gauges are taken with `U[kb_idx]`).
+2. Phases: `Im ln M_nn = atan2(Im, Re)`, principal branch.
+3. Centres: `r_n = −(1/N) Σ_{k,b} w_b b · Im ln M_nn`.
+4. Gradient, i.e. the true dΩ/dW, anti-Hermitian:
+   `g_k = −(1/N) · 4 Σ_b w_b (A[R^{k,b}] − S[T^{k,b}])`,
+   where `R_mn = M_mn·conj(M_nn)`, `T_mn = (M_mn/M_nn)·q_n`,
+   `q_n = Im ln M_nn + b·r_n`, `A[B] = (B − B†)/2`, `S[B] = (B + B†)/(2i)`.
+5. Step: `dW_k = −(α·N / (4 w_tot)) g_k`, `w_tot = Σ_b w_b`. α = 1 is the classic
+   MV step.
+6. Update: `U_k ← U_k · exp(dW_k)`. The matrix exponential is computed from the
+   Hermitian eigendecomposition of `i·dW`: `exp(dW) = V·diag(e^{−iλ})·V†`, as
+   wannier90 does with `zheev`.
+7. Convergence: `|ΔΩ| < conv_tol` for `conv_window` consecutive iterations, the same
+   semantics as wannier90.
 
-孤立带的初始规范是 Löwdin 对称正交化 `U0 = A(A†A)^{−1/2}`，对应 wannier90 输出的 "Initial State"。
+The initial gauge for isolated bands is the Löwdin symmetric orthonormalisation
+`U0 = A(A†A)^{−1/2}`, which corresponds to the "Initial State" printed by wannier90.
 
-### 收敛判断与设备同步
+### Convergence check and device synchronisation
 
-热循环不在每次迭代都把数据读回主机，以免 GPU 上每次迭代都要等一次同步。
+The hot loop does not read data back to the host at every iteration; on a GPU that
+would cost one synchronisation per iteration.
 
-- 收敛计数 `n_below` 和 Ω 历史都保存在设备端张量中，循环结束后才一次取回。
-- 每 `check_every` 次迭代只读回一个标量收敛标志。`check_every > 1` 时，循环最多比实际收敛多跑 `check_every − 1` 次迭代。
-- 更新 U 后旋转得到的 M 直接作为下一次迭代的输入，每次迭代只旋转一次。
-- 解纠缠循环用同样的做法。
+- The convergence counter `n_below` and the Ω history are kept in device tensors and
+  fetched once after the loop ends.
+- Only one scalar convergence flag is read back, every `check_every` iterations. With
+  `check_every > 1` the loop runs at most `check_every − 1` iterations past actual
+  convergence.
+- The M rotated after the update of U is the input of the next iteration, so each
+  iteration rotates only once.
+- The disentanglement loop works the same way.
 
-### 解纠缠（disentangle.py）
+### Disentanglement (disentangle.py)
 
-解纠缠在每个 k 上选出使规范不变 spread Ω_I 最小的 nw 维子空间。底层函数签名：
+Disentanglement selects at each k the nw-dimensional subspace that minimises the
+gauge-invariant spread Ω_I. The signature of the low-level function:
 
 ```python
 res = disentangle(M0_full, A_full, eig, bvec, wb, kb_idx,
@@ -111,266 +135,370 @@ res = disentangle(M0_full, A_full, eig, bvec, wb, kb_idx,
                   conv_tol=1e-10, conv_window=3,
                   device="cpu", dtype=torch.complex128,
                   check_every=1, verbose=False)
-# res.M0_reduced、res.U0 直接交给 wannierise()
+# res.M0_reduced and res.U0 go straight to wannierise()
 ```
 
-便捷入口 `disentangle_case(case)` 从 `.win` 读取窗口和迭代参数，`.win` 中没有的项用 wannier90 默认值：
+The convenience entry `disentangle_case(case)` reads the windows and the iteration
+parameters from `.win`; items absent from `.win` take the wannier90 defaults:
 
-| `.win` 关键字 | `disentangle()` 参数 | 缺省值 |
+| `.win` keyword | `disentangle()` argument | Default |
 |---|---|---|
-| `dis_win_min`、`dis_win_max` | `dis_win_min`、`dis_win_max` | 全部本征值的最小值、最大值 |
-| `dis_froz_max` | `froz_win_max` | 不设冻结窗 |
-| `dis_froz_min` | `froz_win_min` | 只给了 `dis_froz_max` 时取 `dis_win_min` |
+| `dis_win_min`, `dis_win_max` | `dis_win_min`, `dis_win_max` | minimum and maximum of all eigenvalues |
+| `dis_froz_max` | `froz_win_max` | no frozen window |
+| `dis_froz_min` | `froz_win_min` | `dis_win_min` when only `dis_froz_max` is given |
 | `dis_num_iter` | `num_iter` | 200 |
 | `dis_mix_ratio` | `mix_ratio` | 0.5 |
 | `dis_conv_tol` | `conv_tol` | 1e-10 |
 | `dis_conv_window` | `conv_window` | 3 |
 
-实现逐步对照 wannier90 3.1 `disentangle.F90` 的源码，而不只是文献中的公式：
+The implementation follows the source of wannier90 3.1 `disentangle.F90` step by
+step, not only the formulas of the literature:
 
-1. 窗口（对应 `dis_windows`）：外窗在每个 k 上选出 `ndimwin(k)` 条带。`.eig` 读入时检查能量升序，
-   所以选出的带是连续的。冻结窗内的 `ndimfroz(k)` 条带必须整条保留。
-   `ndimwin < nw` 或 `ndimfroz > nw` 时报错，与 wannier90 相同。
-2. 初始子空间（对应 `dis_project` 和 `dis_proj_froz`）：`V0 = polar(A_w)`，即批量 SVD 的幺正因子，
-   与 Löwdin 正交化等价。有冻结窗时，非冻结部分取 `Q_f P_s Q_f` 的前 `nw − nf` 个本征向量（SMV Eq. 27），
-   冻结方向直接用单位向量。
-3. 主循环（对应 `dis_extract`）：Jacobi 式迭代，所有 k 同时更新，与 wannier90 按 MPI 分配 k 点时的语义相同。
-   - `Z_in⁽¹⁾ = Z[V⁽⁰⁾]`；`Z_in⁽ⁱ⁾ = mix·Z_out⁽ⁱ⁻¹⁾ + (1 − mix)·Z_in⁽ⁱ⁻¹⁾`
-   - `V⁽ⁱ⁾` = 冻结态，加上 `Z_in⁽ⁱ⁾` 的前 `nw − nf` 个本征向量
+1. Windows (corresponds to `dis_windows`): the outer window selects `ndimwin(k)`
+   bands at each k. Reading `.eig` checks that the energies ascend, so the selected
+   bands are contiguous. The `ndimfroz(k)` bands inside the frozen window must be
+   kept whole. `ndimwin < nw` or `ndimfroz > nw` raises an error, as in wannier90.
+2. Initial subspace (corresponds to `dis_project` and `dis_proj_froz`):
+   `V0 = polar(A_w)`, the unitary factor of a batched SVD, equivalent to Löwdin
+   orthonormalisation. With a frozen window, the non-frozen part takes the leading
+   `nw − nf` eigenvectors of `Q_f P_s Q_f` (SMV Eq. 27), and the frozen directions
+   are unit vectors.
+3. Main loop (corresponds to `dis_extract`): a Jacobi-style iteration in which all k
+   update simultaneously, the same semantics as wannier90 when it distributes the
+   k-points over MPI.
+   - `Z_in⁽¹⁾ = Z[V⁽⁰⁾]`; `Z_in⁽ⁱ⁾ = mix·Z_out⁽ⁱ⁻¹⁾ + (1 − mix)·Z_in⁽ⁱ⁻¹⁾`
+   - `V⁽ⁱ⁾` = the frozen states plus the leading `nw − nf` eigenvectors of `Z_in⁽ⁱ⁾`
    - `Z_out⁽ⁱ⁾ = Z[V⁽ⁱ⁾]`
-   - 其中 `Z[V](k) = Σ_b w_b M^{k,b} P_{k+b} M^{k,b†}`，`P = V V†`，再投影到 k 点的非冻结补空间。
+   - Here `Z[V](k) = Σ_b w_b M^{k,b} P_{k+b} M^{k,b†}` with `P = V V†`, then
+     projected onto the non-frozen complement at the k-point.
 
-   mixing 混合的是 Z 矩阵，不是投影算符。`Z_out` 在子空间更新之后、迭代末尾组装。这两点都与 wannier90 相同。
-4. 收敛判据：每次迭代计算两个 Ω_I。
-   - `Ω_I(i−1)`（SMV Eq. 18）的近邻用上一次迭代的子空间，等于冻结贡献加上选中本征值之和。
-   - `Ω_I(i)`（SMV Eq. 12）全部用新子空间。
-   - `delta = Ω_I(i−1)/Ω_I(i) − 1`，连续 `conv_window` 次 `|delta| < conv_tol` 即收敛。
-5. 初始规范（对应 `internal_find_u`）：`U0 = polar(V† A_w)`，即 wannier90 的 Löwdin 投影初值。
+   The mixing acts on the Z matrices, not on the projectors. `Z_out` is assembled
+   after the subspace update, at the end of the iteration. Both points are the same
+   as in wannier90.
+4. Convergence criterion: each iteration computes two values of Ω_I.
+   - `Ω_I(i−1)` (SMV Eq. 18) uses the subspaces of the previous iteration for the
+     neighbours and equals the frozen contribution plus the sum of the selected
+     eigenvalues.
+   - `Ω_I(i)` (SMV Eq. 12) uses the new subspaces throughout.
+   - `delta = Ω_I(i−1)/Ω_I(i) − 1`; the run is converged when `|delta| < conv_tol`
+     for `conv_window` consecutive iterations.
+5. Initial gauge (corresponds to `internal_find_u`): `U0 = polar(V† A_w)`, the
+   Löwdin-projection initial gauge of wannier90.
 
-### 逐 k 不等的维度并入一次 batched eigh
+### k-dependent dimensions in one batched eigh
 
-`ndimwin` 和 `ndimfroz` 随 k 变化，例如 li2mno3 自旋 1 的 nf 在 284~286 之间。逐 k 循环会破坏批量，
-所以实现保留全 nb 维，用掩码和对角能级移位代替切片：
+`ndimwin` and `ndimfroz` vary with k; for example, nf of li2mno3 spin 1 lies between
+284 and 286. A loop over k would break the batching, so the implementation keeps the
+full nb dimension and replaces slicing by masks and diagonal level shifts:
 
-- Z 先把冻结行列和窗外行列置零，再在对角线上加移位：冻结方向 `+2·w_tot`，窗外方向 `−2·w_tot`。
-  因为 ‖M‖ ≤ 1 且 w_b > 0，Z 的谱落在 `[0, w_tot]` 内，所以升序本征值排成 `[窗外 | 自由谱 | 冻结]`。
-- 一次 `torch.linalg.eigh` 的最后 nw 列就是新子空间。冻结块是精确的 `2w_tot·I`，
-  它的本征向量是冻结单位向量的幺正组合。子空间是精确的，列内的规范没有物理效应。
-- `Ω_I(i−1)` 需要的选中本征值之和，用逐 k 的槽位掩码 `nb − nw ≤ pos < nb − nf(k)` 向量化计算。
-- 移位同时加在 `Z_in` 和 `Z_out` 中。mixing 是线性的，移位在混合后保持不变，槽位选择在每次迭代都有效。
-- eigh 之后按列类型用掩码清除约 1e−15 的跨块浮点噪声（`_scrub_columns`），冻结态保持严格冻结。
-- 初始子空间的 `QPQ`（谱在 `[0, 1]`）用同样方法处理，移位取 ±2。补空间块与冻结块精确解耦，
-  所以近零本征值对应的本征向量自动与冻结态正交，wannier90 中 ortho-fix 要保证的也是这一性质。
+- The frozen and the out-of-window rows and columns of Z are set to zero, then
+  shifts are added on the diagonal: `+2·w_tot` for frozen directions and `−2·w_tot`
+  for out-of-window directions. Because ‖M‖ ≤ 1 and w_b > 0, the spectrum of Z lies
+  in `[0, w_tot]`, so the ascending eigenvalues are ordered
+  `[out of window | free spectrum | frozen]`.
+- The last nw columns of a single `torch.linalg.eigh` are the new subspace. The
+  frozen block is exactly `2w_tot·I`, and its eigenvectors are a unitary combination
+  of the frozen unit vectors. The subspace is exact, and the gauge within the
+  columns has no physical effect.
+- The sum of the selected eigenvalues needed by `Ω_I(i−1)` is vectorised with a
+  per-k slot mask `nb − nw ≤ pos < nb − nf(k)`.
+- The shifts are added to both `Z_in` and `Z_out`. The mixing is linear, so the
+  shifts survive it and the slot selection holds at every iteration.
+- After eigh, cross-block floating-point noise of about 1e−15 is cleared with masks
+  by column type (`_scrub_columns`), so the frozen states stay strictly frozen.
+- The `QPQ` of the initial subspace (spectrum in `[0, 1]`) is treated the same way,
+  with shifts of ±2. The complement block decouples exactly from the frozen block,
+  so the eigenvectors of near-zero eigenvalues are automatically orthogonal to the
+  frozen states; this is the property that the ortho-fix of wannier90 enforces.
 
-### 与 wannier90 的差异
+### Differences from wannier90
 
-wannier90 在解纠缠收敛后，会把 V 右乘子空间哈密顿量的本征向量，供能带插值使用。gpuw90 不做能带插值，省略了这一步。
+After disentanglement converges, wannier90 right-multiplies V by the eigenvectors of
+the subspace Hamiltonian, for use in band interpolation. gpuw90 does no band
+interpolation and omits this step.
 
-这一步只改变规范。右乘 `V → VR` 在 `M0_reduced = V† M0 V'` 与 `U0 = polar(V† A)` 之间严格相消，
-因为 `polar(R†B) = R†·polar(B)`。Ω_I、中心、spread 和局域化轨迹都不受影响。
-纠缠带初态与参考在 `.wout` 打印精度内一致（见"正确性验证结果"），与这一推导相符。
+The step changes only the gauge. The right-multiplication `V → VR` cancels exactly
+between `M0_reduced = V† M0 V'` and `U0 = polar(V† A)`, because
+`polar(R†B) = R†·polar(B)`. Ω_I, the centres, the spreads and the localisation
+trajectory are unaffected. The entangled-band initial states agree with the
+reference to the print precision of `.wout` (see "Verification results"), consistent
+with this derivation.
 
-## 数值问题与处理
+## Numerical issues and their handling
 
-下面各项在代码中都有就地注释。
+Every item below has a comment at the relevant place in the code.
 
-### 梯度的 1/N 前因子和整体符号
+### The 1/N prefactor and the overall sign of the gradient
 
-文献中 MV 梯度常写成 `4 Σ_b w_b (A[R] − S[T])`。但 Ω 本身带 `(1/N) Σ_k`，实现中也容易差一个整体符号。
+The literature often writes the MV gradient as `4 Σ_b w_b (A[R] − S[T])`. But Ω
+itself carries `(1/N) Σ_k`, and an implementation also easily gets the overall sign
+wrong.
 
-gpuw90 用有限差分方向导数检验梯度（`fd_check.py`）：比较解析的 `Re Tr[g† X]` 与
-`[Ω(U e^{εX}) − Ω(U e^{−εX})] / 2ε`。
+gpuw90 tests the gradient with a finite-difference directional derivative
+(`fd_check.py`): it compares the analytic `Re Tr[g† X]` with
+`[Ω(U e^{εX}) − Ω(U e^{−εX})] / 2ε`.
 
-| 梯度写法 | GaAs 上的 ratio |
+| Form of the gradient | ratio on GaAs |
 |---|---|
-| `4 Σ_b w_b (A[R] − S[T])` | −1/8，即 −1/N（N = 8） |
-| `−(1/N) · 4 Σ_b w_b (A[R] − S[T])`（当前实现） | +1.0000，三个 ε 下相同 |
+| `4 Σ_b w_b (A[R] − S[T])` | −1/8, i.e. −1/N (N = 8) |
+| `−(1/N) · 4 Σ_b w_b (A[R] − S[T])` (current implementation) | +1.0000, the same for all three ε |
 
-因此真实梯度是 `g = −(1/N) · 4 Σ_b w_b (A[R] − S[T])`，按 `dW = −eff·g` 下降时 Ω 单调减小。
-改动梯度后先跑 `fd_check.py`，不要直接采用公式中的前因子和符号。
+The true gradient is therefore `g = −(1/N) · 4 Σ_b w_b (A[R] − S[T])`, and Ω
+decreases monotonically along the descent `dW = −eff·g`. After changing the
+gradient, run `fd_check.py` first; do not take the prefactor and sign straight from
+a formula.
 
-### Ω_I 与 Ω_OD 的拆分
+### Splitting Ω_I and Ω_OD
 
-Ω_I 必须对全部 m、n 求和，Ω_OD 只取非对角部分：
+Ω_I must sum over all m, n; Ω_OD takes only the off-diagonal part:
 
 - `Ω_I = (1/N) Σ_{k,b} w_b (nw − Σ_{m,n} |M_mn|²)`
 - `Ω_OD = (1/N) Σ_{k,b} w_b Σ_{m≠n} |M_mn|²`
 - `Ω_D = (1/N) Σ_{k,b} w_b Σ_n (Im ln M_nn + b·r_n)²`
 
-常见错误是把 `Σ_n |M_nn|²` 放进 Ω_I。这样 Ω_OD 先被并进 Ω_I，又被单独加一次，总 Ω 多出一个 Ω_OD。
-症状是中心正确（偏差 6e-7 Å）而总 spread 偏高 0.502，等于 Ω_OD。
-按上式实现时，GaAs 初态 Ω 与参考逐位一致（4.46881212）。
+A common mistake is to put `Σ_n |M_nn|²` into Ω_I. Ω_OD is then first merged into
+Ω_I and afterwards added once more on its own, so the total Ω is too large by one
+Ω_OD. The symptom is correct centres (deviation 6e-7 Å) and a total spread too high
+by 0.502, which equals Ω_OD. With the formulas above, the initial-state Ω of GaAs
+agrees with the reference digit for digit (4.46881212).
 
-### ln 的支割线
+### Branch cut of ln
 
-`Im ln M_nn = atan2(Im, Re)`，取值在 (−π, π]，与 wannier90 的 `aimag(log(...))` 相同。
-CPU 和 GPU 取同一主值，不会因设备不同而跳支。
+`Im ln M_nn = atan2(Im, Re)` takes values in (−π, π], the same as
+`aimag(log(...))` in wannier90. CPU and GPU take the same principal value, so the
+branch does not jump from one device to the other.
 
-绝缘体 WF 的 M_nn ≈ 1，相位小，远离 ±π。只有在接近平局或 |M_nn| → 0 时才可能翻支，
-使中心跳动 `b·2π/…` 量级。孤立带验收算例的 Ω_D 很小，没有触发。
+For the WFs of an insulator, M_nn ≈ 1: the phase is small and far from ±π. A branch
+flip is possible only near a tie or when |M_nn| → 0; it would move the centre by the
+order of `b·2π/…`. Ω_D of the isolated-band check cases is small and no flip occurs.
 
-### b 向量的 shell 权重
+### Shell weights of the b vectors
 
-权重按 wannier90 的 kmesh 规则重建：
+The weights are rebuilt by the kmesh rules of wannier90:
 
-1. b 向量按 |b| 分 shell。
-2. 用最小二乘解 `Σ_shell w_s (Σ_{b∈s} b_α b_β) = δ_αβ` 的 6 个独立对称分量。
-3. 均匀网格上各 k 的 shell 结构相同，权重按 |b| 匹配回填到每个 (k, b)。
+1. Group the b vectors into shells by |b|.
+2. Solve by least squares the 6 independent symmetric components of
+   `Σ_shell w_s (Σ_{b∈s} b_α b_β) = δ_αβ`.
+3. On a uniform mesh every k has the same shell structure; the weights are filled
+   back into each (k, b) by matching |b|.
 
-加载时计算 B1 残差 `max|Σ_b w_b b⊗b − I|`：GaAs 为 9e-18，Diamond 为 2e-16。
-w_b 与参考逐位一致（GaAs 0.408635，Diamond 0.527876）。
+Loading computes the B1 residual `max|Σ_b w_b b⊗b − I|`: 9e-18 for GaAs and 2e-16
+for Diamond. w_b agrees with the reference digit for digit (GaAs 0.408635, Diamond
+0.527876).
 
-### 简并本征向量的相位（不需要处理）
+### Phases of degenerate eigenvectors (nothing to handle)
 
-`i·dW` 的本征向量在简并子空间内只确定到一个幺正旋转或相位。
-但 `exp(dW) = V·f(λ)·V†` 是算符函数，与这个规范无关，所以简并不影响更新。
-Löwdin 的 `(A†A)^{−1/2}` 同理。代码中注明了这一点，不需要加相位固定逻辑。
+Within a degenerate subspace the eigenvectors of `i·dW` are fixed only up to a
+unitary rotation or a phase. But `exp(dW) = V·f(λ)·V†` is a function of the operator
+and does not depend on this gauge, so degeneracy does not affect the update. The
+same holds for the Löwdin `(A†A)^{−1/2}`. The code notes this; no phase-fixing logic
+is needed.
 
-### 全程 FP64
+### FP64 throughout
 
-计算全部使用 complex128 / float64，与 wannier90 的双精度一致。
+All computation uses complex128 / float64, in line with the double precision of
+wannier90.
 
-CPU 与 GPU 只在归约顺序上不同，差异约 1e-14。收敛到同一极小时，这对中心的影响远小于 1e-4 Å；
-验收实测的偏差在 1e-6~1e-9 Å 量级（见"正确性验证结果"）。
-gpuw90 不要求 CPU 与 GPU 逐位一致，只要求物理上等价。
+CPU and GPU differ only in the order of reductions, by about 1e-14. When both
+converge to the same minimum, the effect on the centres is far below 1e-4 Å; the
+deviations measured in the checks are of the order of 1e-6 to 1e-9 Å (see
+"Verification results"). gpuw90 does not require CPU and GPU to agree bit for bit,
+only to be physically equivalent.
 
-### WF 顺序与周期镜像
+### WF order and periodic images
 
-最小化得到的 WF 顺序可能与参考不同，近简并的 WF 也可能互换。
+The order of the WFs from the minimisation may differ from the reference, and nearly
+degenerate WFs may swap.
 
-验收脚本因此按最近中心贪心配对，不按序号；距离用最小镜像，即先在实空间晶格中折叠再取长度。
-这样可以容忍简并交换和晶格平移。阈值为 1e-4 Å。
+The check scripts therefore pair the WFs greedily by nearest centre, not by index.
+Distances use the minimum image: fold into the real-space lattice first, then take
+the length. This tolerates degenerate swaps and lattice translations. The threshold
+is 1e-4 Å.
 
-### .mmn 的列主序
+### Column-major order of .mmn
 
-每个 (k, b) 块内的 nb×nb 数据以带序 m 为最快变化的索引，即 Fortran 列主序。
-读入时用 `reshape(order="F")` 得到 `M[m,n]`。
+Within each (k, b) block the nb×nb data have the band index m as the fastest-varying
+index, i.e. Fortran column-major order. Reading uses `reshape(order="F")` to obtain
+`M[m,n]`.
 
-如果误按行主序读，中心的对称性会被破坏，但 B1 残差仍然正常。
-初态中心与参考的对照能直接发现这个错误。
+If the data are misread as row-major, the symmetry of the centres is broken while
+the B1 residual stays normal. Comparing the initial-state centres with the reference
+exposes this error directly.
 
-### 解纠缠：两个 Ω_I 的计算次序
+### Disentanglement: order of the two Ω_I evaluations
 
-次序必须如下：
+The order must be:
 
-1. `Ω_I(i−1)` 的冻结贡献用上一次迭代的近邻子空间，在更新任何 k 之前整体算出；
-2. `Ω_I(i)` 用新子空间；
-3. `Z_out` 在子空间更新之后、迭代末尾组装。
+1. the frozen contribution to `Ω_I(i−1)` uses the neighbour subspaces of the
+   previous iteration and is computed as a whole before any k is updated;
+2. `Ω_I(i)` uses the new subspaces;
+3. `Z_out` is assembled after the subspace update, at the end of the iteration.
 
-任何一处次序不对，delta 序列就会偏离 wannier90，收敛迭代数对不上。
-按此次序实现时，四个纠缠带通道的迭代数与 wannier90 逐一相同。
+If any of these is out of order, the delta sequence departs from wannier90 and the
+number of iterations to convergence no longer matches. With this order, the
+iteration counts of the four entangled-band channels equal those of wannier90 one by
+one.
 
-### 解纠缠：能级移位的幅度
+### Disentanglement: size of the level shift
 
-冻结方向和窗外方向的对角移位如果取很大的数（如 1e6），eigh 本征向量的误差（约 eps·‖A‖/gap）
-会被放大并混进自由子空间。
+If the diagonal shifts of the frozen and out-of-window directions are very large
+(e.g. 1e6), the error of the eigh eigenvectors (about eps·‖A‖/gap) is amplified and
+mixes into the free subspace.
 
-gpuw90 取与谱同量级的 `±2·w_tot`。因为 ‖M‖ ≤ 1，Z 的谱有界于 `[0, w_tot]`，
-这个移位已足够把各块分开，又不损失精度。初始子空间的 `QPQ`（谱在 `[0, 1]`）同理取 ±2。
+gpuw90 uses `±2·w_tot`, of the same order as the spectrum. Because ‖M‖ ≤ 1, the
+spectrum of Z is bounded by `[0, w_tot]`, so this shift is enough to separate the
+blocks and loses no precision. The `QPQ` of the initial subspace (spectrum in
+`[0, 1]`) likewise takes ±2.
 
-## 正确性验证结果
+## Verification results
 
-孤立带 2 个算例和纠缠带 4 个通道全部 PASS，最大中心偏差都在 1e-6 Å 以下，验收阈值为 1e-4 Å。
-运行命令和参数见 README.md 的"运行验收"。
+The 2 isolated-band cases and the 4 entangled-band channels all PASS. Every maximum
+centre deviation is below 1e-6 Å; the check threshold is 1e-4 Å. Commands and
+arguments are in "Running the checks" of README.md.
 
-### 孤立带
+### Isolated bands
 
-参考输出是 wannier90 3.1 test-suite 的 `benchmark.out`，完全收敛：GaAs 从第 2 次迭代起中心不再变化。
+The reference output is the `benchmark.out` of the wannier90 3.1 test-suite, fully
+converged: the GaAs centres no longer change from iteration 2 on.
 
-| 算例 | nb/nw | nk | nntot | 收敛迭代数 | 最大中心偏差（Å） | 最大 spread 偏差（Ų） | Ω_total 偏差 |
+| Case | nb/nw | nk | nntot | Iterations to convergence | Max centre deviation (Å) | Max spread deviation (Ų) | Ω_total deviation |
 |---|---|---|---|---|---|---|---|
-| GaAs（example01） | 4/4 | 8 | 8 | 10 | 8.31e-07 | 4.07e-09 | 2.6e-10 |
-| Diamond（example05） | 4/4 | 64 | 8 | 12 | 3.13e-09 | 1.98e-09 | 1.3e-10 |
+| GaAs (example01) | 4/4 | 8 | 8 | 10 | 8.31e-07 | 4.07e-09 | 2.6e-10 |
+| Diamond (example05) | 4/4 | 64 | 8 | 12 | 3.13e-09 | 1.98e-09 | 1.3e-10 |
 
-- 阈值 1e-4 Å，两例的余量为 10⁵~10⁷ 倍。Diamond 有 64 个 k 点，覆盖了批量 k 路径。
-- 初态（Löwdin 后、未优化）的中心与参考 "Initial State" 相差 6e-7 Å（GaAs）和 3e-9 Å（Diamond）。
-  这一项不经过最小化，单独验证了文件读取、shell 权重和中心公式。
+- The threshold is 1e-4 Å; the margin of the two cases is a factor of 10⁵–10⁷.
+  Diamond has 64 k-points and exercises the batched-k path.
+- The initial-state centres (after Löwdin, before optimisation) differ from the
+  reference "Initial State" by 6e-7 Å (GaAs) and 3e-9 Å (Diamond). This item
+  involves no minimisation and verifies on its own the file reading, the shell
+  weights and the centre formula.
 
-复现：`python3 check_against_w90.py testdata/gaas --seed gaas`；Diamond 换成 `testdata/diamond --seed diamond`。
+Reproduce: `python3 check_against_w90.py testdata/gaas --seed gaas`; for Diamond use
+`testdata/diamond --seed diamond`.
 
-### 纠缠带
+### Entangled bands
 
-参考输出来自 SAI 集群上 wannier90.x 3.1 的串行运行（`run_np1_s*/wannier90.*.wout`）。
-参考运行与 gpuw90 读的是同一套 VASP 导出文件（`.mmn/.amn/.eig/.win` 通过符号链接指向同一份）。
-两套算例都有冻结窗（`dis_froz_max` 取自 `.win`），外窗为默认的全范围。
-li2mno3 与 LEOS 生产计算的体系规模相同（288 个 WF）。
+The reference output comes from serial runs of wannier90.x 3.1 on the SAI cluster
+(`run_np1_s*/wannier90.*.wout`). The reference runs and gpuw90 read the same VASP
+export (`.mmn/.amn/.eig/.win`, symbolic links to one copy). Both cases have a frozen
+window (`dis_froz_max` from `.win`); the outer window is the default full range.
+li2mno3 has the same system size as the LEOS production calculations (288 WFs).
 
-| 算例（自旋） | nb/nw | nk/nnb | nf | 解纠缠迭代数（gpuw90 / 参考） | Ω_I（Ų，两边打印值相同） | \|ΔΩ_I\| | 初态最大中心偏差（Å） | 初态最大 spread 偏差（Ų） |
+| Case (spin) | nb/nw | nk/nnb | nf | Disentanglement iterations (gpuw90 / reference) | Ω_I (Ų, same printed value on both sides) | \|ΔΩ_I\| | Max initial-state centre deviation (Å) | Max initial-state spread deviation (Ų) |
 |---|---|---|---|---|---|---|---|---|
-| vircef s1 | 180/142 | 8/12 | 141 | 82 / 82，收敛 | 81.06033903 | 3.4e-09 | 7.9e-07 | 5.0e-09 |
-| vircef s2 | 180/142 | 8/12 | 140 | 188 / 188，收敛 | 80.32720233 | 4.6e-10 | 7.7e-07 | 4.9e-09 |
-| li2mno3 s1 | 356/288 | 8/8 | 284~286 | 38 / 38，收敛 | 154.86511542 | 4.4e-09 | 8.3e-07 | 5.0e-09 |
-| li2mno3 s2 | 356/288 | 8/8 | 240 | 200 / 200，两边都到 `dis_num_iter` 上限，未收敛 | 135.30457827 | 4.1e-09 | 8.2e-07 | 5.0e-09 |
+| vircef s1 | 180/142 | 8/12 | 141 | 82 / 82, converged | 81.06033903 | 3.4e-09 | 7.9e-07 | 5.0e-09 |
+| vircef s2 | 180/142 | 8/12 | 140 | 188 / 188, converged | 80.32720233 | 4.6e-10 | 7.7e-07 | 4.9e-09 |
+| li2mno3 s1 | 356/288 | 8/8 | 284–286 | 38 / 38, converged | 154.86511542 | 4.4e-09 | 8.3e-07 | 5.0e-09 |
+| li2mno3 s2 | 356/288 | 8/8 | 240 | 200 / 200, both at the `dis_num_iter` limit, not converged | 135.30457827 | 4.1e-09 | 8.2e-07 | 5.0e-09 |
 
-验收门限：|ΔΩ_I| ≤ 1e-4 Ų，初态最大中心偏差 ≤ 1e-4 Å。四个通道全部 PASS。
+Gates: |ΔΩ_I| ≤ 1e-4 Ų and a maximum initial-state centre deviation ≤ 1e-4 Å. All
+four channels PASS.
 
-验收量的选择依据：
+Why these quantities are checked:
 
-- 参考 `.wout` 的局域化段用 CG，固定 100 次迭代，没有收敛判据（`conv_window = −1`）。
-  四个参考末态都没有收敛，最后几次迭代的 ΔΩ 仍有 1e-2~1e-1 Ų/迭代。
-- 因此末态中心的差异反映的是两边运行设置不同。实测这一差异约 0.3 Å，
-  而且 gpuw90 收敛后的 Ω_total 更低（vircef s1：94.2618，参考为 94.6541）。它不能用来判断实现对错。
-- 所以硬验收只用与运行设置无关的量：Ω_I（解纠缠的规范不变输出），以及解纠缠后的 "Initial State" 中心和 spread。
-  后者是子空间加 Löwdin 投影的初值，确定性计算，不经过任何最小化。
-- 选验收量之前，应先看参考 `.wout` 中回显的运行参数，确认参考本身是否收敛。
+- The localisation part of the reference `.wout` uses CG with a fixed 100 iterations
+  and no convergence criterion (`conv_window = −1`). None of the four reference
+  final states is converged; ΔΩ in the last iterations is still 1e-2 to
+  1e-1 Ų/iteration.
+- The difference between the final-state centres therefore reflects the different
+  run settings of the two sides. It measures about 0.3 Å, and the converged Ω_total
+  of gpuw90 is lower (vircef s1: 94.2618, reference 94.6541). It cannot tell whether
+  the implementation is correct.
+- The hard check therefore uses only quantities that do not depend on the run
+  settings: Ω_I (the gauge-invariant output of disentanglement), and the centres and
+  spreads of the "Initial State" after disentanglement. The latter is the subspace
+  plus the Löwdin-projection initial gauge, a deterministic computation with no
+  minimisation.
+- Before choosing the quantities to check, read the run parameters echoed in the
+  reference `.wout` and confirm whether the reference itself is converged.
 
-结果解读：
+Reading the results:
 
-- 初态中心偏差约 8e-7 Å、spread 偏差约 5e-9 Ų，对应 `.wout` 打印精度的舍入（中心 6 位小数，spread 8 位小数）。
-  孤立带 GaAs 的 8.3e-7 Å 也是同一来源。实际吻合程度比这更高。
-- 四个通道的解纠缠迭代数与 wannier90 逐一相同（38、82、188、200）。
-  这说明 mixing、两个 Ω_I 的计算次序和收敛窗口语义都与 wannier90 一致。
-- li2mno3 s2 在 200 次迭代截断、未收敛的轨迹上仍复现到 4e-9 Ų，说明不动点迭代中的浮点漂移可以忽略。
-- 脚本每次都会检查 `|Ω_I(初态) − Ω_I(解纠缠)|`。这是规范不变量，实测约 1e-11。
+- The initial-state centre deviation of about 8e-7 Å and spread deviation of about
+  5e-9 Ų correspond to the rounding at the print precision of `.wout` (6 decimals
+  for centres, 8 decimals for spreads). The 8.3e-7 Å of isolated-band GaAs has the
+  same origin. The actual agreement is better than this.
+- The disentanglement iteration counts of the four channels equal those of wannier90
+  one by one (38, 82, 188, 200). This shows that the mixing, the order of the two
+  Ω_I evaluations and the semantics of the convergence window all match wannier90.
+- li2mno3 s2 is truncated at 200 iterations, and its unconverged trajectory is still
+  reproduced to 4e-9 Ų, so the floating-point drift of the fixed-point iteration is
+  negligible.
+- The script checks `|Ω_I(initial state) − Ω_I(disentangled)|` on every run. Ω_I is
+  gauge-invariant; the measured difference is about 1e-11.
 
-CUDA 上的验收：V100 上 li2mno3 同样 PASS（|ΔΩ_I| = 4.4e-9 Ų，初态中心偏差 8.3e-7 Å），
-测量条件见 README.md 的"性能实测"。
+Check on CUDA: li2mno3 also passes on a V100 (|ΔΩ_I| = 4.4e-9 Ų, initial-state
+centre deviation 8.3e-7 Å); the measurement conditions are in "Measured performance"
+of README.md.
 
-复现：`python3 check_dis_against_w90.py testdata/vircef --seed wannier90.1`，其余通道换目录和 `--seed`。
-大输入不入库，先运行 `testdata/fetch_entangled.sh`。
+Reproduce: `python3 check_dis_against_w90.py testdata/vircef --seed wannier90.1`;
+for the other channels change the directory and `--seed`. The large inputs are not
+committed; run `testdata/fetch_entangled.sh` first.
 
-## 显存与分块
+## GPU memory and tiling
 
-目前的工作集很小，显存不构成约束。代码不做分块，全部张量常驻设备。
+The working set is small at present and GPU memory is not a constraint. The code
+does no tiling; all tensors stay on the device.
 
-- GPU 可行性评估估算，解纠缠和局域化的全部工作集 < 2 GB。出处：
-  `docs/reports/20260710_gpu_feasibility.md` 的"规模画像与基线拆解"一节；该文件已移出工作区，在 git 历史中可查。
-- 以 Ce 体系（nk = 32，nw ≈ 253，nntot ≈ 8~12）估算：`M0 = 32 × 10 × 253² × 16 B ≈ 0.33 GB`，`U ≈ 0.1 GB`。
-  V100-SXM2-16GB 单卡足够。
-- 解纠缠阶段在整个迭代期间保留全带的窗口掩码重叠 `M0w [nk,nnb,nb,nb]`。
+- The GPU feasibility assessment estimates the whole working set of disentanglement
+  and localisation at < 2 GB. Source: the section on the scale profile and baseline
+  breakdown of `docs/reports/20260710_gpu_feasibility.md`; the file has been moved
+  out of the working tree and can be found in the git history.
+- Estimate for a Ce system (nk = 32, nw ≈ 253, nntot ≈ 8–12):
+  `M0 = 32 × 10 × 253² × 16 B ≈ 0.33 GB`, `U ≈ 0.1 GB`. A single V100-SXM2-16GB card
+  is enough.
+- The disentanglement stage keeps the window-masked full-band overlaps
+  `M0w [nk,nnb,nb,nb]` for the whole iteration.
 
-体系更大、需要分块时，可以按两级切分：
+For a larger system that needs tiling, the split can be made at two levels:
 
-| 级别 | 切法 | 依据 |
+| Level | Split | Basis |
 |---|---|---|
-| 自旋 | ISPIN = 2 的两个通道依次处理，或分到两块 GPU 上并行 | 两个自旋通道完全独立。gpuw90 本身按 seed 一次处理一个自旋通道 |
-| k 点 | `M0` 按 k 切块从主机流入；U 全量常驻设备，只换入 `M0[k_tile]` 及其近邻块 | 旋转 M 要用近邻的 `U[k+b]`，而 U 很小。梯度对 b 的求和、中心的归约都只涉及本 k，跨块的只有近邻 U 的查表 |
+| Spin | Process the two channels of ISPIN = 2 one after the other, or in parallel on two GPUs | The two spin channels are fully independent. gpuw90 itself processes one spin channel at a time, per seed |
+| k-points | Stream `M0` from the host in k tiles; U stays whole on the device, and only `M0[k_tile]` and its neighbour tiles are swapped in | Rotating M needs the neighbour `U[k+b]`, and U is small. The sum over b in the gradient and the reduction for the centres involve only the local k; the only cross-tile access is the lookup of the neighbour U |
 
-k 分块只有超大体系才需要。
+k tiling is needed only for very large systems.
 
-显存压力最大的是 SCDM 中 `nb × Nr ≈ 5.3 GB` 的矩阵，但 SCDM 不在 gpuw90 的范围内：初猜直接读 VASP 写出的 `.amn`。
+The largest demand on GPU memory is the `nb × Nr ≈ 5.3 GB` matrix of SCDM, but SCDM
+is outside the scope of gpuw90: the initial guess is read from the `.amn` that VASP
+writes.
 
-## 与 LEOS 管线的对接
+## Connection to the LEOS pipeline
 
-gpuw90 可以在 VASP 之外离线完成 Wannier 化中解纠缠和局域化两步，代替 VASP 内 wannier90 库模式的这两步。
+gpuw90 can do the disentanglement and localisation steps of the Wannierisation
+offline, outside VASP, in place of the same two steps of the wannier90 library mode
+inside VASP.
 
-| 环节 | 现状 |
+| Part | Current state |
 |---|---|
-| 输入 | VASP 设置 `LWRITE_MMN_AMN`（mlwf.F 中已有的开关），写出 `seedname.mmn`、`.amn`、`.eig`；另需一个提供晶胞和显式 kpoints 的 `.win`，可由 VASP 写出或手写。gpuw90 离线读取这些文件，不进入 VASP 进程，显存由 gpuw90 自行管理 |
-| 输出 | 每个自旋通道的 `centres [nw,3]`（Å）和 `spreads [nw]`，以 numpy 数组的形式放在 `WannieriseResult` 中返回 |
-| 帧间热启动 | `wannierise()` 接受任意幺正 `U0`，可以传入上一帧收敛的 `res.U` 作为初值。仓库中没有针对这一用法的测试 |
+| Input | VASP with `LWRITE_MMN_AMN` set (an existing switch in mlwf.F) writes `seedname.mmn`, `.amn`, `.eig`; a `.win` that provides the cell and explicit kpoints is also needed, written by VASP or by hand. gpuw90 reads these files offline, does not enter the VASP process, and manages its own GPU memory |
+| Output | `centres [nw,3]` (Å) and `spreads [nw]` of each spin channel, returned as numpy arrays in `WannieriseResult` |
+| Warm start between frames | `wannierise()` accepts any unitary `U0`, so the converged `res.U` of the previous frame can be passed as the initial gauge. The repository has no test of this use |
 
-目前没有把输出写成 EOSCAR 或交给 pyleos 的适配器，见"已知限制"。
+There is no adapter yet that writes the output as EOSCAR or hands it to pyleos; see
+"Known limitations".
 
-## 已知限制
+## Known limitations
 
-- 局域化只有固定步长最速下降，没有 CG 和线搜索。良态体系（GaAs、Diamond）10~12 次迭代收敛；
-  在 vircef、li2mno3 这类近简并体系上，SD 跑 2000 次迭代仍未达到 1e-10。集群 wannier90.x 的 CG 100 次迭代也没有收敛。
-- 冻结窗边缘近简并时，子空间选取是离散决策，对浮点运算顺序敏感，下游中心可能因此移动。
-  目前只有 wannier90 参考输出回归（`check_dis_against_w90.py`）一道防护。
-- 验收脚本按最近中心贪心配对 WF（`check_against_w90.match_wfs`），不是全局最优配对。nw 很大时可能配错。
-- `.win` 没有显式 kpoints 块时，`load_case()` 必须传 `nnkp_path`，不会根据 `mp_grid` 自动生成 k 点。
-- 不支持 wannier90 的 `guiding_centres` 选项。
-- 没有输出适配器：结果不会写成 EOSCAR，也没有供 pyleos 读取的文件格式。
-- 局域化每次迭代都从 `M0` 整体重新旋转 M，没有 wannier90 式的增量更新。
-- 纠缠带验收只有 vircef 和 li2mno3 两套算例，没有 Ce 体系的真实帧。
+- Localisation has only fixed-step steepest descent, with no CG and no line search.
+  Well-conditioned systems (GaAs, Diamond) converge in 10–12 iterations; on nearly
+  degenerate systems such as vircef and li2mno3, SD has not reached 1e-10 after 2000
+  iterations. The CG of wannier90.x on the cluster has not converged after 100
+  iterations either.
+- With a near-degeneracy at the edge of the frozen window, the subspace selection is
+  a discrete decision that is sensitive to the order of floating-point operations,
+  and the downstream centres may move as a result. The only safeguard at present is
+  the regression against the wannier90 reference output
+  (`check_dis_against_w90.py`).
+- The check scripts pair the WFs greedily by nearest centre
+  (`check_against_w90.match_wfs`), not by a globally optimal matching. Mispairing is
+  possible when nw is very large.
+- When `.win` has no explicit kpoints block, `load_case()` must be given
+  `nnkp_path`; it does not generate the k-points from `mp_grid`.
+- The `guiding_centres` option of wannier90 is not supported.
+- There is no output adapter: results are not written as EOSCAR, and there is no
+  file format for pyleos to read.
+- Every localisation iteration re-rotates M from `M0` as a whole; there is no
+  incremental update as in wannier90.
+- The entangled-band check has only the two cases vircef and li2mno3, and no real
+  frame of a Ce system.

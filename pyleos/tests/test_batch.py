@@ -17,7 +17,7 @@ from pyleos.batch import (load_state, retry, save_state, squeue_ids,  # noqa: E4
                           status, submit, triage)
 
 REPO = Path(__file__).resolve().parent.parent.parent
-ABORTED_CASE = REPO / "data" / "v3" / "regress_v31" / "mumnox_abort2"
+ABORTED_CASE = REPO / "cases" / "mumnox" / "v31-abort2"
 
 
 def _make_case(dest: Path, name: str, incar: str, status_: str) -> Path:

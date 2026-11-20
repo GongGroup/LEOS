@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LEOS poster, RSC FIRST 2026</title>
+<!-- 900 x 1200 mm.  Build: sh build.sh (panels/*.svg come from make_panels.py and make_schematics.py). -->
+<style>
+@page { size: 900mm 1200mm; margin: 0 }
+* { box-sizing: border-box; margin: 0; padding: 0 }
+:root {
+  --red: #B5223A; --ink: #1B1B1F; --grey: #66666C; --card: #F4F2F0;
+  --pink: #F8ECED; --pinkline: #E7BCC3; --rule: #D9D6D3;
+  --m: 27mm;                 /* page margin */
+  --body: 30pt; --small: 24pt;
+}
+html, body { width: 900mm; height: 1200mm; background: #fff }
+body {
+  font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--body); line-height: 1.24; color: var(--ink);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  overflow: hidden;
+}
+sub, sup { font-size: 0.66em; line-height: 0; position: relative; vertical-align: baseline }
+sup { top: -0.46em } sub { top: 0.26em }
+i { font-style: italic }
+b { font-weight: 700 }
+.nw { white-space: nowrap }
+img { display: block; flex: none }
+
+/* ------------------------------------------------------------ header */
+/* white header: the red is kept for the seal, the poster number and one rule */
+.header { position: relative; height: 156mm; color: var(--ink); background: #fff }
+.header::after {
+  content: ""; position: absolute; left: var(--m); right: var(--m); bottom: 0;
+  height: 1.1mm; background: var(--red);
+}
+.seal { position: absolute; left: var(--m); top: 24mm; width: 106mm; height: 106mm }
+.seal img { width: 100%; height: 100% }
+.title {
+  position: absolute; left: 148mm; top: 13mm;
+  font-size: 88pt; font-weight: 900; line-height: 1.07; letter-spacing: -0.012em;
+  white-space: nowrap;
+}
+.authors {
+  position: absolute; left: 148mm; top: 114mm;
+  font-size: 39pt; font-weight: 500; line-height: 1.2; white-space: nowrap;
+}
+.authors u { text-decoration-thickness: 0.9mm; text-underline-offset: 1.8mm }
+.affil {
+  position: absolute; left: 148mm; top: 134.5mm;
+  font-size: 22pt; font-weight: 400; line-height: 1.3; color: #4A4A50;
+  white-space: nowrap;
+}
+.venue {
+  position: absolute; right: var(--m); top: 14mm; text-align: center;
+  font-size: 22pt; font-weight: 600; line-height: 1.28;
+}
+.pnum {
+  margin: 5mm auto 0; width: 72mm; height: 28mm; border: 1.2mm solid var(--red);
+  border-radius: 5mm; font-size: 52pt; font-weight: 700; line-height: 25.6mm;
+  letter-spacing: 0.02em; color: var(--red);
+}
+
+.code { position: absolute; right: var(--m); top: 71mm; width: 112mm; text-align: right; white-space: nowrap }
+.code img { width: 50mm; height: 50mm; margin: 0 18.75mm 1.6mm auto }
+.code .t { font-size: 18pt; font-weight: 500; line-height: 1.25; color: #4A4A50 }
+.code .u { font-size: 19.5pt; font-weight: 700; line-height: 1.25 }
+
+/* -------------------------------------------------------------- body */
+.main { height: 1044mm; padding: 12mm var(--m) 0 }
+h2 { font-size: 40pt; font-weight: 700; line-height: 1.12; display: flex; align-items: center; white-space: nowrap; margin-bottom: 4mm }
+h2 .n {
+  flex: none; display: inline-block; background: var(--red); color: #fff; border-radius: 50%;
+  text-align: center; font-weight: 700; width: 15.6mm; height: 15.6mm; font-size: 30pt;
+  line-height: 15.9mm; margin-right: 5mm;
+}
+.cap { font-size: 27pt; line-height: 1.26; margin-top: 3.4mm }
+
+.intro {
+  background: var(--card); border-radius: 6mm; padding: 7mm 12mm 6.5mm;
+  display: grid; grid-template-columns: 1fr 360mm; column-gap: 16mm; align-items: center;
+}
+.intro p { font-size: 32pt; line-height: 1.3 }
+.intro p + p { margin-top: 2.6mm }
+.intro h3 { color: var(--red); font-size: 42pt; font-weight: 700; line-height: 1.1; margin-bottom: 4.4mm; white-space: nowrap }
+.intro .pics img + img { margin-top: 8mm }
+.intro .hl { color: var(--red); font-weight: 700 }
+
+#rule { margin-top: 13mm }
+#rule h2 { font-size: 46pt; margin-bottom: 6mm }
+#rule h2 .n { width: 17.6mm; height: 17.6mm; font-size: 34pt; line-height: 17.9mm }
+
+.row2 { display: grid; grid-template-columns: 251.7mm 340mm 222.1mm; justify-content: space-between; margin-top: 14mm }
+#s5 { margin-top: 14mm }
+#s5 .cap { margin: 0 0 5.5mm }
+
+/* ------------------------------------------------------------ footer */
+.footer {
+  margin-top: 8mm; border-top: 0.45mm solid var(--rule); padding-top: 3.6mm;
+  display: flex; align-items: center; column-gap: 11mm;
+  font-size: 19pt; line-height: 1.36; color: #2A2A2E; white-space: nowrap;
+}
+.footer b { font-weight: 700 }
+.footer .lg img { width: auto }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="seal"><img src="assets/SJTU.png" alt="Shanghai Jiao Tong University"></div>
+  <div class="title">Oxidation-State Assignment as a<br>Minimum-Cost Flow: A Parameter-Free<br>Wannier-Based Approach for Solids</div>
+  <div class="authors"><u>Xian-Yang Zhang</u><sup>1</sup>, Yang-Lu Zhang<sup>1</sup>, Xue-Qing Gong<sup>1,*</sup></div>
+  <div class="affil"><sup>1</sup> School of Chemistry and Chemical Engineering, Shanghai Jiao Tong University, 800 Dongchuan Road, Shanghai 200240 &nbsp;·&nbsp; <sup>*</sup> xqgong@sjtu.edu.cn</div>
+  <div class="venue">RSC FIRST 2026<br>AI in Chemistry · Xiamen<div class="pnum">P100</div></div>
+  <div class="code">
+    <img src="panels/qr.svg" alt="QR code: https://github.com/GongGroup/LEOS">
+    <div class="t">Method · source code · gpuw90</div>
+    <div class="u">github.com/GongGroup/LEOS</div>
+  </div>
+</header>
+
+<main class="main">
+
+<!-- ========================================================== this work -->
+<section class="intro" id="intro">
+  <div>
+    <h3>Why Wannier functions?</h3>
+    <p>DFT does not output oxidation states. With atom-centred basis sets (GTO, LCAO), every electron can be projected onto an atom. Plane waves, the standard for solids, belong to no atom: there is nothing to project on. Wannier functions (WFs) turn plane-wave states back into localised electron pairs, and one question remains: which atom owns a bond pair? <span class="hl">We let the calculation decide.</span> Each atom’s pull on the pair comes from its own WFs. No electronegativity table, no fitted parameter.</p>
+  </div>
+  <div class="pics">
+    <img src="panels/basis.svg" alt="Atom-centred basis functions, plane waves, Wannier functions">
+    <img src="panels/pipeline.svg" alt="DFT, Wannier functions, owner of each pair, oxidation states">
+  </div>
+</section>
+
+<!-- ============================================== 1: the assignment rule -->
+<section id="rule">
+  <h2><span class="n">1</span>A parameter-free electron-assignment rule based on Wannier centres</h2>
+  <img src="panels/rules.svg" alt="The rule: Wannier centres, the three cases of a bond pair, electron count">
+</section>
+
+<!-- ============================================================ evidence -->
+<div class="row2">
+  <section id="s2">
+    <h2><span class="n">2</span>Solving the hydrogen problem</h2>
+    <img src="panels/dividing.svg" alt="Position of the WF centre along X-H bonds">
+    <p class="cap">129 of 137 X–H pairs lie nearer H. The balance of the two pulls, <i>f</i>*, assigns all 153 H atoms correctly.</p>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">3</span>Comparison of assignment algorithms</h2>
+    <img src="panels/accuracy.svg" alt="Atoms assigned the reference oxidation state by eight assignment algorithms">
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">4</span>Emergent electronegativity</h2>
+    <img src="panels/chi.svg" alt="In-situ electronegativity against the Allen scale">
+  </section>
+</div>
+
+<!-- ============================================================== gpuw90 -->
+<section id="s5">
+  <h2><span class="n">5</span>gpuw90: computing Wannier functions on a GPU</h2>
+  <p class="cap">gpuw90 rewrites the two iterative steps of wannier90 in PyTorch. It reads the same input files and runs unchanged on a CPU or a GPU.</p>
+  <img src="panels/gpuw90.svg" alt="gpuw90: where it sits, how it batches, timings and agreement with wannier90">
+</section>
+
+<!-- ============================================================= footer -->
+<footer class="footer">
+  <b>Acknowledgements</b>
+  <!-- A logo is shown when assets/<name>.svg, .png or .jpg exists; otherwise the name is printed. -->
+  <span class="lg" data-src="assets/NSFC" data-h="18" data-alt="National Natural Science Foundation of China (NSFC)"></span>
+  <span class="lg" data-src="assets/MOST" data-h="11.5" data-alt="Ministry of Science and Technology of China (MOST)"></span>
+</footer>
+
+</main>
+
+<script>
+/* Funding bodies in the footer: logo file if present, name otherwise. */
+document.querySelectorAll(".footer .lg").forEach(el => {
+  const exts = ["svg", "png", "jpg"];
+  const next = i => {
+    if (i === exts.length) { el.textContent = el.dataset.alt; return; }
+    const img = new Image();
+    img.onload = () => { img.alt = el.dataset.alt; img.style.height = el.dataset.h + "mm"; el.appendChild(img); };
+    img.onerror = () => next(i + 1);
+    img.src = el.dataset.src + "." + exts[i];
+  };
+  next(0);
+});
+/* Layout report for the build check: open poster.html#measure with --dump-dom. */
+if (location.hash === "#measure") {
+  const mm = v => (v * 25.4 / 96).toFixed(1);
+  const out = [];
+  const box = (sel) => { const e = document.querySelector(sel); if (!e) return; const r = e.getBoundingClientRect();
+    out.push(sel.padEnd(14) + " x " + mm(r.left).padStart(6) + "  y " + mm(r.top).padStart(6) + "  w " + mm(r.width).padStart(6) + "  h " + mm(r.height).padStart(6) + "  bottom " + mm(r.bottom).padStart(6) +
+      (e.scrollHeight > e.clientHeight + 8 ? "  OVERFLOW-Y " + mm(e.scrollHeight - e.clientHeight) : "") + (e.scrollWidth > e.clientWidth + 4 ? "  OVERFLOW-X " + mm(e.scrollWidth - e.clientWidth) : "")); };
+  window.addEventListener("load", () => {
+    [".header", ".venue", ".code", ".code img", "#intro", "#intro > div", "#rule", "#rule img", ".row2", "#s2", "#s3", "#s4", "#s5",
+     "#s5 img", ".footer"].forEach(box);
+    document.querySelectorAll(".title, .authors, .affil, h2, h3, .code .t, .code .u").forEach(e => {
+      const rg = document.createRange(); rg.selectNodeContents(e); const r = rg.getBoundingClientRect();
+      const host = e.closest("section, .strip > div, .header") || e.parentElement; const p = host.getBoundingClientRect();
+      const cs = getComputedStyle(host); const lim = p.right - parseFloat(cs.paddingRight);
+      out.push("text " + JSON.stringify(e.textContent.trim().replace(/\s+/g, " ").slice(0, 38)).padEnd(44) + " left " + mm(r.left).padStart(6) + " right " + mm(r.right).padStart(6) + "  limit " + mm(lim).padStart(6) + (r.right > lim + 0.5 ? "   <-- TOO WIDE" : "")); });
+    document.querySelectorAll(".cap, .intro p").forEach(e => {
+      const lh = parseFloat(getComputedStyle(e).lineHeight);
+      out.push("lines " + JSON.stringify(e.textContent.trim().slice(0, 30)).padEnd(36) + Math.round(e.getBoundingClientRect().height / lh)); });
+    const pre = document.createElement("pre"); pre.id = "measure"; pre.textContent = out.join("\n"); document.body.appendChild(pre);
+  });
+}
+</script>
+</body>
+</html>

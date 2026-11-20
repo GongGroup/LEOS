@@ -181,8 +181,8 @@ def supply_total_of(wfs: List["WfInfo"]) -> int:
 
 # Cost-gap below which tier-2 composition may arbitrate, and the composition
 # lead required to overturn the geometry. Values sit in the interior of the
-# safe plateau mapped by the 2026-07-10 sensitivity scan (script/
-# arbiter_scan.py, data/v3/arbiter_scan_20260710.tsv, RESULTS 3.8): tau=1.0
+# safe plateau mapped by the 2026-07-10 sensitivity scan (tools/
+# arbiter_scan.py, results/scan_arbiter_20260710.tsv, RESULTS 3.8): tau=1.0
 # fixes hi3 + the Rh complex and breaks nothing (1.5 starts overriding clear
 # geometry, e.g. tmao); pmargin in [0.10, 0.30] blocks the H-1s projector
 # artefact that at 0.05 flipped 37 legacy C-H/N-H hydrogens (vircef, mumnox),
@@ -369,7 +369,7 @@ def assign_case(case: CaseData, beta: float = 10.0,
                 fragments: Optional[List[List[int]]] = None,
                 tier2: str = "linear") -> AssignResult:
     """beta defaults to the production value 10 (plateau [8,12], see
-    data/v3/beta_scan_20260712.tsv); values around 3 misassign X-H bonds
+    results/scan_beta.tsv); values around 3 misassign X-H bonds
     silently, so never lower it below ~8 for real systems.
 
     gamma > 0 enables the tier-2 cost: c -= gamma * p_hat(w,a), where
