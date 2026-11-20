@@ -1,0 +1,443 @@
+# r3-T-B (pyleos/methods/frozen/r3-T-B-cap-repair.py) on the application cases
+# produced by: python3 paper/r3tb_applications.py   (run from the repo root; 2026-11-18)
+# r3tb   = plugin.assign(bench.scrub(load_case(cases/<case>/<run>))) with plugin = bench.load_plugin(...), as `pyleos bench clean` calls it
+# flow   = pyleos.transport.assign_case(load_case(...)), beta = 10, Allen (methane Co4 total: fragments=[Co atoms])
+# greedy = OS(int) column of the EOSCAR (per-WF greedy rule)
+# n_stray = len(assign_case(load_case(...)).stray); n_wf = WFs of all spin channels
+# values 'a/b/c' in the OS(El) rows are min/max/mean over the atoms of the element; 'v xN' = N atoms (or units) at v
+# r3tb_vs_ref compares the r3tb column with the reference column (OS(El) rows: the mean)
+# 69 runs tested; tables read by r3-T-B: none; r3-T-B time 15.5 s (assign + diagnose)
+study	case	run	role	n_atoms	n_wf	n_stray	quantity	r3tb	flow	greedy	reference	r3tb_vs_ref	note
+delithiation	li14o16	v31	app-li2o2	30	112	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li14o16~b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 2 electrons; |dNe| 2.0e-10
+delithiation	li14o16	v31	app-li2o2	30	112	0	OS(Li) min/max/mean, 14 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+delithiation	li14o16	v31	app-li2o2	30	112	0	OS(O) min/max/mean, 16 atoms	-1/0/-0.8750	-2/0/-0.8750	-2/0/-0.8750	mean -0.8750	equal	charge counting, Li +1 in a neutral cell
+delithiation	li14o16	v31	app-li2o2	30	112	0	mean OS(O)	-0.8750	-0.8750	-0.8750	-0.8750	equal	reference: -n(Li)/n(O)
+delithiation	li14o16	v31	app-li2o2	30	112	0	OS(Li), all atoms	+1 x14	+1 x14	+1 x14	+1 x14	equal	
+delithiation	li14o16	v31	app-li2o2	30	112	0	O atoms by OS	-1 x14, 0 x2	-2 x4, -1 x6, 0 x6	-2 x1, -1 x12, 0 x3	-	-	
+delithiation	li14o16	v31	app-li2o2	30	112	0	charges of the 8 O2 units (O-O < 2.4 A)	-2 x6, -1 x2	-2 x6, -1 x2	-2 x6, -1 x2	-2 x6, -1 x2	equal	reference: one hole per removed Li, each on one O2 unit
+delithiation	li15o16	v31	app-li2o2	31	112	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li15o16~f: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 5.8e-12
+delithiation	li15o16	v31	app-li2o2	31	112	0	OS(Li) min/max/mean, 15 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+delithiation	li15o16	v31	app-li2o2	31	112	0	OS(O) min/max/mean, 16 atoms	-1/0/-0.9375	-2/0/-0.9375	-3/0/-0.9375	mean -0.9375	equal	charge counting, Li +1 in a neutral cell
+delithiation	li15o16	v31	app-li2o2	31	112	0	mean OS(O)	-0.9375	-0.9375	-0.9375	-0.9375	equal	reference: -n(Li)/n(O)
+delithiation	li15o16	v31	app-li2o2	31	112	0	OS(Li), all atoms	+1 x15	+1 x15	+1 x15	+1 x15	equal	
+delithiation	li15o16	v31	app-li2o2	31	112	0	O atoms by OS	-1 x15, 0 x1	-2 x7, -1 x1, 0 x8	-3 x2, -2 x3, -1 x3, 0 x8	-	-	
+delithiation	li15o16	v31	app-li2o2	31	112	0	charges of the 8 O2 units (O-O < 2.4 A)	-2 x7, -1 x1	-2 x7, -1 x1	-3 x2, -2 x3, -1 x3	-2 x7, -1 x1	equal	reference: one hole per removed Li, each on one O2 unit
+delithiation	li16o16	v31	app-li2o2	32	112	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure li16o16~b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 3.9e-12
+delithiation	li16o16	v31	app-li2o2	32	112	0	OS(Li) min/max/mean, 16 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+delithiation	li16o16	v31	app-li2o2	32	112	0	OS(O) min/max/mean, 16 atoms	-1/-1/-1.0000	-2/0/-1.0000	-3/+1/-1.0000	mean -1.0000	equal	charge counting, Li +1 in a neutral cell
+delithiation	li16o16	v31	app-li2o2	32	112	0	mean OS(O)	-1.0000	-1.0000	-1.0000	-1.0000	equal	reference: -n(Li)/n(O)
+delithiation	li16o16	v31	app-li2o2	32	112	0	OS(Li), all atoms	+1 x16	+1 x16	+1 x16	+1 x16	equal	
+delithiation	li16o16	v31	app-li2o2	32	112	0	O atoms by OS	-1 x16	-2 x4, -1 x8, 0 x4	-3 x1, -2 x3, -1 x8, 0 x3, +1 x1	-	-	
+delithiation	li16o16	v31	app-li2o2	32	112	0	charges of the 8 O2 units (O-O < 2.4 A)	-2 x8	-2 x8	-2 x8	-2 x8	equal	reference: one hole per removed Li, each on one O2 unit
+polaron	li15o16	polaron-sp-hse	app-li2o2	31	112	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li15o16~b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 3.3e-11
+polaron	li15o16	polaron-sp-hse	app-li2o2	31	112	0	OS(Li) min/max/mean, 15 atoms	+1/+1/+1.0000	+1/+1/+1.0000	0/+1/+0.9333	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-sp-hse	app-li2o2	31	112	0	OS(O) min/max/mean, 16 atoms	-1/0/-0.9375	-2/0/-0.9375	-2/0/-0.8750	mean -0.9375	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-sp-hse	app-li2o2	31	112	0	mean OS(O)	-0.9375	-0.9375	-0.8750	-0.9375	equal	reference: -n(Li)/n(O)
+polaron	li15o16	polaron-sp-hse	app-li2o2	31	112	0	OS(Li), all atoms	+1 x15	+1 x15	0 x1, +1 x14	+1 x15	equal	
+polaron	li15o16	polaron-sp-hse	app-li2o2	31	112	0	O atoms by OS	-1 x15, 0 x1	-2 x3, -1 x9, 0 x4	-2 x2, -1 x10, 0 x4	-	-	
+polaron	li15o16	polaron-sp-hse	app-li2o2	31	112	0	charges of the 8 O2 units (O-O < 2.4 A)	-2 x7, -1 x1	-2 x7, -1 x1	-2 x6, -1 x2	-2 x7, -1 x1	equal	reference: one hole per removed Li, each on one O2 unit
+polaron	li15o16	polaron-sp-hse	app-li2o2	31	112	0	charge of the shortest O2 unit (O16-O20, 1.401 A; next 1.541 A)	-1	-2	-1 (electron count -1.11)	-1	equal	reference: the hole sits on the short-bond (superoxide) unit
+polaron	li15o16	polaron-sp-hse	app-li2o2	31	112	0	O2 units / unpaired O with charge other than -2	O16-O20 1.401 A -1	O18-O22 1.566 A -1	O16-O20 1.401 A -1; O24-O28 2.222 A -1	-	-	
+polaron	li15o16	polaron-sp-pbe	app-li2o2	31	118	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li15o16~b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 7 electrons; |dNe| 2.2e-09
+polaron	li15o16	polaron-sp-pbe	app-li2o2	31	118	0	OS(Li) min/max/mean, 15 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-sp-pbe	app-li2o2	31	118	0	OS(O) min/max/mean, 16 atoms	-1/0/-0.9375	-2/0/-0.9375	-2/0/-0.9375	mean -0.9375	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-sp-pbe	app-li2o2	31	118	0	mean OS(O)	-0.9375	-0.9375	-0.9375	-0.9375	equal	reference: -n(Li)/n(O)
+polaron	li15o16	polaron-sp-pbe	app-li2o2	31	118	0	OS(Li), all atoms	+1 x15	+1 x15	+1 x15	+1 x15	equal	
+polaron	li15o16	polaron-sp-pbe	app-li2o2	31	118	0	O atoms by OS	-1 x15, 0 x1	-2 x7, -1 x1, 0 x8	-2 x2, -1 x11, 0 x3	-	-	
+polaron	li15o16	polaron-sp-pbe	app-li2o2	31	118	0	charges of the 8 O2 units (O-O < 2.4 A)	-2 x7, -1 x1	-4 x3, -2 x1, -1 x1, 0 x3	-2 x7, -1 x1	-2 x7, -1 x1	equal	reference: one hole per removed Li, each on one O2 unit
+polaron	li15o16	polaron-sp-pbe	app-li2o2	31	118	0	charge of the shortest O2 unit (O16-O20, 1.401 A; next 1.541 A)	-2	-2	-1 (electron count -1.22)	-1	differs	reference: the hole sits on the short-bond (superoxide) unit
+polaron	li15o16	polaron-sp-pbe	app-li2o2	31	118	0	O2 units / unpaired O with charge other than -2	O19-O23 2.203 A -1	O17-O21 1.541 A -1; O27-O31 1.556 A 0; O26-O30 1.566 A 0; O18-O22 1.566 A 0; O19-O23 2.203 A -4; O24-O28 2.222 A -4; O25-O29 2.286 A -4	O16-O20 1.401 A -1	-	-	
+polaron	li15o16	polaron-u0	app-li2o2	31	112	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li15o16~c: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 6.5e-11
+polaron	li15o16	polaron-u0	app-li2o2	31	112	0	OS(Li) min/max/mean, 15 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-u0	app-li2o2	31	112	0	OS(O) min/max/mean, 16 atoms	-1/0/-0.9375	-2/0/-0.9375	-2/+1/-0.9375	mean -0.9375	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-u0	app-li2o2	31	112	0	mean OS(O)	-0.9375	-0.9375	-0.9375	-0.9375	equal	reference: -n(Li)/n(O)
+polaron	li15o16	polaron-u0	app-li2o2	31	112	0	OS(Li), all atoms	+1 x15	+1 x15	+1 x15	+1 x15	equal	
+polaron	li15o16	polaron-u0	app-li2o2	31	112	0	O atoms by OS	-1 x15, 0 x1	-2 x7, -1 x1, 0 x8	-2 x4, -1 x9, 0 x1, +1 x2	-	-	
+polaron	li15o16	polaron-u0	app-li2o2	31	112	0	charges of the 8 O2 units (O-O < 2.4 A)	-2 x7, -1 x1	-2 x7, -1 x1	-3 x1, -2 x5, -1 x2	-2 x7, -1 x1	equal	reference: one hole per removed Li, each on one O2 unit
+polaron	li15o16	polaron-u0	app-li2o2	31	112	0	charge of the shortest O2 unit (O17-O21, 1.481 A; next 1.481 A)	-1	-2	-1 (electron count -1.73)	-	-	no unit below 1.45 A
+polaron	li15o16	polaron-u0	app-li2o2	31	112	0	O2 units / unpaired O with charge other than -2	O17-O21 1.481 A -1	O16-O20 1.530 A -1	O17-O21 1.481 A -1; O19-O23 1.481 A -1; O16-O20 1.530 A -3	-	-	
+polaron	li15o16	polaron-u4	app-li2o2	31	112	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li15o16~c: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 6.7e-12
+polaron	li15o16	polaron-u4	app-li2o2	31	112	0	OS(Li) min/max/mean, 15 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-u4	app-li2o2	31	112	0	OS(O) min/max/mean, 16 atoms	-1/0/-0.9375	-2/0/-0.9375	-2/0/-0.9375	mean -0.9375	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-u4	app-li2o2	31	112	0	mean OS(O)	-0.9375	-0.9375	-0.9375	-0.9375	equal	reference: -n(Li)/n(O)
+polaron	li15o16	polaron-u4	app-li2o2	31	112	0	OS(Li), all atoms	+1 x15	+1 x15	+1 x15	+1 x15	equal	
+polaron	li15o16	polaron-u4	app-li2o2	31	112	0	O atoms by OS	-1 x15, 0 x1	-2 x6, -1 x3, 0 x7	-2 x3, -1 x9, 0 x4	-	-	
+polaron	li15o16	polaron-u4	app-li2o2	31	112	0	charges of the 8 O2 units (O-O < 2.4 A)	-2 x7, -1 x1	-2 x7, -1 x1	-3 x2, -2 x3, -1 x3	-2 x7, -1 x1	equal	reference: one hole per removed Li, each on one O2 unit
+polaron	li15o16	polaron-u4	app-li2o2	31	112	0	charge of the shortest O2 unit (O18-O31, 1.405 A; next 1.537 A)	-1	-2	-1 (electron count -1.21)	-1	equal	reference: the hole sits on the short-bond (superoxide) unit
+polaron	li15o16	polaron-u4	app-li2o2	31	112	0	O2 units / unpaired O with charge other than -2	O18-O31 1.405 A -1	O25-O29 1.550 A -1	O18-O31 1.405 A -1; O22-O27 1.537 A -1; O16-O20 1.541 A -3; O24-O28 1.546 A -1; O25-O29 1.550 A -3	-	-	
+polaron	li15o16	polaron-u6	app-li2o2	31	114	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li15o16~d: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 3 electrons; |dNe| 3.9e-02
+polaron	li15o16	polaron-u6	app-li2o2	31	114	0	OS(Li) min/max/mean, 15 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-u6	app-li2o2	31	114	0	OS(O) min/max/mean, 16 atoms	-1/0/-0.9375	-2/0/-0.9375	-1/0/-0.9375	mean -0.9375	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-u6	app-li2o2	31	114	0	mean OS(O)	-0.9375	-0.9375	-0.9375	-0.9375	equal	reference: -n(Li)/n(O)
+polaron	li15o16	polaron-u6	app-li2o2	31	114	0	OS(Li), all atoms	+1 x15	+1 x15	+1 x15	+1 x15	equal	
+polaron	li15o16	polaron-u6	app-li2o2	31	114	0	O atoms by OS	-1 x15, 0 x1	-2 x4, -1 x7, 0 x5	-1 x15, 0 x1	-	-	
+polaron	li15o16	polaron-u6	app-li2o2	31	114	0	charges of the 7 O2 units (O-O < 2.4 A)	-2 x7	-3 x1, -2 x4, -1 x1, 0 x1	-2 x6, -1 x1	-	-	reference: one hole per removed Li, each on one O2 unit; unpaired O atoms [16, 17]: r3tb -1,0, flow -1,-2
+polaron	li15o16	polaron-u6	app-li2o2	31	114	0	charge of the shortest O2 unit (O25-O29, 1.377 A; next 1.505 A)	-2	-2	-1 (electron count -1.13)	-1	differs	reference: the hole sits on the short-bond (superoxide) unit
+polaron	li15o16	polaron-u6	app-li2o2	31	114	0	O2 units / unpaired O with charge other than -2	O16 unpaired -1; O17 unpaired 0	O26-O30 1.527 A -1; O19-O23 1.545 A 0; O18-O22 2.143 A -3; O16 unpaired -1; O17 unpaired -2	O25-O29 1.377 A -1; O16 unpaired -1; O17 unpaired -1	-	-	
+polaron	li15o16	polaron-u8	app-li2o2	31	112	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li15o16~b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 1.4e-14
+polaron	li15o16	polaron-u8	app-li2o2	31	112	0	OS(Li) min/max/mean, 15 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-u8	app-li2o2	31	112	0	OS(O) min/max/mean, 16 atoms	-1/0/-0.9375	-2/0/-0.9375	-2/0/-0.9375	mean -0.9375	equal	charge counting, Li +1 in a neutral cell
+polaron	li15o16	polaron-u8	app-li2o2	31	112	0	mean OS(O)	-0.9375	-0.9375	-0.9375	-0.9375	equal	reference: -n(Li)/n(O)
+polaron	li15o16	polaron-u8	app-li2o2	31	112	0	OS(Li), all atoms	+1 x15	+1 x15	+1 x15	+1 x15	equal	
+polaron	li15o16	polaron-u8	app-li2o2	31	112	0	O atoms by OS	-1 x15, 0 x1	-2 x2, -1 x11, 0 x3	-2 x1, -1 x13, 0 x2	-	-	
+polaron	li15o16	polaron-u8	app-li2o2	31	112	0	charges of the 8 O2 units (O-O < 2.4 A)	-2 x7, -1 x1	-2 x7, -1 x1	-3 x1, -2 x5, -1 x2	-2 x7, -1 x1	equal	reference: one hole per removed Li, each on one O2 unit
+polaron	li15o16	polaron-u8	app-li2o2	31	112	0	charge of the shortest O2 unit (O16-O20, 1.401 A; next 1.541 A)	-1	-2	-1 (electron count -1.11)	-1	equal	reference: the hole sits on the short-bond (superoxide) unit
+polaron	li15o16	polaron-u8	app-li2o2	31	112	0	O2 units / unpaired O with charge other than -2	O16-O20 1.401 A -1	O18-O22 1.566 A -1	O16-O20 1.401 A -1; O27-O31 1.556 A -3; O25-O29 2.286 A -1	-	-	
+delithiation-other	li14o16	v3	app-li2o2	30	120	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li14o16~a: wrong (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 10 electrons; |dNe| 2.3e-03
+delithiation-other	li14o16	v3	app-li2o2	30	120	0	OS(Li) min/max/mean, 14 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+delithiation-other	li14o16	v3	app-li2o2	30	120	0	OS(O) min/max/mean, 16 atoms	-2/0/-0.8750	-2/+2/-0.8750	-1/0/-0.8750	mean -0.8750	equal	charge counting, Li +1 in a neutral cell
+delithiation-other	li14o16	v3	app-li2o2	30	120	0	mean OS(O)	-0.8750	-0.8750	-0.8750	-0.8750	equal	reference: -n(Li)/n(O)
+delithiation-other	li14o16	v3	app-li2o2	30	120	0	OS(Li), all atoms	+1 x14	+1 x14	+1 x14	+1 x14	equal	
+delithiation-other	li14o16	v3	app-li2o2	30	120	0	O atoms by OS	-2 x1, -1 x12, 0 x3	-2 x5, -1 x7, 0 x2, +1 x1, +2 x1	-1 x14, 0 x2	-	-	
+delithiation-other	li14o16	v3	app-li2o2	30	120	0	charges of the 8 O2 units (O-O < 2.4 A)	-3 x1, -2 x4, -1 x3	-3 x3, -2 x1, -1 x3, 0 x1	-2 x7, 0 x1	-2 x6, -1 x2	differs	reference: one hole per removed Li, each on one O2 unit
+delithiation-other	li15o16	v3	app-li2o2	31	112	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li15o16~a: wrong (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 2.8e-02
+delithiation-other	li15o16	v3	app-li2o2	31	112	0	OS(Li) min/max/mean, 15 atoms	-1/+1/+0.0000	+1/+1/+1.0000	-1/+1/+0.0000	mean +1.0000	differs	charge counting, Li +1 in a neutral cell
+delithiation-other	li15o16	v3	app-li2o2	31	112	0	OS(O) min/max/mean, 16 atoms	0/0/+0.0000	-2/0/-0.9375	0/0/+0.0000	mean -0.9375	differs	charge counting, Li +1 in a neutral cell
+delithiation-other	li15o16	v3	app-li2o2	31	112	0	mean OS(O)	+0.0000	-0.9375	+0.0000	-0.9375	differs	reference: -n(Li)/n(O)
+delithiation-other	li15o16	v3	app-li2o2	31	112	0	OS(Li), all atoms	-1 x7, 0 x1, +1 x7	+1 x15	-1 x7, 0 x1, +1 x7	+1 x15	differs	
+delithiation-other	li15o16	v3	app-li2o2	31	112	0	O atoms by OS	0 x16	-2 x7, -1 x1, 0 x8	0 x16	-	-	
+delithiation-other	li15o16	v3	app-li2o2	31	112	0	charges of the 8 O2 units (O-O < 2.4 A)	0 x8	-2 x7, -1 x1	0 x8	-2 x7, -1 x1	differs	reference: one hole per removed Li, each on one O2 unit
+delithiation-other	li15o16	v3-md	app-li2o2	31	152	88	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li15o16~a: wrong (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 41 electrons; |dNe| 8.9e-11
+delithiation-other	li15o16	v3-md	app-li2o2	31	152	88	OS(Li) min/max/mean, 15 atoms	0/+1/+0.8667	+1/+1/+1.0000	-4/+1/-0.2000	mean +1.0000	differs	charge counting, Li +1 in a neutral cell
+delithiation-other	li15o16	v3-md	app-li2o2	31	152	88	OS(O) min/max/mean, 16 atoms	-10/+3/-0.8125	-2/+2/-0.9375	-2/+3/+0.1875	mean -0.9375	differs	charge counting, Li +1 in a neutral cell
+delithiation-other	li15o16	v3-md	app-li2o2	31	152	88	mean OS(O)	-0.8125	-0.9375	+0.1875	-0.9375	differs	reference: -n(Li)/n(O)
+delithiation-other	li15o16	v3-md	app-li2o2	31	152	88	OS(Li), all atoms	0 x2, +1 x13	+1 x15	-4 x1, -2 x2, -1 x3, 0 x1, +1 x8	+1 x15	differs	
+delithiation-other	li15o16	v3-md	app-li2o2	31	152	88	O atoms by OS	-10 x1, -5 x1, -4 x2, -3 x1, -2 x1, 0 x1, +1 x4, +2 x4, +3 x1	-2 x8, -1 x3, 0 x3, +2 x2	-2 x7, +1 x3, +2 x4, +3 x2	-	-	
+delithiation-other	li15o16	v3-md	app-li2o2	31	152	88	charges of the 8 O2 units (O-O < 2.4 A)	-9 x1, -4 x1, -2 x3, +1 x1, +2 x1, +3 x1	-4 x1, -3 x2, -2 x3, 0 x1, +1 x1	-1 x3, 0 x3, +1 x1, +5 x1	-2 x7, -1 x1	differs	reference: one hole per removed Li, each on one O2 unit
+delithiation-other	li15o16	v3-u	app-li2o2	31	112	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li15o16~e: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 6.7e-11
+delithiation-other	li15o16	v3-u	app-li2o2	31	112	0	OS(Li) min/max/mean, 15 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	charge counting, Li +1 in a neutral cell
+delithiation-other	li15o16	v3-u	app-li2o2	31	112	0	OS(O) min/max/mean, 16 atoms	-1/0/-0.9375	-2/0/-0.9375	-2/+1/-0.9375	mean -0.9375	equal	charge counting, Li +1 in a neutral cell
+delithiation-other	li15o16	v3-u	app-li2o2	31	112	0	mean OS(O)	-0.9375	-0.9375	-0.9375	-0.9375	equal	reference: -n(Li)/n(O)
+delithiation-other	li15o16	v3-u	app-li2o2	31	112	0	OS(Li), all atoms	+1 x15	+1 x15	+1 x15	+1 x15	equal	
+delithiation-other	li15o16	v3-u	app-li2o2	31	112	0	O atoms by OS	-1 x15, 0 x1	-2 x7, -1 x1, 0 x8	-2 x4, -1 x8, 0 x3, +1 x1	-	-	
+delithiation-other	li15o16	v3-u	app-li2o2	31	112	0	charges of the 8 O2 units (O-O < 2.4 A)	-2 x7, -1 x1	-2 x7, -1 x1	-2 x7, -1 x1	-2 x7, -1 x1	equal	reference: one hole per removed Li, each on one O2 unit
+delithiation-other	li16o16	v3	app-li2o2	32	116	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure li16o16~a: wrong (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 4 electrons; |dNe| 7.9e-08
+delithiation-other	li16o16	v3	app-li2o2	32	116	0	OS(Li) min/max/mean, 16 atoms	-1/+1/+0.2500	+1/+1/+1.0000	-1/+1/+0.2500	mean +1.0000	differs	charge counting, Li +1 in a neutral cell
+delithiation-other	li16o16	v3	app-li2o2	32	116	0	OS(O) min/max/mean, 16 atoms	-2/0/-0.2500	-2/0/-1.0000	-1/0/-0.2500	mean -1.0000	differs	charge counting, Li +1 in a neutral cell
+delithiation-other	li16o16	v3	app-li2o2	32	116	0	mean OS(O)	-0.2500	-1.0000	-0.2500	-1.0000	differs	reference: -n(Li)/n(O)
+delithiation-other	li16o16	v3	app-li2o2	32	116	0	OS(Li), all atoms	-1 x6, +1 x10	+1 x16	-1 x6, +1 x10	+1 x16	differs	
+delithiation-other	li16o16	v3	app-li2o2	32	116	0	O atoms by OS	-2 x1, -1 x2, 0 x13	-2 x4, -1 x8, 0 x4	-1 x4, 0 x12	-	-	
+delithiation-other	li16o16	v3	app-li2o2	32	116	0	charges of the 8 O2 units (O-O < 2.4 A)	-3 x1, -1 x1, 0 x6	-4 x2, -2 x2, -1 x4	-2 x2, 0 x6	-2 x8	differs	reference: one hole per removed Li, each on one O2 unit
+li15o16-md	li15o16	v3-md2	app-li2o2	-	-	-	mean OS(O) over the steps, min..max [odd]	-0.9375..-0.9375	-0.9375..-0.9375	-0.9375..-0.9375	-0.9375	equal	20 steps, 152 WFs each, stray 18..21, surplus e 41; step-to-geometry map not recorded: XDATCAR configurations odd
+li15o16-md	li15o16	v3-md2	app-li2o2	-	-	-	OS(Li) over all steps and atoms, min..max [odd]	+1..+1	+1..+1	+1..+1	+1..+1	equal	20 steps, 152 WFs each, stray 18..21, surplus e 41; step-to-geometry map not recorded: XDATCAR configurations odd
+li15o16-md	li15o16	v3-md2	app-li2o2	-	-	-	charge of an O2 unit, min..max [odd]	-3..0	-4..+2	-	-2..-1	-	r3-T-B undetermined in 0 of 20 steps
+li15o16-md	li15o16	v3-md2	app-li2o2	-	-	-	mean OS(O) over the steps, min..max [even]	-0.9375..-0.9375	-0.9375..-0.9375	-0.9375..-0.9375	-0.9375	equal	20 steps, 152 WFs each, stray 18..21, surplus e 41; step-to-geometry map not recorded: XDATCAR configurations even
+li15o16-md	li15o16	v3-md2	app-li2o2	-	-	-	OS(Li) over all steps and atoms, min..max [even]	+1..+1	+1..+1	+1..+1	+1..+1	equal	20 steps, 152 WFs each, stray 18..21, surplus e 41; step-to-geometry map not recorded: XDATCAR configurations even
+li15o16-md	li15o16	v3-md2	app-li2o2	-	-	-	charge of an O2 unit, min..max [even]	-3..0	-4..+2	-	-2..-1	-	r3-T-B undetermined in 0 of 20 steps
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ce18o36co4ch4_fs: unchecked (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 6 electrons; |dNe| 1.9e-01
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	OS(Ce) min/max/mean, 18 atoms	+2/+4/+3.7222	+4/+4/+4.0000	+3/+5/+3.8889	-	-	
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	OS(O) min/max/mean, 36 atoms	-2/-1/-1.9444	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	differs	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	OS(Co) min/max/mean, 4 atoms	+1/+2/+1.2500	0/+1/+0.5000	+1/+2/+1.7500	-	-	
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	OS(H) min/max/mean, 4 atoms	-1/+1/+0.5000	-1/+1/+0.5000	-2/+1/+0.2500	mean +0.5000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	OS(C) min/max/mean, 1 atoms	-4/-4/-4.0000	-4/-4/-4.0000	-6/-6/-6.0000	mean -4.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	OS of the transferred H (atom 60, C-H 2.915 A)	-1	-1	-2	-1	equal	reference: fig. 5(a), +1 before and -1 after C-H cleavage
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	OS of C (atom 63)	-4	-4	-6	-4	equal	reference: fig. 5(a)
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	Co4 total OS (per-atom values)	+5 (+2,+1,+1,+1)	+2 (fragment; per-atom run 0,0,+1,+1)	+7 (+2,+1,+2,+2)	-	-	fig. 5(a) supports only the step: +2 from the initial to the transition and final state
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	Ce atoms by OS	+2 x1, +3 x3, +4 x14	+4 x18	+3 x3, +4 x14, +5 x1	-	-	WF occupations indicate three Ce(+3) (fig5_caption.md)
+methane	ce18o36co4ch4_fs	v3	app-methane	63	506	1	O atoms by OS	-2 x34, -1 x2	-2 x36	-2 x36	-2 x36	differs	
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ce18o36co4ch4_fs: unchecked (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 7.6e-04
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	OS(Ce) min/max/mean, 18 atoms	+3/+4/+3.7778	+3/+4/+3.8889	+3/+4/+3.8333	-	-	
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	OS(O) min/max/mean, 36 atoms	-2/-1/-1.9722	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	differs	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	OS(Co) min/max/mean, 4 atoms	+1/+2/+1.2500	0/+2/+1.0000	+1/+2/+1.7500	-	-	
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	OS(H) min/max/mean, 4 atoms	-1/+1/+0.5000	-1/+1/+0.5000	-3/+1/+0.0000	mean +0.5000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	OS(C) min/max/mean, 1 atoms	-4/-4/-4.0000	-4/-4/-4.0000	-4/-4/-4.0000	mean -4.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	OS of the transferred H (atom 60, C-H 2.915 A)	-1	-1	-3	-1	equal	reference: fig. 5(a), +1 before and -1 after C-H cleavage
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	OS of C (atom 63)	-4	-4	-4	-4	equal	reference: fig. 5(a)
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	Co4 total OS (per-atom values)	+5 (+2,+1,+1,+1)	+4 (fragment; per-atom run +2,+1,0,+1)	+7 (+1,+2,+2,+2)	-	-	fig. 5(a) supports only the step: +2 from the initial to the transition and final state
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	Ce atoms by OS	+3 x4, +4 x14	+3 x2, +4 x16	+3 x3, +4 x15	-	-	WF occupations indicate three Ce(+3) (fig5_caption.md)
+methane	ce18o36co4ch4_fs	v31-4gpu	diag	63	501	0	O atoms by OS	-2 x35, -1 x1	-2 x36	-2 x36	-2 x36	differs	
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ce18o36co4ch4_fs: unchecked (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 1.1e-03
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	OS(Ce) min/max/mean, 18 atoms	+3/+4/+3.8333	+3/+4/+3.8889	+3/+4/+3.8333	-	-	
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	OS(O) min/max/mean, 36 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	OS(Co) min/max/mean, 4 atoms	+1/+2/+1.2500	0/+2/+1.0000	+1/+3/+1.7500	-	-	
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	OS(H) min/max/mean, 4 atoms	-1/+1/+0.5000	-1/+1/+0.5000	-3/+1/+0.0000	mean +0.5000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	OS(C) min/max/mean, 1 atoms	-4/-4/-4.0000	-4/-4/-4.0000	-4/-4/-4.0000	mean -4.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	OS of the transferred H (atom 60, C-H 2.915 A)	-1	-1	-3	-1	equal	reference: fig. 5(a), +1 before and -1 after C-H cleavage
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	OS of C (atom 63)	-4	-4	-4	-4	equal	reference: fig. 5(a)
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	Co4 total OS (per-atom values)	+5 (+1,+1,+1,+2)	+4 (fragment; per-atom run 0,+1,+1,+2)	+7 (+1,+3,+1,+2)	-	-	fig. 5(a) supports only the step: +2 from the initial to the transition and final state
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	Ce atoms by OS	+3 x3, +4 x15	+3 x2, +4 x16	+3 x3, +4 x15	-	-	WF occupations indicate three Ce(+3) (fig5_caption.md)
+methane	ce18o36co4ch4_fs	v31-mag10	diag	63	501	0	O atoms by OS	-2 x36	-2 x36	-2 x36	-2 x36	equal	
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ce18o36co4ch4_is: unchecked (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 6 electrons; |dNe| 2.1e-02
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	OS(Ce) min/max/mean, 18 atoms	+3/+4/+3.8333	+4/+4/+4.0000	+3/+4/+3.8333	-	-	
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	OS(O) min/max/mean, 36 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	OS(Co) min/max/mean, 4 atoms	0/+2/+0.7500	-1/+1/+0.0000	0/+1/+0.7500	-	-	
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	OS(H) min/max/mean, 4 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	OS(C) min/max/mean, 1 atoms	-4/-4/-4.0000	-4/-4/-4.0000	-4/-4/-4.0000	mean -4.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	OS of the transferred H (atom 60, C-H 1.101 A)	+1	+1	+1	+1	equal	reference: fig. 5(a), +1 before and -1 after C-H cleavage
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	OS of C (atom 63)	-4	-4	-4	-4	equal	reference: fig. 5(a)
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	Co4 total OS (per-atom values)	+3 (+2,0,0,+1)	0 (fragment; per-atom run +1,0,-1,0)	+3 (+1,0,+1,+1)	-	-	fig. 5(a) supports only the step: +2 from the initial to the transition and final state
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	Ce atoms by OS	+3 x3, +4 x15	+4 x18	+3 x3, +4 x15	-	-	WF occupations indicate three Ce(+3) (fig5_caption.md)
+methane	ce18o36co4ch4_is	v3	app-methane	63	506	2	O atoms by OS	-2 x36	-2 x36	-2 x36	-2 x36	equal	
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ce18o36co4ch4_is: unchecked (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 8.0e-04
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	OS(Ce) min/max/mean, 18 atoms	+3/+4/+3.8333	+3/+4/+3.8889	+3/+5/+3.8333	-	-	
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	OS(O) min/max/mean, 36 atoms	-2/-1/-1.9722	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	differs	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	OS(Co) min/max/mean, 4 atoms	-1/+1/+0.5000	-1/+2/+0.5000	-1/+2/+0.7500	-	-	
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	OS(H) min/max/mean, 4 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	OS(C) min/max/mean, 1 atoms	-4/-4/-4.0000	-4/-4/-4.0000	-4/-4/-4.0000	mean -4.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	OS of the transferred H (atom 60, C-H 1.101 A)	+1	+1	+1	+1	equal	reference: fig. 5(a), +1 before and -1 after C-H cleavage
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	OS of C (atom 63)	-4	-4	-4	-4	equal	reference: fig. 5(a)
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	Co4 total OS (per-atom values)	+2 (-1,+1,+1,+1)	+2 (fragment; per-atom run -1,0,+1,+2)	+3 (+2,+2,0,-1)	-	-	fig. 5(a) supports only the step: +2 from the initial to the transition and final state
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	Ce atoms by OS	+3 x3, +4 x15	+3 x2, +4 x16	+3 x4, +4 x13, +5 x1	-	-	WF occupations indicate three Ce(+3) (fig5_caption.md)
+methane	ce18o36co4ch4_is	v31-mag10	diag	63	501	0	O atoms by OS	-2 x35, -1 x1	-2 x36	-2 x36	-2 x36	differs	
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ce18o36co4ch4_is: unchecked (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 6.3e-04
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	OS(Ce) min/max/mean, 18 atoms	+3/+5/+3.8889	+3/+4/+3.8889	+2/+5/+3.8333	-	-	
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	OS(O) min/max/mean, 36 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	OS(Co) min/max/mean, 4 atoms	0/+1/+0.5000	0/+1/+0.5000	0/+1/+0.7500	-	-	
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	OS(H) min/max/mean, 4 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	OS(C) min/max/mean, 1 atoms	-4/-4/-4.0000	-4/-4/-4.0000	-4/-4/-4.0000	mean -4.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	OS of the transferred H (atom 60, C-H 1.101 A)	+1	+1	+1	+1	equal	reference: fig. 5(a), +1 before and -1 after C-H cleavage
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	OS of C (atom 63)	-4	-4	-4	-4	equal	reference: fig. 5(a)
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	Co4 total OS (per-atom values)	+2 (+1,0,0,+1)	+2 (fragment; per-atom run 0,+1,+1,0)	+3 (+1,+1,+1,0)	-	-	fig. 5(a) supports only the step: +2 from the initial to the transition and final state
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	Ce atoms by OS	+3 x3, +4 x14, +5 x1	+3 x2, +4 x16	+2 x1, +3 x2, +4 x14, +5 x1	-	-	WF occupations indicate three Ce(+3) (fig5_caption.md)
+methane	ce18o36co4ch4_is	v31-mag6	diag	63	501	0	O atoms by OS	-2 x36	-2 x36	-2 x36	-2 x36	equal	
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ce18o36co4ch4_ts: unchecked (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 8 electrons; |dNe| 9.6e-03
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	OS(Ce) min/max/mean, 18 atoms	+3/+6/+3.9444	+4/+4/+4.0000	+3/+4/+3.8333	-	-	
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	OS(O) min/max/mean, 36 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	OS(Co) min/max/mean, 4 atoms	-1/+2/+0.2500	0/+2/+0.5000	+1/+4/+2.0000	-	-	
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	OS(H) min/max/mean, 4 atoms	0/+1/+0.7500	-1/+1/+0.5000	-4/+1/-0.2500	mean +0.5000	differs	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	OS(C) min/max/mean, 1 atoms	-3/-3/-3.0000	-4/-4/-4.0000	-4/-4/-4.0000	mean -4.0000	differs	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	OS of the transferred H (atom 60, C-H 2.350 A)	0	-1	-4	-1	differs	reference: fig. 5(a), +1 before and -1 after C-H cleavage
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	OS of C (atom 63)	-3	-4	-4	-4	differs	reference: fig. 5(a)
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	Co4 total OS (per-atom values)	+1 (0,-1,0,+2)	+2 (fragment; per-atom run 0,0,+2,0)	+8 (+1,+2,+4,+1)	-	-	fig. 5(a) supports only the step: +2 from the initial to the transition and final state
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	Ce atoms by OS	+3 x3, +4 x14, +6 x1	+4 x18	+3 x3, +4 x15	-	-	WF occupations indicate three Ce(+3) (fig5_caption.md)
+methane	ce18o36co4ch4_ts	v3	app-methane	63	508	0	O atoms by OS	-2 x36	-2 x36	-2 x36	-2 x36	equal	
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ce18o36co4ch4_ts: unchecked (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 1.9e-03
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	OS(Ce) min/max/mean, 18 atoms	+3/+4/+3.8333	+3/+4/+3.8889	+3/+4/+3.8333	-	-	
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	OS(O) min/max/mean, 36 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	OS(Co) min/max/mean, 4 atoms	0/+2/+0.7500	0/+2/+1.0000	+2/+5/+3.0000	-	-	
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	OS(H) min/max/mean, 4 atoms	0/+1/+0.7500	-1/+1/+0.5000	-8/+1/-1.2500	mean +0.5000	differs	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	OS(C) min/max/mean, 1 atoms	-3/-3/-3.0000	-4/-4/-4.0000	-4/-4/-4.0000	mean -4.0000	differs	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	OS of the transferred H (atom 60, C-H 2.350 A)	0	-1	-8	-1	differs	reference: fig. 5(a), +1 before and -1 after C-H cleavage
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	OS of C (atom 63)	-3	-4	-4	-4	differs	reference: fig. 5(a)
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	Co4 total OS (per-atom values)	+3 (+1,0,0,+2)	+4 (fragment; per-atom run +1,0,+1,+2)	+12 (+2,+3,+5,+2)	-	-	fig. 5(a) supports only the step: +2 from the initial to the transition and final state
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	Ce atoms by OS	+3 x3, +4 x15	+3 x2, +4 x16	+3 x3, +4 x15	-	-	WF occupations indicate three Ce(+3) (fig5_caption.md)
+methane	ce18o36co4ch4_ts	v31-mag10	diag	63	501	0	O atoms by OS	-2 x36	-2 x36	-2 x36	-2 x36	equal	
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ce18o36co4ch4_ts: unchecked (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 1.5e-03
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	OS(Ce) min/max/mean, 18 atoms	+3/+4/+3.7778	+3/+4/+3.8889	+3/+4/+3.8333	-	-	
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	OS(O) min/max/mean, 36 atoms	-2/-1/-1.9722	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	differs	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	OS(Co) min/max/mean, 4 atoms	-1/+1/+0.5000	0/+2/+1.0000	+1/+3/+1.7500	-	-	
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	OS(H) min/max/mean, 4 atoms	0/+1/+0.7500	-1/+1/+0.5000	-3/+1/+0.0000	mean +0.5000	differs	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	OS(C) min/max/mean, 1 atoms	-2/-2/-2.0000	-4/-4/-4.0000	-4/-4/-4.0000	mean -4.0000	differs	fig. 5(a): C -4, O -2, three H +1 and H_t
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	OS of the transferred H (atom 60, C-H 2.350 A)	0	-1	-3	-1	differs	reference: fig. 5(a), +1 before and -1 after C-H cleavage
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	OS of C (atom 63)	-2	-4	-4	-4	differs	reference: fig. 5(a)
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	Co4 total OS (per-atom values)	+2 (+1,+1,-1,+1)	+4 (fragment; per-atom run 0,0,+2,+2)	+7 (+1,+2,+3,+1)	-	-	fig. 5(a) supports only the step: +2 from the initial to the transition and final state
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	Ce atoms by OS	+3 x4, +4 x14	+3 x2, +4 x16	+3 x3, +4 x15	-	-	WF occupations indicate three Ce(+3) (fig5_caption.md)
+methane	ce18o36co4ch4_ts	v31-mag6	diag	63	501	0	O atoms by OS	-2 x35, -1 x1	-2 x36	-2 x36	-2 x36	differs	
+methane	ce18o36co4ch4_is/ts/fs	v3/v3/v3	app-methane	-	-	-	Co4 total OS, initial/transition/final [legacy (v3)]	+3/+1/+5	0/+2/+2	+3/+8/+7	step +2, then constant	differs	reference: fig. 5(a), the step the two data sets agree on
+methane	ce18o36co4ch4_is/ts/fs	v31-mag6/v31-mag6/v31-mag10	diag	-	-	-	Co4 total OS, initial/transition/final [reruns (v31)]	+2/+2/+5	+2/+4/+4	+3/+7/+7	step +2, then constant	differs	reference: fig. 5(a), the step the two data sets agree on
+ceo2	ce4o7	v3	app-ceo2	11	96	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ce4o7: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 6 electrons; |dNe| 8.7e-09
+ceo2	ce4o7	v3	app-ceo2	11	96	0	OS(Ce) min/max/mean, 4 atoms	+3/+4/+3.5000	+3/+4/+3.5000	+3/+4/+3.5000	mean +3.5000	equal	charge counting with O -2
+ceo2	ce4o7	v3	app-ceo2	11	96	0	OS(O) min/max/mean, 7 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	charge counting with O -2
+ceo2	ce4o7	v3	app-ceo2	11	96	0	OS of Ce1, Ce2, Ce3, Ce4	+4,+3,+4,+3	+3,+4,+3,+4	+4,+3,+3,+4	-	-	the four Ce atoms are equivalent neighbours of the vacant site (2.343 A)
+ceo2	ce4o7	v3	app-ceo2	11	96	0	number of Ce at +3	2	2	2	2	equal	reference: two electrons per O vacancy, O at -2
+ceo2	ce4o7	v3	app-ceo2	11	96	0	O atoms by OS	-2 x7	-2 x7	-2 x7	-2 x7	equal	
+ceo2	ce4o8	v3	app-ceo2	12	96	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure ce4o8: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 2.2e-12
+ceo2	ce4o8	v3	app-ceo2	12	96	0	OS(Ce) min/max/mean, 4 atoms	+4/+4/+4.0000	+4/+4/+4.0000	+4/+4/+4.0000	mean +4.0000	equal	charge counting with O -2
+ceo2	ce4o8	v3	app-ceo2	12	96	0	OS(O) min/max/mean, 8 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	charge counting with O -2
+ceo2	ce4o8	v3	app-ceo2	12	96	0	OS of Ce1, Ce2, Ce3, Ce4	+4,+4,+4,+4	+4,+4,+4,+4	+4,+4,+4,+4	-	-	
+ceo2	ce4o8	v3	app-ceo2	12	96	0	number of Ce at +3	0	0	0	0	equal	reference: two electrons per O vacancy, O at -2
+ceo2	ce4o8	v3	app-ceo2	12	96	0	O atoms by OS	-2 x8	-2 x8	-2 x8	-2 x8	equal	
+mh4	mgh4	v3	comas	10	8	3	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure mgh4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 4 electrons; |dNe| 1.8e-03
+mh4	mgh4	v3	comas	10	8	3	OS(H) min/max/mean, 8 atoms	-1/0/-0.5000	-1/+1/-0.5000	-1/+1/-0.5000	mean -0.5000	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	mgh4	v3	comas	10	8	3	OS(Mg) min/max/mean, 2 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+2/+2/+2.0000	mean +2.0000	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	mgh4	v3	comas	10	8	3	OS(Mg)	+2 x2	+2 x2	+2 x2	+2	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	mgh4	v3	comas	10	8	3	mean OS(H)	-0.5000	-0.5000	-0.5000	-0.5000	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	mgh4	v3	comas	10	8	3	OS of the H atoms by site	H_b -1,-1,-1,-1; H_a-H_a (0,0) (0,0)	H_b -1,-1,-1,-1; H_a-H_a (-1,+1) (-1,+1)	H_b -1,-1,-1,-1; H_a-H_a (-1,+1) (-1,+1)	H_b -1; H_a 0 each	equal	I4/mmm cell with sites H_b and H_a; H_a-H_a 0.757 A, H_b-H 2.023 A; Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	mgh4	v3	comas	10	8	3	shortest H-H distance (A)	0.757	-	-	-	-	H2 unit
+mh4	cah4	v3	comas	5	8	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure cah4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 2 electrons; |dNe| 3.3e-04
+mh4	cah4	v3	comas	5	8	0	OS(Ca) min/max/mean, 1 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+4/+4/+4.0000	mean +2.0000	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	cah4	v3	comas	5	8	0	OS(H) min/max/mean, 4 atoms	-1/+1/-0.5000	-1/+1/-0.5000	-2/0/-1.0000	mean -0.5000	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	cah4	v3	comas	5	8	0	OS(Ca)	+2 x1	+2 x1	+4 x1	+2	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	cah4	v3	comas	5	8	0	mean OS(H)	-0.5000	-0.5000	-1.0000	-0.5000	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	cah4	v3	comas	5	8	0	OS of the H atoms (two equivalent pairs)	pairs (-1,-1) (-1,+1)	pairs (-1,-1) (-1,+1)	pairs (-2,-1) (-1,0)	H_b -1; H_a 0 each	differs	5-atom cell with one H site (H-H 1.366 A), not the two-site structure of the literature; Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	cah4	v3	comas	5	8	0	shortest H-H distance (A)	1.366	-	-	-	-	no H2 unit
+mh4	srh4	v3	comas	10	14	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure srh4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 2.5e-11
+mh4	srh4	v3	comas	10	14	0	OS(H) min/max/mean, 8 atoms	-1/0/-0.5000	-1/+1/-0.5000	-9/0/-2.5000	mean -0.5000	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	srh4	v3	comas	10	14	0	OS(Sr) min/max/mean, 2 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+10/+10/+10.0000	mean +2.0000	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	srh4	v3	comas	10	14	0	OS(Sr)	+2 x2	+2 x2	+10 x2	+2	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	srh4	v3	comas	10	14	0	mean OS(H)	-0.5000	-0.5000	-2.5000	-0.5000	equal	Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	srh4	v3	comas	10	14	0	OS of the H atoms by site	H_b -1,-1,-1,-1; H_a-H_a (0,0) (0,0)	H_b -1,-1,-1,-1; H_a-H_a (-1,+1) (-1,+1)	H_b -1,-9,-5,-5; H_a-H_a (0,0) (0,0)	H_b -1; H_a 0 each	equal	I4/mmm cell with sites H_b and H_a; H_a-H_a 0.765 A, H_b-H 2.372 A; Comas-Vila et al. 2025, notes N352, p. 7081
+mh4	srh4	v3	comas	10	14	0	shortest H-H distance (A)	0.765	-	-	-	-	H2 unit
+mh4	sch4	v3	comas	5	9	3	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure sch4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 3 electrons; |dNe| 4.4e-05
+mh4	sch4	v3	comas	5	9	3	OS(H) min/max/mean, 4 atoms	-1/0/-0.7500	-1/0/-0.7500	-2/0/-1.2500	mean -0.7500	equal	Comas-Vila et al. 2025, notes N353, p. 7081-7082
+mh4	sch4	v3	comas	5	9	3	OS(Sc) min/max/mean, 1 atoms	+3/+3/+3.0000	+3/+3/+3.0000	+5/+5/+5.0000	mean +3.0000	equal	Comas-Vila et al. 2025, notes N353, p. 7081-7082
+mh4	sch4	v3	comas	5	9	3	OS(Sc)	+3 x1	+3 x1	+5 x1	+3	equal	Comas-Vila et al. 2025, notes N353, p. 7081-7082
+mh4	sch4	v3	comas	5	9	3	mean OS(H)	-0.7500	-0.7500	-1.2500	-0.7500	equal	Comas-Vila et al. 2025, notes N353, p. 7081-7082
+mh4	sch4	v3	comas	5	9	3	OS of the H atoms (two equivalent pairs)	pairs (-1,-1) (-1,0)	pairs (-1,-1) (-1,0)	pairs (-2,-1) (-2,0)	H_b -1; H_a -0.5 each	differs	5-atom cell with one H site (H-H 1.686 A), not the two-site structure of the literature; Comas-Vila et al. 2025, notes N353, p. 7081-7082
+mh4	sch4	v3	comas	5	9	3	shortest H-H distance (A)	1.686	-	-	-	-	no H2 unit
+mh4	yh4	v3	comas	5	8	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure yh4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 1 electrons; |dNe| 8.2e-02
+mh4	yh4	v3	comas	5	8	0	OS(H) min/max/mean, 4 atoms	-1/0/-0.7500	-1/0/-0.7500	-4/-1/-2.7500	mean -0.7500	equal	Comas-Vila et al. 2025, notes N353, p. 7081-7082
+mh4	yh4	v3	comas	5	8	0	OS(Y) min/max/mean, 1 atoms	+3/+3/+3.0000	+3/+3/+3.0000	+11/+11/+11.0000	mean +3.0000	equal	Comas-Vila et al. 2025, notes N353, p. 7081-7082
+mh4	yh4	v3	comas	5	8	0	OS(Y)	+3 x1	+3 x1	+11 x1	+3	equal	Comas-Vila et al. 2025, notes N353, p. 7081-7082
+mh4	yh4	v3	comas	5	8	0	mean OS(H)	-0.7500	-0.7500	-2.7500	-0.7500	equal	Comas-Vila et al. 2025, notes N353, p. 7081-7082
+mh4	yh4	v3	comas	5	8	0	OS of the H atoms (two equivalent pairs)	pairs (-1,-1) (-1,0)	pairs (-1,-1) (-1,0)	pairs (-4,-3) (-3,-1)	H_b -1; H_a -0.5 each	differs	5-atom cell with one H site (H-H 1.806 A), not the two-site structure of the literature; Comas-Vila et al. 2025, notes N353, p. 7081-7082
+mh4	yh4	v3	comas	5	8	0	shortest H-H distance (A)	1.806	-	-	-	-	no H2 unit
+mh4	zrh4	v3	comas	5	9	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure zrh4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 2 electrons; |dNe| 1.2e-01
+mh4	zrh4	v3	comas	5	9	0	OS(H) min/max/mean, 4 atoms	-1/-1/-1.0000	-1/-1/-1.0000	-4/-1/-2.5000	mean -1.0000	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	zrh4	v3	comas	5	9	0	OS(Zr) min/max/mean, 1 atoms	+4/+4/+4.0000	+4/+4/+4.0000	+10/+10/+10.0000	mean +4.0000	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	zrh4	v3	comas	5	9	0	OS(Zr)	+4 x1	+4 x1	+10 x1	+4	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	zrh4	v3	comas	5	9	0	mean OS(H)	-1.0000	-1.0000	-2.5000	-1.0000	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	zrh4	v3	comas	5	9	0	OS of the H atoms (two equivalent pairs)	pairs (-1,-1) (-1,-1)	pairs (-1,-1) (-1,-1)	pairs (-4,-1) (-4,-1)	H_b -1; H_a -1 each	equal	5-atom cell with one H site (H-H 1.776 A), not the two-site structure of the literature; Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	zrh4	v3	comas	5	9	0	shortest H-H distance (A)	1.776	-	-	-	-	no H2 unit
+mh4	ceh4	v3	comas	10	20	8	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ceh4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 8 electrons; |dNe| 1.1e-05
+mh4	ceh4	v3	comas	10	20	8	OS(Ce) min/max/mean, 2 atoms	+4/+4/+4.0000	+4/+4/+4.0000	+9/+9/+9.0000	mean +4.0000	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	ceh4	v3	comas	10	20	8	OS(H) min/max/mean, 8 atoms	-1/-1/-1.0000	-1/-1/-1.0000	-4/-1/-2.2500	mean -1.0000	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	ceh4	v3	comas	10	20	8	OS(Ce)	+4 x2	+4 x2	+9 x2	+4	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	ceh4	v3	comas	10	20	8	mean OS(H)	-1.0000	-1.0000	-2.2500	-1.0000	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	ceh4	v3	comas	10	20	8	OS of the H atoms by site	H_b -1,-1,-1,-1; H_a-H_a (-1,-1) (-1,-1)	H_b -1,-1,-1,-1; H_a-H_a (-1,-1) (-1,-1)	H_b -4,-4,-1,-1; H_a-H_a (-3,-1) (-3,-1)	H_b -1; H_a -1 each	equal	I4/mmm cell with sites H_b and H_a; H_a-H_a 1.566 A, H_b-H 1.926 A; Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	ceh4	v3	comas	10	20	8	shortest H-H distance (A)	1.566	-	-	-	-	no H2 unit
+mh4	thh4	v3	comas	10	18	8	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure thh4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 4 electrons; |dNe| 1.4e-03
+mh4	thh4	v3	comas	10	18	8	OS(H) min/max/mean, 8 atoms	-1/-1/-1.0000	-1/-1/-1.0000	-3/-1/-2.5000	mean -1.0000	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	thh4	v3	comas	10	18	8	OS(Th) min/max/mean, 2 atoms	+4/+4/+4.0000	+4/+4/+4.0000	+8/+12/+10.0000	mean +4.0000	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	thh4	v3	comas	10	18	8	OS(Th)	+4 x2	+4 x2	+8 x1, +12 x1	+4	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	thh4	v3	comas	10	18	8	mean OS(H)	-1.0000	-1.0000	-2.5000	-1.0000	equal	Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	thh4	v3	comas	10	18	8	OS of the H atoms by site	H_b -1,-1,-1,-1; H_a-H_a (-1,-1) (-1,-1)	H_b -1,-1,-1,-1; H_a-H_a (-1,-1) (-1,-1)	H_b -1,-3,-3,-3; H_a-H_a (-3,-3) (-3,-1)	H_b -1; H_a -1 each	equal	I4/mmm cell with sites H_b and H_a; H_a-H_a 1.664 A, H_b-H 1.946 A; Comas-Vila et al. 2025, notes N354, p. 7082
+mh4	thh4	v3	comas	10	18	8	shortest H-H distance (A)	1.664	-	-	-	-	no H2 unit
+comas-other	ba3si4	v3	comas	28	94	36	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ba3si4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 4 electrons; |dNe| 4.3e-07
+comas-other	ba3si4	v3	comas	28	94	36	OS(Ba) min/max/mean, 12 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+10/+10/+10.0000	mean +2.0000	equal	Comas-Vila et al. 2025, notes N347 (Si4 fragment -6)
+comas-other	ba3si4	v3	comas	28	94	36	OS(Si) min/max/mean, 16 atoms	-3/+1/-1.5000	-4/0/-1.5000	-11/-3/-7.5000	mean -1.5000	equal	Comas-Vila et al. 2025, notes N347 (Si4 fragment -6)
+comas-other	cs2pt	v3	comas	6	28	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure cs2pt~a: suspect (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 5.7e-14
+comas-other	cs2pt	v3	comas	6	28	0	OS(Cs) min/max/mean, 4 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+4/+8/+5.5000	-	-	
+comas-other	cs2pt	v3	comas	6	28	0	OS(Pt) min/max/mean, 2 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-14/-8/-11.0000	mean -2.0000	equal	Comas-Vila et al. 2025, notes N348
+comas-other	csf3	v3	comas	12	45	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure csf3: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 5.7e-14
+comas-other	csf3	v3	comas	12	45	0	OS(Cs) min/max/mean, 3 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+9/+9/+9.0000	-	-	
+comas-other	csf3	v3	comas	12	45	0	OS(F) min/max/mean, 9 atoms	-1/0/-0.3333	-1/0/-0.3333	-6/-1/-3.0000	mean -0.3333	equal	Comas-Vila et al. 2025, notes N363 (F3 fragment -1)
+comas-other	csf5	v3	comas	12	44	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure csf5: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 1.4e-14
+comas-other	csf5	v3	comas	12	44	0	OS(Cs) min/max/mean, 2 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+9/+9/+9.0000	-	-	
+comas-other	csf5	v3	comas	12	44	0	OS(F) min/max/mean, 10 atoms	-1/0/-0.2000	-1/0/-0.2000	-5/0/-1.8000	mean -0.2000	equal	Comas-Vila et al. 2025, notes N364 (F5 fragment -1)
+comas-other	csh3	v3	comas	8	13	3	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure csh3: suspect (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 2 electrons; |dNe| 6.0e-02
+comas-other	csh3	v3	comas	8	13	3	OS(Cs) min/max/mean, 2 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+9/+9/+9.0000	-	-	
+comas-other	csh3	v3	comas	8	13	3	OS(H) min/max/mean, 6 atoms	-1/+1/-0.3333	-1/+1/-0.3333	-5/-1/-3.0000	mean -0.3333	equal	Comas-Vila et al. 2025, notes N362 (H3 fragment -1)
+comas-other	hgf4_a	v3	comas	10	40	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure hgf4_a: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 2.8e-14
+comas-other	hgf4_a	v3	comas	10	40	0	OS(F) min/max/mean, 8 atoms	-1/-1/-1.0000	-1/-1/-1.0000	-1/-1/-1.0000	-	-	
+comas-other	hgf4_a	v3	comas	10	40	0	OS(Hg) min/max/mean, 2 atoms	+4/+4/+4.0000	+4/+4/+4.0000	+4/+4/+4.0000	mean +4.0000	equal	Comas-Vila et al. 2025, notes N361
+comas-other	hgf4_b	v3	comas	10	41	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure hgf4_b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 2 electrons; |dNe| 3.7e-11
+comas-other	hgf4_b	v3	comas	10	41	0	OS(F) min/max/mean, 8 atoms	-1/0/-0.7500	-1/0/-0.7500	-1/0/-0.7500	-	-	
+comas-other	hgf4_b	v3	comas	10	41	0	OS(Hg) min/max/mean, 2 atoms	+2/+4/+3.0000	+2/+4/+3.0000	+3/+3/+3.0000	mean +4.0000	differs	Comas-Vila et al. 2025, notes N361
+comas-other	hgf4_c	v3	comas	5	21	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure hgf4_c: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 2 electrons; |dNe| 9.0e-11
+comas-other	hgf4_c	v3	comas	5	21	0	OS(F) min/max/mean, 4 atoms	-1/-1/-1.0000	-1/-1/-1.0000	-1/0/-0.7500	-	-	
+comas-other	hgf4_c	v3	comas	5	21	0	OS(Hg) min/max/mean, 1 atoms	+4/+4/+4.0000	+4/+4/+4.0000	+3/+3/+3.0000	mean +4.0000	equal	Comas-Vila et al. 2025, notes N361
+comas-other	k_hp	v3	comas	8	38	6	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure k_hp: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 4 electrons; |dNe| 2.8e-02
+comas-other	k_hp	v3	comas	8	38	6	OS(K) min/max/mean, 8 atoms	0/0/+0.0000	-1/+1/+0.0000	-3/+3/+0.0000	mean +1.0000	differs	Comas-Vila et al. 2025, notes N345 (electrons on non-nuclear attractors)
+comas-other	lin5	v3	comas	6	14	1	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure lin5: suspect (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 2 electrons; |dNe| 2.0e-02
+comas-other	lin5	v3	comas	6	14	1	OS(Li) min/max/mean, 1 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	-	-	
+comas-other	lin5	v3	comas	6	14	1	OS(N) min/max/mean, 5 atoms	-1/+1/-0.2000	-1/+1/-0.2000	-1/0/-0.2000	-	-	
+comas-other	mgxe	v3	comas	2	7	5	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure mgxe: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 4 electrons; |dNe| 7.1e-02
+comas-other	mgxe	v3	comas	2	7	5	OS(Mg) min/max/mean, 1 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+2/+2/+2.0000	mean +2.0000	equal	Comas-Vila et al. 2025, notes N360
+comas-other	mgxe	v3	comas	2	7	5	OS(Xe) min/max/mean, 1 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	Comas-Vila et al. 2025, notes N360
+comas-other	xef2	v3	comas	6	22	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure xef2: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 8.4e-13
+comas-other	xef2	v3	comas	6	22	0	OS(F) min/max/mean, 4 atoms	-1/-1/-1.0000	-1/-1/-1.0000	-5/-3/-4.0000	-	-	
+comas-other	xef2	v3	comas	6	22	0	OS(Xe) min/max/mean, 2 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+8/+8/+8.0000	mean +2.0000	equal	Comas-Vila et al. 2025, notes N359
+comas-other	xef3	v3	comas	16	58	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure xef3: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 5.7e-14
+comas-other	xef3	v3	comas	16	58	0	OS(F) min/max/mean, 12 atoms	-1/-1/-1.0000	-1/-1/-1.0000	-5/-1/-2.6667	-	-	
+comas-other	xef3	v3	comas	16	58	0	OS(Xe) min/max/mean, 4 atoms	+2/+4/+3.0000	+2/+4/+3.0000	+8/+8/+8.0000	mean +3.0000	equal	Comas-Vila et al. 2025, notes N359 (Xe1 +2, Xe2 +4)
+comas-other	xef4	v3	comas	10	36	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure xef4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 1.4e-14
+comas-other	xef4	v3	comas	10	36	0	OS(F) min/max/mean, 8 atoms	-1/-1/-1.0000	-1/-1/-1.0000	-3/-1/-2.0000	-	-	
+comas-other	xef4	v3	comas	10	36	0	OS(Xe) min/max/mean, 2 atoms	+4/+4/+4.0000	+4/+4/+4.0000	+8/+8/+8.0000	mean +4.0000	equal	Comas-Vila et al. 2025, notes N359
+comas-other	xeo2_a	v3	comas	24	81	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure xeo2_a: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 2 electrons; |dNe| 3.8e-03
+comas-other	xeo2_a	v3	comas	24	81	0	OS(O) min/max/mean, 16 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-1/-1.8125	-	-	
+comas-other	xeo2_a	v3	comas	24	81	0	OS(Xe) min/max/mean, 8 atoms	+4/+4/+4.0000	+2/+6/+4.0000	+3/+4/+3.6250	mean +4.0000	equal	Comas-Vila et al. 2025, notes N356
+comas-other	xeo2_b	v3	comas	12	41	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure xeo2_b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 2 electrons; |dNe| 3.2e-02
+comas-other	xeo2_b	v3	comas	12	41	0	OS(O) min/max/mean, 8 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	-	-	
+comas-other	xeo2_b	v3	comas	12	41	0	OS(Xe) min/max/mean, 4 atoms	+3/+5/+4.0000	+2/+6/+4.0000	+3/+5/+4.0000	mean +4.0000	equal	Comas-Vila et al. 2025, notes N356
+comas-other	xeo3_a	v3	comas	16	54	1	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure xeo3_a: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 4 electrons; |dNe| 1.0e-01
+comas-other	xeo3_a	v3	comas	16	54	1	OS(O) min/max/mean, 12 atoms	-2/-1/-1.6667	-2/0/-1.6667	-2/+1/-1.7500	-	-	
+comas-other	xeo3_a	v3	comas	16	54	1	OS(Xe) min/max/mean, 4 atoms	+4/+6/+5.0000	+4/+6/+5.0000	+4/+6/+5.2500	mean +4.0000	differs	Comas-Vila et al. 2025, notes N357 (by atoms Xe +4 (O1 -2, O2 0); O2 as fragment: +5)
+comas-other	xeo3_b	v3	comas	48	158	9	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure xeo3_b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 4 electrons; |dNe| 9.8e-02
+comas-other	xeo3_b	v3	comas	48	158	9	OS(O) min/max/mean, 36 atoms	-4/-1/-1.8333	-2/-2/-2.0000	-3/0/-1.8056	-	-	
+comas-other	xeo3_b	v3	comas	48	158	9	OS(Xe) min/max/mean, 12 atoms	+4/+6/+5.5000	+6/+6/+6.0000	+4/+6/+5.4167	mean +5.0000	differs	Comas-Vila et al. 2025, notes N358 (Xe1 +6, Xe2 +4; called ambiguous)
+comas-other	xeo_a	v3	comas	8	28	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure xeo_a: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 5.0e-14
+comas-other	xeo_a	v3	comas	8	28	0	OS(O) min/max/mean, 4 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	-	-	
+comas-other	xeo_a	v3	comas	8	28	0	OS(Xe) min/max/mean, 4 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+2/+2/+2.0000	mean +2.0000	equal	Comas-Vila et al. 2025, notes N355 (100 GPa: +2; 200 GPa: Xe1 +4, Xe2 0)
+comas-other	xeo_b	v3	comas	8	29	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure xeo_b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 2 electrons; |dNe| 9.6e-02
+comas-other	xeo_b	v3	comas	8	29	0	OS(O) min/max/mean, 4 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	-	-	
+comas-other	xeo_b	v3	comas	8	29	0	OS(Xe) min/max/mean, 4 atoms	0/+4/+2.0000	0/+6/+2.0000	0/+4/+2.0000	mean +2.0000	equal	Comas-Vila et al. 2025, notes N355 (100 GPa: +2; 200 GPa: Xe1 +4, Xe2 0)
+comas-other	ybafe2o5_a	v3	comas	18	152	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ybafe2o5_a: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 18 electrons; |dNe| 6.0e-02
+comas-other	ybafe2o5_a	v3	comas	18	152	0	OS(Ba) min/max/mean, 2 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+2/+3/+2.5000	-	-	
+comas-other	ybafe2o5_a	v3	comas	18	152	0	OS(Fe) min/max/mean, 4 atoms	+2/+3/+2.5000	+2/+3/+2.5000	+2/+2/+2.0000	mean +2.5000	equal	Comas-Vila et al. 2025, notes N351 (one phase Fe +3/+2, the other +2.5)
+comas-other	ybafe2o5_a	v3	comas	18	152	0	OS(O) min/max/mean, 10 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	-	-	
+comas-other	ybafe2o5_a	v3	comas	18	152	0	OS(Y) min/max/mean, 2 atoms	+3/+3/+3.0000	+3/+3/+3.0000	+3/+4/+3.5000	-	-	
+comas-other	ybafe2o5_b	v3	comas	9	76	4	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure ybafe2o5_b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 9 electrons; |dNe| 3.4e-02
+comas-other	ybafe2o5_b	v3	comas	9	76	4	OS(Ba) min/max/mean, 1 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+3/+3/+3.0000	-	-	
+comas-other	ybafe2o5_b	v3	comas	9	76	4	OS(Fe) min/max/mean, 2 atoms	+2/+3/+2.5000	+1/+4/+2.5000	+1/+2/+1.5000	mean +2.5000	equal	Comas-Vila et al. 2025, notes N351 (one phase Fe +3/+2, the other +2.5)
+comas-other	ybafe2o5_b	v3	comas	9	76	4	OS(O) min/max/mean, 5 atoms	-3/-1/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	-	-	
+comas-other	ybafe2o5_b	v3	comas	9	76	4	OS(Y) min/max/mean, 1 atoms	+3/+3/+3.0000	+3/+3/+3.0000	+4/+4/+4.0000	-	-	
+homonuclear	fes2	v3	test-homonuclear	12	40	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure fes2: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 2.5e-11
+homonuclear	fes2	v3	test-homonuclear	12	40	0	OS(Fe) min/max/mean, 4 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+2/+2/+2.0000	mean +2.0000	equal	pyleos/sets/test_set.json
+homonuclear	fes2	v3	test-homonuclear	12	40	0	OS(S) min/max/mean, 8 atoms	-1/-1/-1.0000	-2/0/-1.0000	-1/-1/-1.0000	mean -1.0000	equal	pyleos/sets/test_set.json
+homonuclear	fes2	v3	test-homonuclear	12	40	0	atoms correct / labelled	12/12	4/12	12/12	12/12	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	fes2	v3	test-homonuclear	12	40	0	wrong sites (element, label -> assigned x count)	-	S-1->-2x4,S-1->+0x4	-	-	-	
+homonuclear	na2s2	v3	test-homonuclear	8	14	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure na2s2: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 2.1e-14
+homonuclear	na2s2	v3	test-homonuclear	8	14	0	OS(Na) min/max/mean, 4 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	pyleos/sets/test_set.json
+homonuclear	na2s2	v3	test-homonuclear	8	14	0	OS(S) min/max/mean, 4 atoms	-1/-1/-1.0000	-2/0/-1.0000	-1/-1/-1.0000	mean -1.0000	equal	pyleos/sets/test_set.json
+homonuclear	na2s2	v3	test-homonuclear	8	14	0	atoms correct / labelled	8/8	4/8	8/8	8/8	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	na2s2	v3	test-homonuclear	8	14	0	wrong sites (element, label -> assigned x count)	-	S-1->-2x2,S-1->+0x2	-	-	-	
+homonuclear	bas3	v3	test-homonuclear	8	28	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure bas3: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 3.6e-14
+homonuclear	bas3	v3	test-homonuclear	8	28	0	OS(Ba) min/max/mean, 2 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+10/+10/+10.0000	mean +2.0000	equal	pyleos/sets/test_set.json
+homonuclear	bas3	v3	test-homonuclear	8	28	0	OS(S) min/max/mean, 6 atoms	-1/0/-0.6667	-2/0/-0.6667	-6/0/-3.3333	mean -0.6667	equal	pyleos/sets/test_set.json
+homonuclear	bas3	v3	test-homonuclear	8	28	0	atoms correct / labelled	8/8	2/8	0/8	8/8	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	bas3	v3	test-homonuclear	8	28	0	wrong sites (element, label -> assigned x count)	-	S-1->+0x4,S+0->-2x2	Ba+2->+10x2,S-1->-6x1,S-1->-4x1,S-1->-2x1,S-1->+0x1,S+0->-4x2	-	-	
+homonuclear	li2o2	v3	test-homonuclear	8	14	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure li2o2~b: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 3.6e-14
+homonuclear	li2o2	v3	test-homonuclear	8	14	0	OS(Li) min/max/mean, 4 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	pyleos/sets/test_set.json
+homonuclear	li2o2	v3	test-homonuclear	8	14	0	OS(O) min/max/mean, 4 atoms	-1/-1/-1.0000	-2/0/-1.0000	-1/-1/-1.0000	mean -1.0000	equal	pyleos/sets/test_set.json
+homonuclear	li2o2	v3	test-homonuclear	8	14	0	atoms correct / labelled	8/8	4/8	8/8	8/8	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	li2o2	v3	test-homonuclear	8	14	0	wrong sites (element, label -> assigned x count)	-	O-1->-2x2,O-1->+0x2	-	-	-	
+homonuclear	bao2	v3	test-homonuclear	3	11	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure bao2: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 7.1e-15
+homonuclear	bao2	v3	test-homonuclear	3	11	0	OS(Ba) min/max/mean, 1 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+4/+4/+4.0000	mean +2.0000	equal	pyleos/sets/test_set.json
+homonuclear	bao2	v3	test-homonuclear	3	11	0	OS(O) min/max/mean, 2 atoms	-1/-1/-1.0000	-2/0/-1.0000	-2/-2/-2.0000	mean -1.0000	equal	pyleos/sets/test_set.json
+homonuclear	bao2	v3	test-homonuclear	3	11	0	atoms correct / labelled	3/3	1/3	0/3	3/3	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	bao2	v3	test-homonuclear	3	11	0	wrong sites (element, label -> assigned x count)	-	O-1->-2x1,O-1->+0x1	Ba+2->+4x1,O-1->-2x2	-	-	
+homonuclear	h2o2	v3	test-homonuclear	16	28	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure h2o2: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 2.7e-13
+homonuclear	h2o2	v3	test-homonuclear	16	28	0	OS(H) min/max/mean, 8 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	pyleos/sets/test_set.json
+homonuclear	h2o2	v3	test-homonuclear	16	28	0	OS(O) min/max/mean, 8 atoms	-1/-1/-1.0000	-2/0/-1.0000	-1/-1/-1.0000	mean -1.0000	equal	pyleos/sets/test_set.json
+homonuclear	h2o2	v3	test-homonuclear	16	28	0	atoms correct / labelled	16/16	8/16	16/16	16/16	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	h2o2	v3	test-homonuclear	16	28	0	wrong sites (element, label -> assigned x count)	-	O-1->-2x4,O-1->+0x4	-	-	-	
+homonuclear	n2h4	v3	test-homonuclear	12	14	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure n2h4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 0.0e+00
+homonuclear	n2h4	v3	test-homonuclear	12	14	0	OS(N) min/max/mean, 4 atoms	-2/-2/-2.0000	-3/-1/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	pyleos/sets/test_set.json
+homonuclear	n2h4	v3	test-homonuclear	12	14	0	OS(H) min/max/mean, 8 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	pyleos/sets/test_set.json
+homonuclear	n2h4	v3	test-homonuclear	12	14	0	atoms correct / labelled	12/12	8/12	12/12	12/12	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	n2h4	v3	test-homonuclear	12	14	0	wrong sites (element, label -> assigned x count)	-	N-2->-3x2,N-2->-1x2	-	-	-	
+homonuclear	cac2	v3	test-homonuclear	3	9	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure cac2: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 1.1e-14
+homonuclear	cac2	v3	test-homonuclear	3	9	0	OS(Ca) min/max/mean, 1 atoms	+2/+2/+2.0000	+2/+2/+2.0000	+2/+2/+2.0000	mean +2.0000	equal	pyleos/sets/test_set.json
+homonuclear	cac2	v3	test-homonuclear	3	9	0	OS(C) min/max/mean, 2 atoms	-1/-1/-1.0000	-2/0/-1.0000	-1/-1/-1.0000	mean -1.0000	equal	pyleos/sets/test_set.json
+homonuclear	cac2	v3	test-homonuclear	3	9	0	atoms correct / labelled	3/3	1/3	3/3	3/3	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	cac2	v3	test-homonuclear	3	9	0	wrong sites (element, label -> assigned x count)	-	C-1->-2x1,C-1->+0x1	-	-	-	
+homonuclear	hg2cl2	v3	test-homonuclear	4	19	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure hg2cl2: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 7.1e-14
+homonuclear	hg2cl2	v3	test-homonuclear	4	19	0	OS(Hg) min/max/mean, 2 atoms	+1/+1/+1.0000	0/+2/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	pyleos/sets/test_set.json
+homonuclear	hg2cl2	v3	test-homonuclear	4	19	0	OS(Cl) min/max/mean, 2 atoms	-1/-1/-1.0000	-1/-1/-1.0000	-1/-1/-1.0000	mean -1.0000	equal	pyleos/sets/test_set.json
+homonuclear	hg2cl2	v3	test-homonuclear	4	19	0	atoms correct / labelled	4/4	2/4	4/4	4/4	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	hg2cl2	v3	test-homonuclear	4	19	0	wrong sites (element, label -> assigned x count)	-	Hg+1->+0x1,Hg+1->+2x1	-	-	-	
+homonuclear	gas	v3	test-homonuclear	8	38	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure gas: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 0.0e+00
+homonuclear	gas	v3	test-homonuclear	8	38	0	OS(Ga) min/max/mean, 4 atoms	+2/+2/+2.0000	+1/+3/+2.0000	+2/+2/+2.0000	mean +2.0000	equal	pyleos/sets/test_set.json
+homonuclear	gas	v3	test-homonuclear	8	38	0	OS(S) min/max/mean, 4 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	pyleos/sets/test_set.json
+homonuclear	gas	v3	test-homonuclear	8	38	0	atoms correct / labelled	8/8	4/8	8/8	8/8	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	gas	v3	test-homonuclear	8	38	0	wrong sites (element, label -> assigned x count)	-	Ga+2->+1x2,Ga+2->+3x2	-	-	-	
+homonuclear	inse	v3	test-homonuclear	4	19	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure inse: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 8.7e-12
+homonuclear	inse	v3	test-homonuclear	4	19	0	OS(In) min/max/mean, 2 atoms	+1/+1/+1.0000	+1/+1/+1.0000	0/+2/+1.0000	mean +2.0000	differs	pyleos/sets/test_set.json
+homonuclear	inse	v3	test-homonuclear	4	19	0	OS(Se) min/max/mean, 2 atoms	-2/0/-1.0000	-2/0/-1.0000	-2/0/-1.0000	mean -2.0000	differs	pyleos/sets/test_set.json
+homonuclear	inse	v3	test-homonuclear	4	19	0	atoms correct / labelled	1/4	1/4	2/4	4/4	differs	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	inse	v3	test-homonuclear	4	19	0	wrong sites (element, label -> assigned x count)	In+2->+1x2,Se-2->+0x1	In+2->+1x2,Se-2->+0x1	In+2->+0x1,Se-2->+0x1	-	-	
+homonuclear	nasi	v3	test-homonuclear	16	20	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure nasi: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 5.7e-14
+homonuclear	nasi	v3	test-homonuclear	16	20	0	OS(Na) min/max/mean, 8 atoms	+1/+1/+1.0000	+1/+1/+1.0000	+1/+1/+1.0000	mean +1.0000	equal	pyleos/sets/test_set.json
+homonuclear	nasi	v3	test-homonuclear	16	20	0	OS(Si) min/max/mean, 8 atoms	-1/-1/-1.0000	-2/0/-1.0000	-1/-1/-1.0000	mean -1.0000	equal	pyleos/sets/test_set.json
+homonuclear	nasi	v3	test-homonuclear	16	20	0	atoms correct / labelled	16/16	8/16	16/16	16/16	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	nasi	v3	test-homonuclear	16	20	0	wrong sites (element, label -> assigned x count)	-	Si-1->-2x4,Si-1->+0x4	-	-	-	
+homonuclear	s8	v3	test-homonuclear	32	96	0	r3-T-B diagnose(): mode; undetermined	closed; no	-	-	-	-	structure s8: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 0 electrons; |dNe| 2.8e-14
+homonuclear	s8	v3	test-homonuclear	32	96	0	OS(S) min/max/mean, 32 atoms	0/0/+0.0000	-2/+2/+0.0000	-1/+2/+0.0000	mean +0.0000	equal	pyleos/sets/test_set.json
+homonuclear	s8	v3	test-homonuclear	32	96	0	atoms correct / labelled	32/32	24/32	4/32	32/32	equal	labels: pyleos/sets/test_set.json (bench.site_labels)
+homonuclear	s8	v3	test-homonuclear	32	96	0	wrong sites (element, label -> assigned x count)	-	S+0->-2x4,S+0->+2x4	S+0->-1x16,S+0->+1x8,S+0->+2x4	-	-	
+homonuclear	TOTAL (13 cases)	v3	test-homonuclear	-	-	-	atoms correct / labelled	131/134	71/134	93/134	131/134 (frozen one-shot run of r3-T-B)	equal	frozen result: results/testset_results_summary.tsv (r3-T-B 131/134, baseline 71/134)
+homonuclear	TOTAL (13 cases)	v3	test-homonuclear	-	-	-	cases with every atom correct	12/13	0/13	9/13	12/13 (frozen one-shot run of r3-T-B)	equal	frozen result: results/testset_results_summary.tsv (r3-T-B 12/13, baseline 0/13)
+fe3o4	fe3o4	v3-verwey	app-fe3o4	56	432	0	r3-T-B diagnose(): mode; undetermined	occupations; no	-	-	-	-	structure fe3o4: ok (cases/STRUCTURES.tsv); WFs beyond NELECT(Wannier): 48 electrons; |dNe| 2.0e-04
+fe3o4	fe3o4	v3-verwey	app-fe3o4	56	432	0	OS(O) min/max/mean, 32 atoms	-2/-2/-2.0000	-2/-2/-2.0000	-2/-2/-2.0000	mean -2.0000	equal	charge counting with O -2
+fe3o4	fe3o4	v3-verwey	app-fe3o4	56	432	0	OS(Fe) min/max/mean, 24 atoms	+1/+3/+2.6667	0/+6/+2.6667	+1/+3/+2.6667	mean +2.6667	equal	charge counting with O -2
+fe3o4	fe3o4	v3-verwey	app-fe3o4	56	432	0	Fe atoms by OS	+1 x1, +2 x6, +3 x17	0 x7, +1 x4, +2 x4, +4 x1, +6 x8	+1 x1, +2 x6, +3 x17	+2 x8, +3 x16	differs	reference: Fe(+2) : Fe(+3) = 1 : 2
+cathode-md	li2mno3	md-x0.00	app-cathode	-	-	-	not tested	-	-	-	-	-	no EOSCAR in the repo
+cathode-md	li2mno3	md-x0.25	app-cathode	-	-	-	not tested	-	-	-	-	-	no EOSCAR in the repo
+cathode-md	li2mno3	md-x0.50	app-cathode	-	-	-	not tested	-	-	-	-	-	no EOSCAR in the repo
+cathode-md	li2ruo3	md-x0.00	app-cathode	-	-	-	not tested	-	-	-	-	-	no EOSCAR in the repo
+cathode-md	li2ruo3	md-x0.25	app-cathode	-	-	-	not tested	-	-	-	-	-	no EOSCAR in the repo
+cathode-md	li2ruo3	md-x0.50	app-cathode	-	-	-	not tested	-	-	-	-	-	no EOSCAR in the repo
+cathode-md	nmc	md-x0.00	app-cathode	-	-	-	not tested	-	-	-	-	-	no EOSCAR in the repo
+cathode-md	nmc	md-x0.25	app-cathode	-	-	-	not tested	-	-	-	-	-	no EOSCAR in the repo
+cathode-md	nmc	md-x0.50	app-cathode	-	-	-	not tested	-	-	-	-	-	no EOSCAR in the repo
